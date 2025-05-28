@@ -62,20 +62,23 @@ const Dashboard = () => {
                     value={userData.accuracy} 
                     className="h-2"
                   />
-                  {/* 60% target line */}
+                  {/* 60% target line - white bar */}
                   <div 
-                    className="absolute top-0 h-2 w-0.5 bg-checkmate-primary" 
+                    className="absolute top-0 h-2 w-0.5 bg-white border border-checkmate-primary" 
                     style={{ left: '60%' }}
                   />
+                </div>
+                {/* 60% label below the bar */}
+                <div className="relative mt-1">
                   <div 
-                    className="absolute -top-1 text-xs text-checkmate-primary font-medium" 
+                    className="absolute text-xs text-checkmate-primary font-medium" 
                     style={{ left: '60%', transform: 'translateX(-50%)' }}
                   >
                     60%
                   </div>
                 </div>
                 {userData.accuracy >= 60 && (
-                  <Badge className="mt-2 bg-green-100 text-green-800">Target Reached!</Badge>
+                  <Badge className="mt-4 bg-green-100 text-green-800">Target Reached!</Badge>
                 )}
               </div>
 
