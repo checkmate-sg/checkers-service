@@ -55,12 +55,25 @@ const Dashboard = () => {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Accuracy</span>
-                  <span className="text-sm text-gray-600">{userData.accuracy}%/60%</span>
+                  <span className="text-sm text-gray-600">{userData.accuracy}%</span>
                 </div>
-                <Progress 
-                  value={userData.accuracy} 
-                  className="h-2"
-                />
+                <div className="relative">
+                  <Progress 
+                    value={userData.accuracy} 
+                    className="h-2"
+                  />
+                  {/* 60% target line */}
+                  <div 
+                    className="absolute top-0 h-2 w-0.5 bg-checkmate-primary" 
+                    style={{ left: '60%' }}
+                  />
+                  <div 
+                    className="absolute -top-1 text-xs text-checkmate-primary font-medium" 
+                    style={{ left: '60%', transform: 'translateX(-50%)' }}
+                  >
+                    60%
+                  </div>
+                </div>
                 {userData.accuracy >= 60 && (
                   <Badge className="mt-2 bg-green-100 text-green-800">Target Reached!</Badge>
                 )}

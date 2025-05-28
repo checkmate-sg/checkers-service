@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ThumbsUp, ThumbsDown, Meh } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CategoryTooltip from "@/components/CategoryTooltip";
 
 const VotePage = () => {
   const { voteId } = useParams();
@@ -156,7 +157,10 @@ const VotePage = () => {
               {categories.map((category) => (
                 <div key={category} className="flex items-center space-x-2">
                   <RadioGroupItem value={category} id={category} />
-                  <Label htmlFor={category} className="text-sm">{category}</Label>
+                  <Label htmlFor={category} className="text-sm flex items-center">
+                    {category}
+                    <CategoryTooltip category={category} />
+                  </Label>
                 </div>
               ))}
             </div>
