@@ -1,15 +1,15 @@
-
-import { Outlet } from "react-router-dom";
 import BottomNavigation from "./BottomNavigation";
+import { ReactNode } from "react";
 
-const Layout = () => {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-checkmate-secondary flex flex-col">
       {/* Main content area */}
-      <main className="flex-1 pb-20">
-        <Outlet />
-      </main>
-      
+      <main className="flex-1 pb-20">{children}</main>
       {/* Bottom navigation */}
       <BottomNavigation />
     </div>
