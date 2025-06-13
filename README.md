@@ -54,20 +54,25 @@ npm run dev
 
 This project is built with:
 
-- Vite
+- NextJS
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- MongoDB
 
-## How can I deploy this project?
+## After real data is integrated change scripts in package.json to this
 
-Simply open [Lovable](https://lovable.dev/projects/4e552da1-c019-47f6-92c6-6ee86119fc9c) and click on Share -> Publish.
+"scripts": {
+"dev": "next dev",
+"build": "next build",
+"start": "next start",
+"lint": "next lint"
+},
 
-## Can I connect a custom domain to my Lovable project?
+## Updates
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- MongoDB is connected, both dashboard and my-votes page are using dynamic data
+- upon first launch seed will populate mongoDB with dummy data
+- Not working: Viewing of individual votes, submission of votes
+- LeaderBoard not updated, still using static data

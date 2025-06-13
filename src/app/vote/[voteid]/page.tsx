@@ -1,3 +1,2 @@
-
-      import VotePage from '@/components/VotePage';
-      export default VotePage;
+import VotePage from "@/components/VotePage";
+export default VotePage;
