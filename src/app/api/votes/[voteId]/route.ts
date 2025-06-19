@@ -1,31 +1,35 @@
-// app/api/votes/[voteId]/route.js
 import { NextResponse } from "next/server";
 import { connectToDB } from "../../../../lib/mongodb";
 import { ObjectId } from "mongodb";
 
-export async function GET(request, { params }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { voteId: string } }
+) {
   try {
-    const { voteId } = params;
+    const voteId = params.voteId;
 
-    if (!voteId) {
+    console.log("voteId:", voteId);
+
+    if (!voteId || !ObjectId.isValid(voteId)) {
       return NextResponse.json(
-        { error: "Vote ID is required" },
+        { error: "Invalid or missing Vote ID" },
         { status: 400 }
       );
     }
 
     const db = await connectToDB();
-
-    // Fetch the vote from MongoDB
-    const vote = await db.collection("votes").findOne({
-      _id: new ObjectId(voteId),
-    });
+    const vote = await db
+      .collection("votes")
+      .findOne({ _id: new ObjectId(voteId) });
 
     if (!vote) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
-    return NextResponse.json(vote);
+    // Optional: format _id to id
+    const { _id, ...rest } = vote;
+    return NextResponse.json({ id: _id.toString(), ...rest });
   } catch (error) {
     console.error("Error fetching vote:", error);
     return NextResponse.json(

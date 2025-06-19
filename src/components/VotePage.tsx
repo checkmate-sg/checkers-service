@@ -8,12 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Meh } from "lucide-react";
+import {
+  ArrowLeft,
+  ThumbsUp,
+  ThumbsDown,
+  Meh,
+  CheckCircle,
+  Clock,
+  MessageSquare,
+  Tag,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CategoryTooltip from "@/components/CategoryTooltip";
 
 const VotePage = () => {
-  const voteId = useParams();
+  const params = useParams();
+  const voteId = params.voteid;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -24,6 +34,12 @@ const VotePage = () => {
   const [messageData, setMessageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hasUserVoted, setHasUserVoted] = useState(false);
+  const [isVoteCompleted, setIsVoteCompleted] = useState(false);
+  const [userPreviousVote, setUserPreviousVote] = useState(null);
+
+  // Hardcoded checker ID
+  const checkerId = "665eaaaa0000000000000001";
 
   // Fetch vote data from MongoDB
   useEffect(() => {
@@ -45,6 +61,59 @@ const VotePage = () => {
 
         const data = await response.json();
         setMessageData(data);
+
+        // Check if vote is completed
+        if (data.status === "completed") {
+          setIsVoteCompleted(true);
+        }
+
+        // Check if current user has already voted
+        const userVote = data.votes?.find(
+          (vote) => vote.checkerId === checkerId
+        );
+
+        if (userVote) {
+          setHasUserVoted(true);
+          setUserPreviousVote(userVote);
+
+          // Pre-populate form with user's previous selections
+          console.log("Previous user vote:", userVote); // Debug log
+
+          // Set category (handle both 'vote' and 'category' fields)
+          const category = userVote.vote || userVote.category;
+          if (category) {
+            setSelectedCategory(category);
+          }
+
+          // Set tags (ensure it's an array)
+          if (userVote.tags && Array.isArray(userVote.tags)) {
+            setSelectedTags([...userVote.tags]); // Create a new array to trigger re-render
+          } else if (userVote.tags && typeof userVote.tags === "string") {
+            // Handle case where tags might be stored as a string
+            try {
+              const parsedTags = JSON.parse(userVote.tags);
+              if (Array.isArray(parsedTags)) {
+                setSelectedTags([...parsedTags]);
+              }
+            } catch (e) {
+              console.warn("Could not parse tags:", userVote.tags);
+              setSelectedTags([]);
+            }
+          } else {
+            setSelectedTags([]);
+          }
+
+          // Set AI rating
+          if (userVote.aiRating) {
+            setAiRating(userVote.aiRating);
+          }
+
+          // Set comment (handle both 'comment' and 'comments' fields)
+          const userComment = userVote.comment;
+          if (userComment) {
+            setComment(userComment);
+          }
+        }
       } catch (err) {
         console.error("Error fetching vote data:", err);
         setError(err.message || "Failed to load vote data");
@@ -78,12 +147,27 @@ const VotePage = () => {
     "Technology",
     "Urgent",
     "Chain Message",
+    "Verified",
+    "Suspicious",
+    "News",
+    "Medical",
+    "Investment",
+    "Scam",
+    "Tutorial",
+    "Analysis",
   ];
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+    if (isVoteCompleted) return; // Don't allow changes if vote is completed
+
+    setSelectedTags((prev) => {
+      const newTags = prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag];
+
+      console.log("Updated tags:", newTags); // Debug log
+      return newTags;
+    });
   };
 
   const handleSubmit = async () => {
@@ -106,17 +190,22 @@ const VotePage = () => {
     }
 
     try {
+      const submitData = {
+        category: selectedCategory,
+        tags: selectedTags,
+        aiRating,
+        comment: comment.trim(), // Trim whitespace
+        checkerId,
+      };
+
+      console.log("Submitting vote data:", submitData); // Debug log
+
       const response = await fetch(`/api/votes/${voteId}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          category: selectedCategory,
-          tags: selectedTags,
-          aiRating,
-          comment,
-        }),
+        body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
@@ -124,7 +213,7 @@ const VotePage = () => {
       }
 
       toast({
-        title: "Vote Submitted!",
+        title: hasUserVoted ? "Vote Updated!" : "Vote Submitted!",
         description: "Thank you for helping fight misinformation.",
       });
 
@@ -136,6 +225,32 @@ const VotePage = () => {
         description: "Failed to submit vote. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const getRatingIcon = (rating) => {
+    switch (rating) {
+      case "great":
+        return <ThumbsUp size={16} className="text-green-600" />;
+      case "acceptable":
+        return <Meh size={16} className="text-yellow-600" />;
+      case "unacceptable":
+        return <ThumbsDown size={16} className="text-red-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const getRatingColor = (rating) => {
+    switch (rating) {
+      case "great":
+        return "bg-green-100 text-green-800";
+      case "acceptable":
+        return "bg-yellow-100 text-yellow-800";
+      case "unacceptable":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -194,6 +309,26 @@ const VotePage = () => {
             <ArrowLeft size={20} />
           </Button>
           <h1 className="text-xl font-bold">Review Message</h1>
+          {/* Status indicator */}
+          <div className="ml-auto">
+            {isVoteCompleted ? (
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
+                <CheckCircle size={12} className="mr-1" />
+                Completed
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="bg-yellow-100 text-yellow-800"
+              >
+                <Clock size={12} className="mr-1" />
+                Pending
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Message Content */}
@@ -246,123 +381,206 @@ const VotePage = () => {
           </Card>
         )}
 
-        {/* Category Selection */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Message Category *</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <div className="grid grid-cols-2 gap-3">
-                {categories.map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <RadioGroupItem value={category} id={category} />
-                    <Label
-                      htmlFor={category}
-                      className="text-sm flex items-center"
-                    >
-                      {category}
-                      <CategoryTooltip category={category} />
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
+        {/* Show final result if vote is completed */}
+        {isVoteCompleted && messageData.finalResult && (
+          <Card className="border-blue-200">
+            <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
+              <CardTitle className="text-base text-blue-800">
+                Final Result
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-3">
+              <p className="text-sm font-medium text-blue-800">
+                {messageData.finalResult}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Tags */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Tags (Optional)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {availableTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedTags.includes(tag) ? "default" : "outline"}
-                  className={`cursor-pointer ${
-                    selectedTags.includes(tag)
-                      ? "bg-checkmate-primary text-white"
-                      : "hover:bg-checkmate-primary hover:text-white"
-                  }`}
-                  onClick={() => handleTagToggle(tag)}
+        {/* Only show voting form if vote is not completed */}
+        {!isVoteCompleted && (
+          <>
+            {/* Category Selection */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Message Category *
+                  {hasUserVoted && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      (Update your selection)
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
                 >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="grid grid-cols-2 gap-3">
+                    {categories.map((category) => (
+                      <div
+                        key={category}
+                        className="flex items-center space-x-2"
+                      >
+                        <RadioGroupItem value={category} id={category} />
+                        <Label
+                          htmlFor={category}
+                          className="text-sm flex items-center"
+                        >
+                          {category}
+                          <CategoryTooltip category={category} />
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
 
-        {/* AI Note Rating */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Rate AI Note *</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup value={aiRating} onValueChange={setAiRating}>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="great" id="great" />
-                  <Label htmlFor="great" className="flex items-center gap-2">
-                    <ThumbsUp size={16} className="text-green-600" />
-                    Great
-                  </Label>
+            {/* Tags */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Tags (Optional)</CardTitle>
+                <p className="text-xs text-gray-500">
+                  Select relevant tags to categorize this message
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant={
+                        selectedTags.includes(tag) ? "default" : "outline"
+                      }
+                      className={`cursor-pointer ${
+                        selectedTags.includes(tag)
+                          ? "bg-checkmate-primary text-white"
+                          : "hover:bg-checkmate-primary hover:text-white"
+                      }`}
+                      onClick={() => handleTagToggle(tag)}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="acceptable" id="acceptable" />
-                  <Label
-                    htmlFor="acceptable"
-                    className="flex items-center gap-2"
-                  >
-                    <Meh size={16} className="text-yellow-600" />
-                    Acceptable
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="unacceptable" id="unacceptable" />
-                  <Label
-                    htmlFor="unacceptable"
-                    className="flex items-center gap-2"
-                  >
-                    <ThumbsDown size={16} className="text-red-600" />
-                    Unacceptable
-                  </Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
+                {selectedTags.length > 0 && (
+                  <div className="mt-3 text-xs text-gray-600">
+                    Selected: {selectedTags.join(", ")}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Optional Comment */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              Additional Comment (Optional)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Add any additional context or observations..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[80px]"
-            />
-          </CardContent>
-        </Card>
+            {/* AI Note Rating */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Rate AI Note *</CardTitle>
+                <p className="text-xs text-gray-500">
+                  How helpful was the AI community note?
+                </p>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={aiRating} onValueChange={setAiRating}>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="great" id="great" />
+                      <Label
+                        htmlFor="great"
+                        className="flex items-center gap-2"
+                      >
+                        <ThumbsUp size={16} className="text-green-600" />
+                        Great
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="acceptable" id="acceptable" />
+                      <Label
+                        htmlFor="acceptable"
+                        className="flex items-center gap-2"
+                      >
+                        <Meh size={16} className="text-yellow-600" />
+                        Acceptable
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="unacceptable" id="unacceptable" />
+                      <Label
+                        htmlFor="unacceptable"
+                        className="flex items-center gap-2"
+                      >
+                        <ThumbsDown size={16} className="text-red-600" />
+                        Unacceptable
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
 
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          className="w-full bg-checkmate-primary hover:bg-checkmate-primary/90 text-white py-3 text-base font-medium rounded-lg"
-        >
-          Done
-        </Button>
+            {/* Optional Comment */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Additional Comment (Optional)
+                </CardTitle>
+                <p className="text-xs text-gray-500">
+                  Share your reasoning or additional observations
+                </p>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Add any additional context or observations..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="min-h-[80px]"
+                  maxLength={500}
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  {comment.length}/500 characters
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmit}
+              className="w-full bg-checkmate-primary hover:bg-checkmate-primary/90 text-white py-3 text-base font-medium rounded-lg"
+            >
+              {hasUserVoted ? "Update Vote" : "Submit Vote"}
+            </Button>
+          </>
+        )}
+
+        {/* Show read-only message if vote is completed */}
+        {isVoteCompleted && (
+          <Card className="border-gray-200">
+            <CardContent className="p-6 text-center">
+              <CheckCircle size={48} className="mx-auto text-green-600 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Voting Completed</h3>
+              <p className="text-gray-600 mb-4">
+                This message has been reviewed and the voting period has ended.
+              </p>
+              {hasUserVoted && (
+                <div className="text-sm text-gray-500 space-y-1">
+                  <p>
+                    Your vote:{" "}
+                    <span className="font-medium">{selectedCategory}</span>
+                  </p>
+                  {userPreviousVote?.aiRating && (
+                    <p>
+                      AI Rating:{" "}
+                      <span className="font-medium capitalize">
+                        {userPreviousVote.aiRating}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </TooltipProvider>
   );
