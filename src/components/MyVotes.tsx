@@ -42,20 +42,38 @@ const MyVotes = () => {
   });
 
   const getStatusBadge = (status: string, finalResult: string | null) => {
-    if (status === "pending") {
-      return (
-        <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-          <Clock size={12} className="mr-1" />
-          Pending
-        </Badge>
-      );
+    switch (status) {
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="text-yellow-600 border-yellow-300"
+          >
+            <Clock size={12} className="mr-1" />
+            Pending
+          </Badge>
+        );
+      case "voted":
+        return (
+          <Badge variant="outline" className="text-green-600 border-green-300">
+            <CheckCircle size={12} className="mr-1" />
+            Voted
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge variant="outline" className="text-blue-600 border-blue-300">
+            <CheckCircle size={12} className="mr-1" />
+            Completed
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="text-gray-600 border-gray-300">
+            {status}
+          </Badge>
+        );
     }
-    return (
-      <Badge variant="outline" className="text-green-600 border-green-300">
-        <CheckCircle size={12} className="mr-1" />
-        Voted
-      </Badge>
-    );
   };
 
   const getCategoryColor = (category: string) => {
@@ -141,7 +159,7 @@ const MyVotes = () => {
                   {/* AI Rating */}
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-500">
-                      AI Note: {vote.aiRating}
+                      AI Note: {vote.aiNote}
                     </span>
                     <Link href={`/vote/${vote.id}`}>
                       <Button
@@ -168,7 +186,7 @@ const MyVotes = () => {
               <div className="text-xl font-bold text-checkmate-primary">
                 {messagesData.filter((m) => m.status === "voted").length}
               </div>
-              <div className="text-xs text-gray-600">Completed</div>
+              <div className="text-xs text-gray-600">Voted</div>
             </div>
             <div>
               <div className="text-xl font-bold text-yellow-600">

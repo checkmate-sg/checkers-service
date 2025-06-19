@@ -1,6 +1,9 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/vote/[voteid]/page": "app/vote/[voteid]/page.js",
   "/my-votes/page": "app/my-votes/page.js",
-  "/api/votes/[voteId]/route": "app/api/votes/[voteId]/route.js"
+  "/api/votes/[voteId]/route": "app/api/votes/[voteId]/route.js",
+  "/api/votes/route": "app/api/votes/route.js",
+  "/api/dashboard/route": "app/api/dashboard/route.js",
+  "/vote/[voteid]/page": "app/vote/[voteid]/page.js",
+  "/api/votes/[voteId]/submit/route": "app/api/votes/[voteId]/submit/route.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }
