@@ -1,6 +1,6 @@
 {
-  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
+  "/vote/[voteid]/page": "app/vote/[voteid]/page.js",
   "/my-votes/page": "app/my-votes/page.js",
-  "/leaderboard/page": "app/leaderboard/page.js"
+  "/api/votes/[voteId]/route": "app/api/votes/[voteId]/route.js"
 }

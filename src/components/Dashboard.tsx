@@ -2,32 +2,83 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Target, MessageSquare, Award } from "lucide-react";
+import {
+  CheckCircle,
+  Target,
+  MessageSquare,
+  Award,
+  Loader2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+
+interface DashboardData {
+  isNewChecker: boolean;
+  userData: {
+    name: string;
+    votes: number;
+    accuracy: number;
+    messagesSent: number;
+    lifetimeVotes: number;
+    lifetimeAccuracy: number;
+    engagementScore: number;
+    recentActivity: Array<{
+      message: string;
+      date: string;
+      type: string;
+    }>;
+  };
+}
 
 const Dashboard = () => {
-  // TODO: Replace with actual user data from backend
-  const isNewChecker = true; // Change to false for certified checkers
-  const userData = {
-    votes: 23,
-    accuracy: 75,
-    messagesSent: 1,
-    lifetimeVotes: 150,
-    lifetimeAccuracy: 82,
-    engagementScore: 95,
-    recentActivity: [
-      { message: "Verified health claim", date: "2 hours ago", type: "vote" },
-      {
-        message: "Submitted suspicious message",
-        date: "1 day ago",
-        type: "submission",
-      },
-      {
-        message: "Achieved 70% accuracy milestone",
-        date: "3 days ago",
-        type: "achievement",
-      },
-    ],
-  };
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (!res.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+        const data = await res.json();
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="p-4 max-w-md mx-auto">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-red-500">
+              {error || "Failed to load dashboard"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { isNewChecker, userData } = dashboardData;
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -37,7 +88,11 @@ const Dashboard = () => {
           Check<span className="text-checkmate-primary">Mate</span>
         </h1>
         <p className="text-gray-600">Fighting misinformation together</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Welcome back, {userData.name}!
+        </p>
       </div>
+
       {isNewChecker ? (
         // New Checker Dashboard
         <div className="space-y-4">
@@ -124,6 +179,45 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Recent Activity for New Checkers */}
+          {userData.recentActivity.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare size={20} />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {userData.recentActivity.map((activity, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-start"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {activity.message}
+                        </p>
+                        <p className="text-xs text-gray-500">{activity.date}</p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          activity.type === "achievement"
+                            ? "border-checkmate-primary text-checkmate-primary"
+                            : ""
+                        }`}
+                      >
+                        {activity.type}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : (
         // Certified Checker Dashboard

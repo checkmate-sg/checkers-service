@@ -26,10 +26,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/my-votes/page.js"
     ],
-    "/leaderboard/page": [
+    "/vote/[voteid]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/leaderboard/page.js"
+      "static/chunks/app/vote/[voteid]/page.js"
+    ],
+    "/vote/[voteid]/error": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/vote/[voteid]/error.js"
+    ],
+    "/vote/[voteid]/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/vote/[voteid]/loading.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

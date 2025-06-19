@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,51 +12,22 @@ const MyVotes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
-  // TODO: Replace with actual data from backend
-  const messagesData = [
-    {
-      id: "msg_001",
-      content:
-        "🚨 URGENT: New COVID variant spreads through 5G towers! Share this...",
-      category: "False",
-      status: "voted",
-      myVote: "False",
-      aiRating: "great",
-      timestamp: "2024-01-15 14:30",
-      finalResult: "False - 85% consensus",
-    },
-    {
-      id: "msg_002",
-      content:
-        "Government announces new tax relief for families earning under...",
-      category: "Pending",
-      status: "pending",
-      myVote: "Legitimate",
-      aiRating: "acceptable",
-      timestamp: "2024-01-14 09:15",
-      finalResult: null,
-    },
-    {
-      id: "msg_003",
-      content: "BREAKING: Celebrity caught in scandal, photos leaked...",
-      category: "Misleading",
-      status: "voted",
-      myVote: "Misleading",
-      aiRating: "great",
-      timestamp: "2024-01-13 16:45",
-      finalResult: "Misleading - 72% consensus",
-    },
-    {
-      id: "msg_004",
-      content: "Free iPhone giveaway! Click here to claim yours now...",
-      category: "Pending",
-      status: "pending",
-      myVote: "Scam",
-      aiRating: "acceptable",
-      timestamp: "2024-01-12 11:20",
-      finalResult: null,
-    },
-  ];
+  const [messagesData, setMessagesData] = useState([]);
+
+  useEffect(() => {
+    const fetchVotes = async () => {
+      try {
+        const res = await fetch("/api/votes");
+        const data = await res.json();
+        console.log(data);
+        setMessagesData(data);
+      } catch (err) {
+        console.error("Error fetching votes:", err);
+      }
+    };
+
+    fetchVotes();
+  }, []);
 
   const filteredMessages = messagesData.filter((message) => {
     const matchesSearch = message.content
@@ -140,42 +111,39 @@ const MyVotes = () => {
             </CardContent>
           </Card>
         ) : (
-          filteredMessages.map((message) => (
-            <Card
-              key={message.id}
-              className="hover:shadow-md transition-shadow"
-            >
+          filteredMessages.map((vote) => (
+            <Card key={vote.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="space-y-3">
                   {/* Status and Category */}
                   <div className="flex justify-between items-start">
-                    {getStatusBadge(message.status, message.finalResult)}
-                    <Badge className={getCategoryColor(message.myVote)}>
-                      {message.myVote}
+                    {getStatusBadge(vote.status, vote.finalResult)}
+                    <Badge className={getCategoryColor(vote.myVote)}>
+                      {vote.myVote}
                     </Badge>
                   </div>
 
                   {/* Message Content */}
                   <p className="text-sm text-gray-800 line-clamp-2">
-                    {message.content}
+                    {vote.content}
                   </p>
 
                   {/* Timestamp */}
-                  <p className="text-xs text-gray-500">{message.timestamp}</p>
+                  <p className="text-xs text-gray-500">{vote.timestamp}</p>
 
                   {/* Final Result (if voted) */}
-                  {message.finalResult && (
+                  {vote.finalResult && (
                     <div className="bg-checkmate-info p-2 rounded text-xs">
-                      <strong>Final Result:</strong> {message.finalResult}
+                      <strong>Final Result:</strong> {vote.finalResult}
                     </div>
                   )}
 
                   {/* AI Rating */}
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-500">
-                      AI Note: {message.aiRating}
+                      AI Note: {vote.aiRating}
                     </span>
-                    <Link href={`/vote/${message.id}`}>
+                    <Link href={`/vote/${vote.id}`}>
                       <Button
                         variant="outline"
                         size="sm"
