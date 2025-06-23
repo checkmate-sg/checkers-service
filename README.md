@@ -74,5 +74,28 @@ This project is built with:
 
 - MongoDB is connected, both dashboard and my-votes page are using dynamic data
 - upon first launch seed will populate mongoDB with dummy data
-- Not working: Viewing of individual votes, submission of votes
+- New Updates (working): Viewing of individual votes, submission of votes, webhook to listen in on new submissions (submit via postman). Refer to details below on how to submit submissions via webhook (take note picture submission not supported at the moment)
+- Currently: seed.ts is in charge of finalising votes based on majority of votes. FInalisation of votes done upon launch for every vote submitted 24hrs and above in db. Seed.ts is also incharge of updating individual users dashboard details, (acccuracy etc etc)
 - LeaderBoard not updated, still using static data
+- Things to work on: nextAuth, connecting to telegram bot
+
+## Using Postman
+
+- Select the Body tab (right next to Headers).
+- Choose raw.
+- In the dropdown to the right of Text, select JSON.
+- Follow the submissions below
+
+POST http://localhost:3000/api/votes/webhook
+
+Example body for submission:
+{
+"content": "🚨 Fake news spreading again!",
+"sender": "External Source"
+}
+
+Expected response:
+{
+"message": "Vote submitted successfully",
+"id": "66abcdef123..."
+}
