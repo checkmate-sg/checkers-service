@@ -14,6 +14,8 @@ export async function seedDatabase() {
   if (existing) return; // Don't re-seed if data exists
 
   const now = new Date();
+  const dayAgo = new Date(now.getTime() - (23 * 60 + 59) * 60 * 1000);
+
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
   const threeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
@@ -111,7 +113,7 @@ export async function seedDatabase() {
     {
       _id: new ObjectId("64f1a1b1c1d1e1f1a1b1c1d5"),
       content: "🚨 URGENT: This is a post to show voted and not completed",
-      timestamp: twelveHoursAgo.toISOString(),
+      timestamp: dayAgo.toISOString(),
       sender: "Unknown WhatsApp User",
       screenshot:
         "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
