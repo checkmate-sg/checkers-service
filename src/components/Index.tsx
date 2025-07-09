@@ -1,5 +1,6 @@
+"use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -7,7 +8,7 @@ const Index = () => {
 
   useEffect(() => {
     // Redirect to dashboard as the main app entry point
-    router.push("/dashboard", { replace: true });
+    router.replace("/dashboard");
   }, [router]);
 
   return (
