@@ -113,7 +113,7 @@ export async function seedDatabase() {
     {
       _id: new ObjectId("64f1a1b1c1d1e1f1a1b1c1d5"),
       content: "🚨 URGENT: This is a post to show voted and not completed",
-      timestamp: dayAgo.toISOString(),
+      timestamp: now.toISOString(),
       sender: "Unknown WhatsApp User",
       screenshot:
         "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",

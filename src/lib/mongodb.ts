@@ -1,7 +1,9 @@
 // lib/mongodb.ts
 import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
+const uri =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://test:password12345@cluster0.hgkklo8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const dbName = "checkmate";
 
 let cachedClient: MongoClient | null = null;
