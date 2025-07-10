@@ -1,8 +1,0 @@
-3:I[8003,["600","static/chunks/600-a27c44ebd414a1d9.js","648","static/chunks/648-96c3bfc20baf12f1.js","3","static/chunks/3-e9e7a1f3f0c58c89.js","185","static/chunks/app/layout-707a26a38f748c1f.js"],""]
-4:I[4707,[],""]
-5:I[6423,[],""]
-6:I[8031,["600","static/chunks/600-a27c44ebd414a1d9.js","648","static/chunks/648-96c3bfc20baf12f1.js","3","static/chunks/3-e9e7a1f3f0c58c89.js","185","static/chunks/app/layout-707a26a38f748c1f.js"],"default"]
-0:["jlbYDSmlpbr_N3xxZzxl8",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",{"children":["__PAGE__",{},[["$L1","$L2",null],null],null]},[[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/8279a1e02fe311b5.css","precedence":"next","crossOrigin":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","$L3",null,{"src":"https://telegram.org/js/telegram-web-app.js","strategy":"beforeInteractive"}]}],["$","body",null,{"children":["$","div",null,{"className":"min-h-screen bg-checkmate-secondary flex flex-col","children":[["$","main",null,{"className":"flex-1 pb-20","children":["$","$L4",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":["$","div",null,{"children":["$","h1",null,{"children":"404 - Page Not Found"}]}],"notFoundStyles":[]}]}],["$","$L6",null,{}]]}]}]]}]],null],null],["$L7",null]]]]
-2:E{"digest":"NEXT_REDIRECT;replace;/dashboard;307;"}
-7:[["$","meta","0",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","1",{"charSet":"utf-8"}]]
-1:null
