@@ -1,9 +1,9 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
 import { findUserByTelegramID } from "@/lib/db";
 
-const handler = NextAuth({
+export const authOptions: NextAuthConfig = {
   providers: [
     CredentialsProvider({
       name: "Telegram",
@@ -33,14 +33,12 @@ const handler = NextAuth({
           id: user.id,
           telegramId,
           name: user.name,
-          email: null,
-          emailVerified: null,
         };
       },
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -55,15 +53,17 @@ const handler = NextAuth({
         session.user = {
           ...session.user,
           id: token.id as string,
-          telegramId: (token.telegramId as string) || "",
+          telegramId: token.telegramId as string,
         };
       }
       return session;
     },
   },
   pages: {
-    signIn: "/unauthorized", // Show a blocked page if not verified
+    signIn: "/unauthorized",
   },
-});
+};
 
-export { handler as GET, handler as POST };
+const handler = NextAuth(authOptions);
+export const GET = handler;
+export const POST = handler;
