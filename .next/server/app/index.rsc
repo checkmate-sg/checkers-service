@@ -1,9 +1,0 @@
-3:I[8003,["648","static/chunks/648-4a96d8b934070a16.js","251","static/chunks/251-41bee75db4220ff7.js","185","static/chunks/app/layout-c1bc4e3bb90d4d9e.js"],""]
-4:I[5934,["648","static/chunks/648-4a96d8b934070a16.js","251","static/chunks/251-41bee75db4220ff7.js","185","static/chunks/app/layout-c1bc4e3bb90d4d9e.js"],"SessionProvider"]
-5:I[4707,[],""]
-6:I[6423,[],""]
-7:I[8031,["648","static/chunks/648-4a96d8b934070a16.js","251","static/chunks/251-41bee75db4220ff7.js","185","static/chunks/app/layout-c1bc4e3bb90d4d9e.js"],"default"]
-0:["0Fb3ykVF_fhyYBR6QoSTJ",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",{"children":["__PAGE__",{},[["$L1","$L2",null],null],null]},[[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/7249b9c0dfb70191.css","precedence":"next","crossOrigin":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","$L3",null,{"src":"https://telegram.org/js/telegram-web-app.js","strategy":"beforeInteractive"}]}],["$","body",null,{"children":["$","div",null,{"className":"min-h-screen bg-checkmate-secondary flex flex-col","children":[["$","$L4",null,{"children":["$","$L5",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L6",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":["$","div",null,{"children":["$","h1",null,{"children":"404 - Page Not Found"}]}],"notFoundStyles":[]}]}],["$","$L7",null,{}]]}]}]]}]],null],null],["$L8",null]]]]
-2:E{"digest":"NEXT_REDIRECT;replace;/dashboard;307;"}
-8:[["$","meta","0",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","1",{"charSet":"utf-8"}]]
-1:null

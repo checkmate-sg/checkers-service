@@ -42,15 +42,29 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log("Fetching dashboard data...");
         const res = await fetch("/api/dashboard");
+        console.log("Response status:", res.status);
+
+        // Get the response text first to see what we're getting
+        const responseText = await res.text();
+        console.log("Raw response:", responseText);
+
         if (!res.ok) {
-          throw new Error("Failed to fetch dashboard data");
+          console.error("API Error:", responseText);
+          setError(`API Error: ${res.status} - ${responseText}`);
+          return;
         }
-        const data = await res.json();
+
+        // Try to parse as JSON
+        const data = JSON.parse(responseText);
+        console.log("Dashboard data received:", data);
         setDashboardData(data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError("Failed to load dashboard data");
+        setError(
+          err instanceof Error ? err.message : "Failed to load dashboard data"
+        );
       } finally {
         setLoading(false);
       }
@@ -82,10 +96,6 @@ const Dashboard = () => {
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-  }
-
-  if (!session) {
-    return null; // Already redirected above; don't flash UI
   }
 
   if (loading) {
