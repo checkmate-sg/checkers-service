@@ -1,3 +1,5 @@
+// app/api/auth/[...nextauth]/route.ts
+
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
@@ -38,7 +40,7 @@ const handler = NextAuth({
     }),
   ],
   session: {
-    strategy: "jwt" as const,
+    strategy: "jwt",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -64,5 +66,5 @@ const handler = NextAuth({
   },
 });
 
-export const GET = handler;
-export const POST = handler;
+// ✅ App Router export (no GET/POST)
+export { handler as GET, handler as POST };
