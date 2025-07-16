@@ -119,7 +119,7 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-checkmate-text mb-2">
           Check<span className="text-checkmate-primary">Mate</span>
         </h1>
-        <p className="text-gray-600">Fighting misinformation together</p>
+        <p className="text-gray-600">Fighting LOLLIPOP together</p>
         <p className="text-sm text-gray-500 mt-1">
           Welcome back, {userData.name}!
         </p>
