@@ -1,8 +1,8 @@
-// File: C:\LocalCodes\Checkmate\checkers-webapp\src\app\api\votes\route.ts
-import * as entry from '../../../../../src/app/api/votes/route.js'
+// File: C:\LocalCodes\Checkmate\checkers-webapp\src\app\api\auth\[...nextauth]\route.ts
+import * as entry from '../../../../../../src/app/api/auth/[...nextauth]/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../src/app/api/votes/route.js')
+type TEntry = typeof import('../../../../../../src/app/api/auth/[...nextauth]/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{
