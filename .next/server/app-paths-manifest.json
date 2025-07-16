@@ -1,5 +1,17 @@
 {
+  "/api/checker/route": "app/api/checker/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/dashboard/route": "app/api/dashboard/route.js",
+  "/api/votes/[voteId]/route": "app/api/votes/[voteId]/route.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/dashboard/route": "app/api/dashboard/route.js"
+  "/api/votes/[voteId]/submit/route": "app/api/votes/[voteId]/submit/route.js",
+  "/api/votes/route": "app/api/votes/route.js",
+  "/api/votes/webhook/route": "app/api/votes/webhook/route.js",
+  "/leaderboard/page": "app/leaderboard/page.js",
+  "/page": "app/page.js",
+  "/unauthorized/page": "app/unauthorized/page.js",
+  "/my-votes/page": "app/my-votes/page.js",
+  "/votepage/page": "app/votepage/page.js",
+  "/vote/[voteid]/page": "app/vote/[voteid]/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
 }
