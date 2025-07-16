@@ -1,11 +1,9 @@
-// app/api/auth/[...nextauth]/route.ts
-
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
 import { findUserByTelegramID } from "@/lib/db";
 
-const handler = NextAuth({
+export const authConfig: NextAuthConfig = {
   providers: [
     CredentialsProvider({
       name: "Telegram",
@@ -40,7 +38,7 @@ const handler = NextAuth({
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt", // <-- must be literal 'jwt'
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -64,7 +62,9 @@ const handler = NextAuth({
   pages: {
     signIn: "/unauthorized",
   },
-});
+};
 
-// ✅ App Router export (no GET/POST)
+const handler = NextAuth(authConfig);
+
+// ✅ Re-export the handler directly — NextAuth returns a Response
 export { handler as GET, handler as POST };
