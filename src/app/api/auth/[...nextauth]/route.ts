@@ -1,9 +1,9 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
 import { findUserByTelegramID } from "@/lib/db";
 
-export const authOptions: NextAuthConfig = {
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Telegram",
@@ -62,8 +62,7 @@ export const authOptions: NextAuthConfig = {
   pages: {
     signIn: "/unauthorized",
   },
-};
+});
 
-const handler = NextAuth(authOptions);
 export const GET = handler;
 export const POST = handler;
