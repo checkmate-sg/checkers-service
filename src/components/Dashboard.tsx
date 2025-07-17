@@ -1,4 +1,7 @@
 "use client";
+
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -39,15 +42,29 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log("Fetching dashboard data...");
         const res = await fetch("/api/dashboard");
+        console.log("Response status:", res.status);
+
+        // Get the response text first to see what we're getting
+        const responseText = await res.text();
+        console.log("Raw response:", responseText);
+
         if (!res.ok) {
-          throw new Error("Failed to fetch dashboard data");
+          console.error("API Error:", responseText);
+          setError(`API Error: ${res.status} - ${responseText}`);
+          return;
         }
-        const data = await res.json();
+
+        // Try to parse as JSON
+        const data = JSON.parse(responseText);
+        console.log("Dashboard data received:", data);
         setDashboardData(data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError("Failed to load dashboard data");
+        setError(
+          err instanceof Error ? err.message : "Failed to load dashboard data"
+        );
       } finally {
         setLoading(false);
       }
@@ -55,6 +72,31 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, []);
+
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    const initData = window.Telegram?.WebApp?.initData;
+    if (!session && initData) {
+      signIn("credentials", {
+        redirect: false,
+        initData,
+      }).then((res) => {
+        if (!res?.ok) {
+          router.replace("/unauthorized");
+        }
+      });
+    }
+  }, [session, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -87,7 +129,7 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-checkmate-text mb-2">
           Check<span className="text-checkmate-primary">Mate</span>
         </h1>
-        <p className="text-gray-600">Fighting misinformation together</p>
+        <p className="text-gray-600">Fighting LOLLIPOP together</p>
         <p className="text-sm text-gray-500 mt-1">
           Welcome back, {userData.name}!
         </p>
