@@ -78,7 +78,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     const initData = window.Telegram?.WebApp?.initData;
+    console.log("initData in Dashboard:", initData); // <-- Add this log
     if (!session && initData) {
+      console.log("No session, triggering signIn with initData"); // <-- Log
       signIn("credentials", {
         redirect: false,
         initData,
