@@ -10,22 +10,34 @@ const UnauthorizedPage = () => {
     console.log("[UnauthorizedPage] useSession status:", status);
     console.log("[UnauthorizedPage] session data:", session);
 
-    const initData = window.Telegram?.WebApp?.initData;
-    console.log("[UnauthorizedPage] Telegram initData:", initData);
+    const checkTelegramInitData = () => {
+      if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+        console.log("[UnauthorizedPage] Telegram SDK loaded");
+        console.log(
+          "[UnauthorizedPage] Telegram initData:",
+          window.Telegram.WebApp.initData
+        );
 
-    if (!session && initData) {
-      console.log("[UnauthorizedPage] Trying to sign in again with initData");
-      signIn("credentials", {
-        redirect: false,
-        initData,
-      }).then((res) => {
-        console.log("[UnauthorizedPage] Sign-in attempt result:", res);
-        if (res?.ok) {
-          console.log("[UnauthorizedPage] Sign-in succeeded, reloading...");
-          window.location.reload();
+        if (!session && window.Telegram.WebApp.initData) {
+          console.log(
+            "[UnauthorizedPage] Attempting re-signin with initData..."
+          );
+          signIn("credentials", {
+            redirect: false,
+            initData: window.Telegram.WebApp.initData,
+          }).then((res) => {
+            console.log("[UnauthorizedPage] Sign-in result:", res);
+            if (res?.ok) {
+              window.location.reload();
+            }
+          });
         }
-      });
-    }
+      } else {
+        console.warn("[UnauthorizedPage] Telegram SDK not loaded yet");
+      }
+    };
+
+    checkTelegramInitData();
   }, [session, status]);
 
   return (
