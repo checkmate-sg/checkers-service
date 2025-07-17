@@ -14,20 +14,29 @@ export const authConfig: NextAuthConfig = {
         const initData = credentials?.initData;
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
 
+        console.log("[Auth] Received initData:", initData);
+
         if (!initData || typeof initData !== "string") return null;
 
         let telegramUser;
         try {
           telegramUser = verifyTelegramInitData(initData, botToken);
+          console.log("[Auth] Parsed Telegram user:", telegramUser);
         } catch (err) {
-          console.error("Telegram initData verification failed", err);
+          console.error("[Auth] Telegram initData verification failed:", err);
           return null;
         }
 
         const telegramId = telegramUser.id.toString();
-        const user = await findUserByTelegramID(telegramId);
+        console.log("[Auth] Looking up user with telegramId:", telegramId);
 
-        if (!user) return null;
+        const user = await findUserByTelegramID(telegramId);
+        console.log("[Auth] User from DB:", user);
+
+        if (!user) {
+          console.warn("[Auth] No user found with telegramId:", telegramId);
+          return null;
+        }
 
         return {
           id: user.id,
