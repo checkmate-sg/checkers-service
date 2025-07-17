@@ -71,4 +71,5 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/unauthorized",
   },
+  debug: process.env.NODE_ENV === "development",
 };
