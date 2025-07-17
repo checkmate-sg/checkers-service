@@ -15,13 +15,6 @@ export default function RootLayout({ children }: LayoutProps) {
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
-          onLoad={() => {
-            console.log("Telegram Web App script loaded successfully");
-            console.log("Telegram object:", window.Telegram);
-          }}
-          onError={(error) => {
-            console.error("Failed to load Telegram Web App script:", error);
-          }}
         />
 
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
