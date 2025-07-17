@@ -85,6 +85,10 @@ const Dashboard = () => {
         );
 
         if (!session) {
+          console.log(
+            "[Dashboard] No sign in, sigining in starting",
+            window.Telegram.WebApp.initData
+          );
           signIn("credentials", {
             redirect: false,
             initData: window.Telegram.WebApp.initData,
