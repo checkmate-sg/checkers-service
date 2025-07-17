@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   const protectedRoutes = ["/dashboard", "/leaderboard", "/my-votes", "/vote"];
   const pathname = req.nextUrl.pathname;
@@ -12,7 +12,14 @@ export async function middleware(req: NextRequest) {
     protectedRoutes.some((path) => pathname.startsWith(path)) ||
     /^\/vote\/[^/]+$/.test(pathname); // match /vote/[voteId]
 
+  const isTelegram = req.headers.get("user-agent")?.includes("Telegram");
+
   if (isProtected && (!token || !token.telegramId)) {
+    // ✅ Allow Telegram clients to reach frontend for login on first load
+    if (isTelegram) {
+      return NextResponse.next(); // Let the page load and signIn() happen
+    }
+
     const url = req.nextUrl.clone();
     url.pathname = "/unauthorized";
     return NextResponse.redirect(url);
@@ -21,7 +28,6 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// This must be in the same file
 export const config = {
   matcher: ["/dashboard", "/leaderboard", "/my-votes", "/vote/:path*"],
 };

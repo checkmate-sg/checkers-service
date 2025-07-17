@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -82,8 +82,12 @@ const Dashboard = () => {
       signIn("credentials", {
         redirect: false,
         initData,
-      }).then((res) => {
-        if (!res?.ok) {
+      }).then(async (res) => {
+        console.log("Sign-in result", res);
+        if (res?.ok) {
+          await getSession(); // Refresh session after successful sign-in
+          router.refresh?.();
+        } else {
           router.replace("/unauthorized");
         }
       });
