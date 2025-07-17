@@ -77,23 +77,31 @@ const Dashboard = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const initData = window.Telegram?.WebApp?.initData;
-    console.log("initData in Dashboard:", initData); // <-- Add this log
-    if (!session && initData) {
-      console.log("No session, triggering signIn with initData"); // <-- Log
-      signIn("credentials", {
-        redirect: false,
-        initData,
-      }).then(async (res) => {
-        console.log("Sign-in result", res);
-        if (res?.ok) {
-          await getSession(); // Refresh session after successful sign-in
-          router.refresh?.();
-        } else {
-          router.replace("/unauthorized");
+    const interval = setInterval(() => {
+      if (window.Telegram?.WebApp?.initData) {
+        console.log(
+          "[Dashboard] initData detected:",
+          window.Telegram.WebApp.initData
+        );
+
+        if (!session) {
+          signIn("credentials", {
+            redirect: false,
+            initData: window.Telegram.WebApp.initData,
+          }).then((res) => {
+            console.log("Sign-in result", res);
+            if (!res?.ok) {
+              router.replace("/unauthorized");
+            }
+          });
         }
-      });
-    }
+        clearInterval(interval);
+      } else {
+        console.log("[Dashboard] Waiting for Telegram SDK...");
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
   }, [session, router]);
 
   if (status === "loading") {
