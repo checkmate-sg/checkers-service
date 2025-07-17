@@ -16,7 +16,10 @@ export const authConfig: NextAuthConfig = {
 
         console.log("[Auth] Received initData:", initData);
 
-        if (!initData || typeof initData !== "string") return null;
+        if (!initData || typeof initData !== "string") {
+          console.error("[Auth] No initData received or invalid format");
+          return null;
+        }
 
         let telegramUser;
         try {

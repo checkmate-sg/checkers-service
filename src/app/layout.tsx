@@ -11,17 +11,14 @@ interface LayoutProps {
 export default function RootLayout({ children }: LayoutProps) {
   return (
     <html lang="en">
-      <head>
+      <body>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
-      </head>
-      <body>
+
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
-          {/* Main content area */}
           <SessionProvider>{children}</SessionProvider>
-          {/* Bottom navigation */}
           <BottomNavigation />
         </div>
       </body>

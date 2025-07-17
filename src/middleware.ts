@@ -4,8 +4,9 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  console.log("Token in middleware:", token); // <-- Log token
 
-  const protectedRoutes = ["/dashboard", "/leaderboard", "/my-votes", "/vote"];
+  const protectedRoutes = ["/leaderboard", "/my-votes", "/vote"];
   const pathname = req.nextUrl.pathname;
 
   const isProtected =
@@ -29,5 +30,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/leaderboard", "/my-votes", "/vote/:path*"],
+  matcher: ["/leaderboard", "/my-votes", "/vote/:path*"],
 };
