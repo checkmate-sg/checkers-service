@@ -99,3 +99,8 @@ Expected response:
 "message": "Vote submitted successfully",
 "id": "66abcdef123..."
 }
+
+## Hosting on Vercel
+
+- Set up environment variables, settings > environment variables
+- You will need three key pair values, the three keys are: TELEGRAM_BOT_TOKEN, NEXTAUTH_SECRET, NEXTAUTH_URL
