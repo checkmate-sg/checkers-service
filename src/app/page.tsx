@@ -1,16 +1,7 @@
-export const dynamic = "force-dynamic";
+// import Layout from "@/components/Layout";
+// import Dashboard from "@/components/Dashboard";
+import { redirect } from "next/navigation";
 
-("use client");
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/dashboard");
-  }, [router]);
-
-  return <p>Redirecting to dashboard...</p>;
+export default function HomePage() {
+  redirect("/dashboard");
 }

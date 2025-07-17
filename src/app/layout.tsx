@@ -11,7 +11,8 @@ interface LayoutProps {
 export default function RootLayout({ children }: LayoutProps) {
   return (
     <html lang="en">
-      <head>
+      <head />
+      <body>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
@@ -20,8 +21,6 @@ export default function RootLayout({ children }: LayoutProps) {
             console.error("[RootLayout] Failed to load Telegram SDK")
           }
         />
-      </head>
-      <body>
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
           <SessionProvider>{children}</SessionProvider>
           <BottomNavigation />
