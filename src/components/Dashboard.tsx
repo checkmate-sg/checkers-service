@@ -83,6 +83,7 @@ const Dashboard = () => {
         redirect: false,
         initData,
       }).then((res) => {
+        console.log("Sign-in result", res);
         if (!res?.ok) {
           router.replace("/unauthorized");
         }
