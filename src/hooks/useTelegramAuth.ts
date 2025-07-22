@@ -19,10 +19,10 @@ export function useTelegramAuth() {
         console.log("[Auth] Starting authentication process...");
 
         // Development mode: sign out first
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Auth] Development mode - signing out first");
-          await signOut({ redirect: false });
-        }
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log("[Auth] Development mode - signing out first");
+        //   await signOut({ redirect: false });
+        // }
 
         // Wait for CSRF token to be available
         console.log("[Auth] Getting CSRF token...");
