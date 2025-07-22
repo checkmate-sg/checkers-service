@@ -46,24 +46,24 @@ export function useTelegramAuth() {
           let initData = window.Telegram.WebApp.initData;
 
           // Dev fallback
-          if (!initData && process.env.NODE_ENV === "development") {
-            console.log("[Auth] No initData in dev mode, using dummy data");
-            const dummyData = {
-              user: JSON.stringify({
-                id: 123456789,
-                first_name: "Test",
-                last_name: "User",
-                username: "testuser",
-              }),
-              chat_instance: "test_instance",
-              chat_type: "private",
-              auth_date: Math.floor(Date.now() / 1000).toString(),
-            };
+          //   if (!initData && process.env.NODE_ENV === "development") {
+          //     console.log("[Auth] No initData in dev mode, using dummy data");
+          //     const dummyData = {
+          //       user: JSON.stringify({
+          //         id: 123456789,
+          //         first_name: "Test",
+          //         last_name: "User",
+          //         username: "testuser",
+          //       }),
+          //       chat_instance: "test_instance",
+          //       chat_type: "private",
+          //       auth_date: Math.floor(Date.now() / 1000).toString(),
+          //     };
 
-            const params = new URLSearchParams(dummyData);
-            params.set("hash", "dummy_hash_for_dev");
-            initData = params.toString();
-          }
+          //     const params = new URLSearchParams(dummyData);
+          //     params.set("hash", "dummy_hash_for_dev");
+          //     initData = params.toString();
+          //   }
 
           if (initData) {
             console.log("[Auth] Found initData, attempting authentication...");
