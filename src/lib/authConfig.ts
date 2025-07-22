@@ -110,9 +110,9 @@ export const authConfig: NextAuthConfig = {
       name: "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: "none", // Try "none" for Telegram WebApp
+        sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
         path: "/",
-        secure: false, // Set to false for development
+        secure: process.env.NODE_ENV === "production", // Must be true when sameSite is "none"
       },
     },
     pkceCodeVerifier: {
@@ -120,6 +120,18 @@ export const authConfig: NextAuthConfig = {
       options: {
         httpOnly: true,
         sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },
