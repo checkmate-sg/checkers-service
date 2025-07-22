@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession, getCsrfToken } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 
@@ -24,6 +24,17 @@ export function useTelegramAuth() {
           await signOut({ redirect: false });
         }
 
+        // Wait for CSRF token to be available
+        console.log("[Auth] Getting CSRF token...");
+        const csrfToken = await getCsrfToken();
+        console.log("[Auth] CSRF token obtained:", !!csrfToken);
+
+        if (!csrfToken) {
+          console.error("[Auth] No CSRF token available");
+          setError("CSRF token not available");
+          return;
+        }
+
         // Check if we have Telegram WebApp context
         if (
           typeof window !== "undefined" &&
@@ -32,17 +43,11 @@ export function useTelegramAuth() {
         ) {
           console.log("[Auth] Telegram WebApp context found");
 
-          // Set dark mode if needed
-          //   if (window.Telegram.WebApp.colorScheme === "dark") {
-          //     document.documentElement.classList.add("dark");
-          //   }
-
           let initData = window.Telegram.WebApp.initData;
 
           // Dev fallback
           if (!initData && process.env.NODE_ENV === "development") {
             console.log("[Auth] No initData in dev mode, using dummy data");
-            // Create a more realistic dummy initData for development
             const dummyData = {
               user: JSON.stringify({
                 id: 123456789,
@@ -56,7 +61,6 @@ export function useTelegramAuth() {
             };
 
             const params = new URLSearchParams(dummyData);
-            // Add a dummy hash (in real scenario, this would be HMAC)
             params.set("hash", "dummy_hash_for_dev");
             initData = params.toString();
           }
@@ -64,13 +68,14 @@ export function useTelegramAuth() {
           if (initData) {
             console.log("[Auth] Found initData, attempting authentication...");
 
-            // Wait a bit for NextAuth to be ready
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // Wait a bit more for NextAuth to be ready
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
             const result = await signIn("telegram", {
               redirect: false,
               initData: initData,
               callbackUrl: "/dashboard",
+              csrfToken: csrfToken, // Explicitly pass CSRF token
             });
 
             console.log("[Auth] SignIn result:", result);
@@ -78,19 +83,36 @@ export function useTelegramAuth() {
             if (result?.error) {
               console.error("[Auth] NextAuth sign-in failed:", result.error);
 
-              // Handle specific errors
-              if (result.error === "MissingCSRF") {
-                console.log("[Auth] CSRF error, retrying...");
-                // Try once more after a short delay
-                await new Promise((resolve) => setTimeout(resolve, 500));
-                const retryResult = await signIn("telegram", {
-                  redirect: false,
-                  initData: initData,
-                  callbackUrl: "/dashboard",
-                });
+              if (result.error === "MissingCSRF" || result.error === "CSRF") {
+                console.log(
+                  "[Auth] CSRF error, getting fresh token and retrying..."
+                );
 
-                if (retryResult?.error) {
-                  setError(`Authentication failed: ${retryResult.error}`);
+                // Get a fresh CSRF token and try once more
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                const freshCsrfToken = await getCsrfToken();
+
+                if (freshCsrfToken) {
+                  const retryResult = await signIn("telegram", {
+                    redirect: false,
+                    initData: initData,
+                    callbackUrl: "/dashboard",
+                    csrfToken: freshCsrfToken,
+                  });
+
+                  if (retryResult?.error) {
+                    console.error(
+                      "[Auth] Retry also failed:",
+                      retryResult.error
+                    );
+                    setError(
+                      `Authentication failed after retry: ${retryResult.error}`
+                    );
+                    router.push("/unauthorized");
+                    return;
+                  }
+                } else {
+                  setError("Could not get fresh CSRF token");
                   router.push("/unauthorized");
                   return;
                 }
@@ -111,12 +133,10 @@ export function useTelegramAuth() {
           console.error("[Auth] No Telegram WebApp context found");
           setError("Telegram WebApp not available");
 
-          // In development, you might want to allow this
           if (process.env.NODE_ENV === "development") {
             console.log(
               "[Auth] Development mode - proceeding without Telegram context"
             );
-            // You could still try to authenticate here with dummy data
           } else {
             router.push("/unauthorized");
           }
@@ -149,7 +169,6 @@ export function useTelegramAuth() {
       authenticateWithTelegram();
     } else {
       console.log("[Auth] Session found, updating global state");
-      // We have a session, update global checker details
       setCheckerDetails((currentChecker) => ({
         ...currentChecker,
         checkerId: session.user.id,
