@@ -6,6 +6,7 @@ declare module "next-auth" {
     user: {
       id: string;
       telegramId: string;
+      name?: string;
     };
   }
 

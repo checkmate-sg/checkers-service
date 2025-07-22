@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn, useSession, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useUser } from "@/contexts/UserContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +32,14 @@ interface DashboardData {
   };
 }
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+  const { checkerId, checkerName, telegramId } = useUser();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -46,7 +48,6 @@ const Dashboard = () => {
         const res = await fetch("/api/dashboard");
         console.log("Response status:", res.status);
 
-        // Get the response text first to see what we're getting
         const responseText = await res.text();
         console.log("Raw response:", responseText);
 
@@ -56,7 +57,6 @@ const Dashboard = () => {
           return;
         }
 
-        // Try to parse as JSON
         const data = JSON.parse(responseText);
         console.log("Dashboard data received:", data);
         setDashboardData(data);
@@ -70,43 +70,10 @@ const Dashboard = () => {
       }
     };
 
-    fetchDashboardData();
-  }, []);
-
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (window.Telegram?.WebApp?.initData) {
-        console.log(
-          "[Dashboard] initData detected:",
-          window.Telegram.WebApp.initData
-        );
-
-        if (!session) {
-          console.log(
-            "[Dashboard] No sign in, sigining in starting",
-            window.Telegram.WebApp.initData
-          );
-          signIn("credentials", {
-            redirect: false,
-            initData: window.Telegram.WebApp.initData,
-          }).then((res) => {
-            console.log("Sign-in result", res);
-            if (!res?.ok) {
-              router.replace("/unauthorized");
-            }
-          });
-        }
-        clearInterval(interval);
-      } else {
-        console.log("[Dashboard] Waiting for Telegram SDK...");
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [session, router]);
+    if (session) {
+      fetchDashboardData();
+    }
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -116,17 +83,78 @@ const Dashboard = () => {
     );
   }
 
-  if (loading) {
+  if (!session) {
     return (
-      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
-        <Loader2 className="animate-spin" size={32} />
+      <div className="p-4 max-w-md mx-auto">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-red-500">No session found. Please sign in.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (error || !dashboardData) {
-    return (
-      <div className="p-4 max-w-md mx-auto">
+  return (
+    <div className="p-4 max-w-md mx-auto">
+      {/* DEBUG INFO */}
+      <Card className="mb-6 border-blue-200">
+        <CardHeader>
+          <CardTitle className="text-sm text-blue-600">🐛 Debug Info</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-xs">
+          <div>
+            <strong>Session Status:</strong> {status}
+          </div>
+          <div>
+            <strong>Session User ID:</strong> {session?.user?.id || "null"}
+          </div>
+          <div>
+            <strong>Session User Name:</strong> {session?.user?.name || "null"}
+          </div>
+          <div>
+            <strong>Session Telegram ID:</strong>{" "}
+            {(session?.user as any)?.telegramId || "null"}
+          </div>
+          <div>
+            <strong>Global Checker ID:</strong> {checkerId || "null"}
+          </div>
+          <div>
+            <strong>Global Checker Name:</strong> {checkerName || "null"}
+          </div>
+          <div>
+            <strong>Global Telegram ID:</strong> {telegramId || "null"}
+          </div>
+          <div>
+            <strong>Dashboard Loading:</strong> {loading.toString()}
+          </div>
+          <div>
+            <strong>Dashboard Error:</strong> {error || "null"}
+          </div>
+          <div>
+            <strong>Dashboard Data:</strong> {dashboardData ? "loaded" : "null"}
+          </div>
+          <div>
+            <strong>Telegram WebApp Available:</strong>{" "}
+            {typeof window !== "undefined" && window.Telegram?.WebApp
+              ? "yes"
+              : "no"}
+          </div>
+          <div>
+            <strong>InitData Present:</strong>{" "}
+            {typeof window !== "undefined" && window.Telegram?.WebApp?.initData
+              ? "yes"
+              : "no"}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* MAIN DASHBOARD CONTENT */}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="animate-spin" size={32} />
+        </div>
+      ) : error || !dashboardData ? (
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-red-500">
@@ -134,238 +162,252 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  const { isNewChecker, userData } = dashboardData;
-
-  return (
-    <div className="p-4 max-w-md mx-auto">
-      {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-checkmate-text mb-2">
-          Check<span className="text-checkmate-primary">Mate</span>
-        </h1>
-        <p className="text-gray-600">Fighting LOLLIPOP together</p>
-        <p className="text-sm text-gray-500 mt-1">
-          Welcome back, {userData.name}!
-        </p>
-      </div>
-
-      {isNewChecker ? (
-        // New Checker Dashboard
-        <div className="space-y-4">
-          <Card className="border-checkmate-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CheckCircle className="text-checkmate-primary" size={20} />
-                Certification Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Votes Progress */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">Votes Completed</span>
-                    <div className="group relative">
-                      <svg
-                        className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-help"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                        This number tracks votes on completed submissions.
-                        Results are finalized 24 hours after vote submission.
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {userData.votes}/50
-                  </span>
-                </div>
-                <Progress value={(userData.votes / 50) * 100} className="h-2" />
-              </div>
-
-              {/* Accuracy Progress */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Accuracy</span>
-                  <span className="text-sm text-gray-600">
-                    {userData.accuracy}%
-                  </span>
-                </div>
-                <div className="relative">
-                  <Progress value={userData.accuracy} className="h-2" />
-                  {/* 60% target line - white bar */}
-                  <div
-                    className="absolute top-0 h-2 w-0.5 bg-white border border-checkmate-primary"
-                    style={{ left: "60%" }}
-                  />
-                </div>
-                {/* 60% label below the bar */}
-                <div className="relative mt-1">
-                  <div
-                    className="absolute text-xs text-checkmate-primary font-medium"
-                    style={{ left: "60%", transform: "translateX(-50%)" }}
-                  >
-                    60%
-                  </div>
-                </div>
-                {userData.accuracy >= 60 && (
-                  <Badge className="mt-4 bg-green-100 text-green-800">
-                    Target Reached!
-                  </Badge>
-                )}
-              </div>
-
-              {/* Messages Sent */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Messages Sent</span>
-                  <span className="text-sm text-gray-600">
-                    {userData.messagesSent}/3
-                  </span>
-                </div>
-                <Progress
-                  value={(userData.messagesSent / 3) * 100}
-                  className="h-2"
-                />
-              </div>
-
-              {/* Certification Status */}
-              <div className="bg-checkmate-info p-3 rounded-lg mt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="text-blue-600" size={16} />
-                  <span className="font-medium text-sm">
-                    Certification Status
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600">
-                  {userData.votes >= 50 &&
-                  userData.accuracy >= 60 &&
-                  userData.messagesSent >= 3
-                    ? "🎉 Eligible for certification! Contact admin to complete."
-                    : "Complete all requirements above to become a certified checker."}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity for New Checkers */}
-          {userData.recentActivity.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare size={20} />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {userData.recentActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-start"
-                    >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {activity.message}
-                        </p>
-                        <p className="text-xs text-gray-500">{activity.date}</p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${
-                          activity.type === "achievement"
-                            ? "border-checkmate-primary text-checkmate-primary"
-                            : ""
-                        }`}
-                      >
-                        {activity.type}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
       ) : (
-        // Certified Checker Dashboard
-        <div className="space-y-4">
-          <Card className="border-checkmate-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="text-checkmate-primary" size={20} />
-                Certified Checker
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-checkmate-primary">
-                    {userData.lifetimeVotes}
-                  </div>
-                  <div className="text-xs text-gray-600">Total Votes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-checkmate-primary">
-                    {userData.lifetimeAccuracy}%
-                  </div>
-                  <div className="text-xs text-gray-600">Accuracy</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-checkmate-primary">
-                    {userData.engagementScore}
-                  </div>
-                  <div className="text-xs text-gray-600">Engagement</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MessageSquare size={20} />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {userData.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.message}</p>
-                      <p className="text-xs text-gray-500">{activity.date}</p>
+        <>
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold text-checkmate-text mb-2">
+              Check<span className="text-checkmate-primary">Mate</span>
+            </h1>
+            <p className="text-gray-600">Fighting LOLLIPOP together</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Welcome back, {dashboardData.userData.name}!
+            </p>
+          </div>
+
+          {dashboardData.isNewChecker ? (
+            // New Checker Dashboard
+            <div className="space-y-4">
+              <Card className="border-checkmate-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CheckCircle className="text-checkmate-primary" size={20} />
+                    Certification Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Votes Progress */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium">
+                          Votes Completed
+                        </span>
+                        <div className="group relative">
+                          <svg
+                            className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-help"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            This number tracks votes on completed submissions.
+                            Results are finalized 24 hours after vote
+                            submission.
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-sm text-gray-600">
+                        {dashboardData.userData.votes}/50
+                      </span>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs ${
-                        activity.type === "achievement"
-                          ? "border-checkmate-primary text-checkmate-primary"
-                          : ""
-                      }`}
-                    >
-                      {activity.type}
-                    </Badge>
+                    <Progress
+                      value={(dashboardData.userData.votes / 50) * 100}
+                      className="h-2"
+                    />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+
+                  {/* Accuracy Progress */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Accuracy</span>
+                      <span className="text-sm text-gray-600">
+                        {dashboardData.userData.accuracy}%
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Progress
+                        value={dashboardData.userData.accuracy}
+                        className="h-2"
+                      />
+                      <div
+                        className="absolute top-0 h-2 w-0.5 bg-white border border-checkmate-primary"
+                        style={{ left: "60%" }}
+                      />
+                    </div>
+                    <div className="relative mt-1">
+                      <div
+                        className="absolute text-xs text-checkmate-primary font-medium"
+                        style={{ left: "60%", transform: "translateX(-50%)" }}
+                      >
+                        60%
+                      </div>
+                    </div>
+                    {dashboardData.userData.accuracy >= 60 && (
+                      <Badge className="mt-4 bg-green-100 text-green-800">
+                        Target Reached!
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Messages Sent */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Messages Sent</span>
+                      <span className="text-sm text-gray-600">
+                        {dashboardData.userData.messagesSent}/3
+                      </span>
+                    </div>
+                    <Progress
+                      value={(dashboardData.userData.messagesSent / 3) * 100}
+                      className="h-2"
+                    />
+                  </div>
+
+                  {/* Certification Status */}
+                  <div className="bg-checkmate-info p-3 rounded-lg mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="text-blue-600" size={16} />
+                      <span className="font-medium text-sm">
+                        Certification Status
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {dashboardData.userData.votes >= 50 &&
+                      dashboardData.userData.accuracy >= 60 &&
+                      dashboardData.userData.messagesSent >= 3
+                        ? "🎉 Eligible for certification! Contact admin to complete."
+                        : "Complete all requirements above to become a certified checker."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity for New Checkers */}
+              {dashboardData.userData.recentActivity.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <MessageSquare size={20} />
+                      Recent Activity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {dashboardData.userData.recentActivity.map(
+                        (activity, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-start"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">
+                                {activity.message}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {activity.date}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                activity.type === "achievement"
+                                  ? "border-checkmate-primary text-checkmate-primary"
+                                  : ""
+                              }`}
+                            >
+                              {activity.type}
+                            </Badge>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            // Certified Checker Dashboard
+            <div className="space-y-4">
+              <Card className="border-checkmate-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Award className="text-checkmate-primary" size={20} />
+                    Certified Checker
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-checkmate-primary">
+                        {dashboardData.userData.lifetimeVotes}
+                      </div>
+                      <div className="text-xs text-gray-600">Total Votes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-checkmate-primary">
+                        {dashboardData.userData.lifetimeAccuracy}%
+                      </div>
+                      <div className="text-xs text-gray-600">Accuracy</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-checkmate-primary">
+                        {dashboardData.userData.engagementScore}
+                      </div>
+                      <div className="text-xs text-gray-600">Engagement</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare size={20} />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {dashboardData.userData.recentActivity.map(
+                      (activity, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-start"
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {activity.message}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {activity.date}
+                            </p>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              activity.type === "achievement"
+                                ? "border-checkmate-primary text-checkmate-primary"
+                                : ""
+                            }`}
+                          >
+                            {activity.type}
+                          </Badge>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
-};
-
-export default Dashboard;
+}

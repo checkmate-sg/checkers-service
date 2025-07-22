@@ -2,7 +2,8 @@ import "./globals.css";
 import BottomNavigation from "../components/BottomNavigation";
 import { ReactNode } from "react";
 import Script from "next/script";
-import { SessionProvider } from "next-auth/react";
+import { UserProvider } from "@/contexts/UserContext";
+import { Providers } from "./providers";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: LayoutProps) {
         />
 
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
-          <SessionProvider>{children}</SessionProvider>
+          <Providers>
+            <UserProvider>{children}</UserProvider>
+          </Providers>
           <BottomNavigation />
         </div>
       </body>
