@@ -1,3 +1,4 @@
+// src/hooks/useTelegramAuth.ts
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,10 +16,12 @@ export function useTelegramAuth() {
   useEffect(() => {
     const authenticateWithTelegram = async () => {
       try {
+        console.log("[Auth] Starting authentication process...");
+
         // Development mode: sign out first
         if (process.env.NODE_ENV === "development") {
+          console.log("[Auth] Development mode - signing out first");
           await signOut({ redirect: false });
-          console.log("Signed out for dev mode");
         }
 
         // Check if we have Telegram WebApp context
@@ -27,6 +30,8 @@ export function useTelegramAuth() {
           window.Telegram &&
           window.Telegram.WebApp
         ) {
+          console.log("[Auth] Telegram WebApp context found");
+
           // Set dark mode if needed
           //   if (window.Telegram.WebApp.colorScheme === "dark") {
           //     document.documentElement.classList.add("dark");
@@ -36,23 +41,39 @@ export function useTelegramAuth() {
 
           // Dev fallback
           if (!initData && process.env.NODE_ENV === "development") {
-            initData = "devdummy";
+            console.log("[Auth] No initData in dev mode, using dummy data");
+            // Create a more realistic dummy initData for development
+            const dummyData = {
+              user: JSON.stringify({
+                id: 123456789,
+                first_name: "Test",
+                last_name: "User",
+                username: "testuser",
+              }),
+              chat_instance: "test_instance",
+              chat_type: "private",
+              auth_date: Math.floor(Date.now() / 1000).toString(),
+            };
+
+            const params = new URLSearchParams(dummyData);
+            // Add a dummy hash (in real scenario, this would be HMAC)
+            params.set("hash", "dummy_hash_for_dev");
+            initData = params.toString();
           }
 
           if (initData) {
-            console.log("[Auth] Found initData, authenticating...");
+            console.log("[Auth] Found initData, attempting authentication...");
 
-            // Try to sign in with NextAuth using Telegram data
             const result = await signIn("credentials", {
               redirect: false,
               initData: initData,
             });
 
+            console.log("[Auth] SignIn result:", result);
+
             if (!result?.ok) {
               console.error("[Auth] NextAuth sign-in failed:", result?.error);
-
-              // If NextAuth fails, the user might not exist in DB
-              // Redirect to unauthorized
+              setError(result?.error || "Authentication failed");
               router.push("/unauthorized");
               return;
             }
@@ -66,7 +87,16 @@ export function useTelegramAuth() {
         } else {
           console.error("[Auth] No Telegram WebApp context found");
           setError("Telegram WebApp not available");
-          router.push("/unauthorized");
+
+          // In development, you might want to allow this
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              "[Auth] Development mode - proceeding without Telegram context"
+            );
+            // You could still try to authenticate here with dummy data
+          } else {
+            router.push("/unauthorized");
+          }
         }
       } catch (err) {
         console.error("[Auth] Authentication error:", err);
@@ -77,21 +107,31 @@ export function useTelegramAuth() {
       }
     };
 
+    console.log(
+      "[Auth] useEffect triggered - status:",
+      status,
+      "session:",
+      !!session
+    );
+
     // Wait for NextAuth to load
     if (status === "loading") {
+      console.log("[Auth] NextAuth still loading...");
       return;
     }
 
     // If we don't have a session, try to authenticate
     if (!session) {
+      console.log("[Auth] No session found, attempting authentication");
       authenticateWithTelegram();
     } else {
+      console.log("[Auth] Session found, updating global state");
       // We have a session, update global checker details
       setCheckerDetails((currentChecker) => ({
         ...currentChecker,
         checkerId: session.user.id,
         checkerName: session.user.name || "Unknown",
-        telegramId: (session.user as any).telegramId,
+        telegramId: session.user.telegramId,
       }));
       setIsLoading(false);
     }
