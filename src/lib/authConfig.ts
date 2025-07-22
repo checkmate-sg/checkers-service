@@ -106,6 +106,15 @@ export const authConfig: NextAuthConfig = {
   debug: process.env.NODE_ENV === "development",
   trustHost: true, // Required for NextAuth v5
   cookies: {
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none", // Try "none" for Telegram WebApp
+        path: "/",
+        secure: false, // Set to false for development
+      },
+    },
     pkceCodeVerifier: {
       name: "next-auth.pkce.code_verifier",
       options: {
