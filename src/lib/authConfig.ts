@@ -7,6 +7,7 @@ import { findUserByTelegramID } from "@/lib/db";
 export const authConfig: NextAuthConfig = {
   providers: [
     CredentialsProvider({
+      id: "telegram",
       name: "Telegram",
       credentials: {
         initData: { label: "initData", type: "text" },
@@ -100,7 +101,19 @@ export const authConfig: NextAuthConfig = {
   },
   pages: {
     signIn: "/unauthorized",
+    error: "/unauthorized",
   },
   debug: process.env.NODE_ENV === "development",
   trustHost: true, // Required for NextAuth v5
+  cookies: {
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 };

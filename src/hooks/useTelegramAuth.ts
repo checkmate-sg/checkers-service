@@ -64,18 +64,41 @@ export function useTelegramAuth() {
           if (initData) {
             console.log("[Auth] Found initData, attempting authentication...");
 
-            const result = await signIn("credentials", {
+            // Wait a bit for NextAuth to be ready
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const result = await signIn("telegram", {
               redirect: false,
               initData: initData,
+              callbackUrl: "/dashboard",
             });
 
             console.log("[Auth] SignIn result:", result);
 
-            if (!result?.ok) {
-              console.error("[Auth] NextAuth sign-in failed:", result?.error);
-              setError(result?.error || "Authentication failed");
-              router.push("/unauthorized");
-              return;
+            if (result?.error) {
+              console.error("[Auth] NextAuth sign-in failed:", result.error);
+
+              // Handle specific errors
+              if (result.error === "MissingCSRF") {
+                console.log("[Auth] CSRF error, retrying...");
+                // Try once more after a short delay
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const retryResult = await signIn("telegram", {
+                  redirect: false,
+                  initData: initData,
+                  callbackUrl: "/dashboard",
+                });
+
+                if (retryResult?.error) {
+                  setError(`Authentication failed: ${retryResult.error}`);
+                  router.push("/unauthorized");
+                  return;
+                }
+              } else {
+                setError(result.error);
+                router.push("/unauthorized");
+                return;
+              }
             }
 
             console.log("[Auth] NextAuth sign-in successful");
