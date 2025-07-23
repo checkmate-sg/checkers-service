@@ -104,15 +104,16 @@ export const authConfig: NextAuthConfig = {
     error: "/unauthorized",
   },
   debug: process.env.NODE_ENV === "development",
-  trustHost: true, // Required for NextAuth v5
+  trustHost: true,
+  // Fixed cookie configuration for Telegram Web Apps
   cookies: {
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
+        sameSite: "lax", // Changed from "none" to "lax" for better compatibility
         path: "/",
-        secure: process.env.NODE_ENV === "production", // Must be true when sameSite is "none"
+        secure: process.env.NODE_ENV === "production",
       },
     },
     pkceCodeVerifier: {
@@ -131,7 +132,7 @@ export const authConfig: NextAuthConfig = {
           : "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
+        sameSite: "lax", // Changed from "none" to "lax"
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },
