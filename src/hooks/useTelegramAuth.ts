@@ -1,7 +1,8 @@
+// src/hooks/useTelegramAuth.ts
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, getCsrfToken, signIn } from "next-auth/react";
+import { signIn, signOut, useSession, getCsrfToken } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 
@@ -17,6 +18,23 @@ export function useTelegramAuth() {
       try {
         console.log("[Auth] Starting authentication process...");
 
+        // Development mode: sign out first
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log("[Auth] Development mode - signing out first");
+        //   await signOut({ redirect: false });
+        // }
+
+        // Wait for CSRF token to be available
+        console.log("[Auth] Getting CSRF token...");
+        const csrfToken = await getCsrfToken();
+        console.log("[Auth] CSRF token obtained:", !!csrfToken);
+
+        if (!csrfToken) {
+          console.error("[Auth] No CSRF token available");
+          setError("CSRF token not available");
+          return;
+        }
+
         // Check if we have Telegram WebApp context
         if (
           typeof window !== "undefined" &&
@@ -27,41 +45,85 @@ export function useTelegramAuth() {
 
           let initData = window.Telegram.WebApp.initData;
 
+          // Dev fallback
+          //   if (!initData && process.env.NODE_ENV === "development") {
+          //     console.log("[Auth] No initData in dev mode, using dummy data");
+          //     const dummyData = {
+          //       user: JSON.stringify({
+          //         id: 123456789,
+          //         first_name: "Test",
+          //         last_name: "User",
+          //         username: "testuser",
+          //       }),
+          //       chat_instance: "test_instance",
+          //       chat_type: "private",
+          //       auth_date: Math.floor(Date.now() / 1000).toString(),
+          //     };
+
+          //     const params = new URLSearchParams(dummyData);
+          //     params.set("hash", "dummy_hash_for_dev");
+          //     initData = params.toString();
+          //   }
+
           if (initData) {
             console.log("[Auth] Found initData, attempting authentication...");
 
-            // Use NextAuth's signIn method instead of direct fetch
+            // Wait a bit more for NextAuth to be ready
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
             const result = await signIn("telegram", {
+              redirect: false,
               initData: initData,
-              redirect: false, // Don't redirect automatically
+              callbackUrl: "/dashboard",
+              csrfToken: csrfToken, // Explicitly pass CSRF token
             });
 
             console.log("[Auth] SignIn result:", result);
 
             if (result?.error) {
-              console.error("[Auth] Authentication failed:", result.error);
+              console.error("[Auth] NextAuth sign-in failed:", result.error);
 
-              if (result.error === "CredentialsSignin") {
-                setError(
-                  "Invalid credentials - user not found or unauthorized"
+              if (result.error === "MissingCSRF" || result.error === "CSRF") {
+                console.log(
+                  "[Auth] CSRF error, getting fresh token and retrying..."
                 );
+
+                // Get a fresh CSRF token and try once more
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                const freshCsrfToken = await getCsrfToken();
+
+                if (freshCsrfToken) {
+                  const retryResult = await signIn("telegram", {
+                    redirect: false,
+                    initData: initData,
+                    callbackUrl: "/dashboard",
+                    csrfToken: freshCsrfToken,
+                  });
+
+                  if (retryResult?.error) {
+                    console.error(
+                      "[Auth] Retry also failed:",
+                      retryResult.error
+                    );
+                    setError(
+                      `Authentication failed after retry: ${retryResult.error}`
+                    );
+                    router.push("/unauthorized");
+                    return;
+                  }
+                } else {
+                  setError("Could not get fresh CSRF token");
+                  router.push("/unauthorized");
+                  return;
+                }
               } else {
-                setError(`Authentication failed: ${result.error}`);
+                setError(result.error);
+                router.push("/unauthorized");
+                return;
               }
-
-              router.push("/unauthorized");
-              return;
             }
 
-            if (result?.ok) {
-              console.log("[Auth] Authentication successful");
-              // Session will be updated automatically by NextAuth
-              router.push("/dashboard");
-            } else {
-              console.error("[Auth] Unexpected authentication result:", result);
-              setError("Unexpected authentication result");
-              router.push("/unauthorized");
-            }
+            console.log("[Auth] NextAuth sign-in successful");
           } else {
             console.error("[Auth] No initData found");
             setError("No Telegram data found");
@@ -73,11 +135,8 @@ export function useTelegramAuth() {
 
           if (process.env.NODE_ENV === "development") {
             console.log(
-              "[Auth] Development mode - you can add dummy data handling here"
+              "[Auth] Development mode - proceeding without Telegram context"
             );
-            // In development, you might want to create dummy initData:
-            // const dummyInitData = "user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%2C%22username%22%3A%22testuser%22%7D&hash=dummy_hash_for_dev";
-            // Then call signIn with this dummy data
           } else {
             router.push("/unauthorized");
           }
