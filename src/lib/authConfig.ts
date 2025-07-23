@@ -105,26 +105,8 @@ export const authConfig: NextAuthConfig = {
   },
   debug: process.env.NODE_ENV === "development",
   trustHost: true,
-  // Fixed cookie configuration for Telegram Web Apps
+  // Improved cookie configuration for Telegram Web Apps
   cookies: {
-    csrfToken: {
-      name: "next-auth.csrf-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax", // Changed from "none" to "lax" for better compatibility
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    pkceCodeVerifier: {
-      name: "next-auth.pkce.code_verifier",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
     sessionToken: {
       name:
         process.env.NODE_ENV === "production"
@@ -132,10 +114,42 @@ export const authConfig: NextAuthConfig = {
           : "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: "lax", // Changed from "none" to "lax"
+        sameSite: "none", // Required for Telegram WebApp iframe
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: true, // Always true for Telegram WebApp
+        domain:
+          process.env.NODE_ENV === "production"
+            ? process.env.AUTH_COOKIE_DOMAIN
+            : undefined,
+      },
+    },
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none", // Required for Telegram WebApp iframe
+        path: "/",
+        secure: true, // Always true for Telegram WebApp
+        domain:
+          process.env.NODE_ENV === "production"
+            ? process.env.AUTH_COOKIE_DOMAIN
+            : undefined,
+      },
+    },
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+        domain:
+          process.env.NODE_ENV === "production"
+            ? process.env.AUTH_COOKIE_DOMAIN
+            : undefined,
       },
     },
   },
+  // Add secret explicitly
+  secret: process.env.NEXTAUTH_SECRET,
 };
