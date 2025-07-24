@@ -2,6 +2,10 @@ import crypto from "crypto";
 
 type VerifiedTelegramData = {
   id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
   [key: string]: any;
 };
 
@@ -26,10 +30,21 @@ export function verifyTelegramInitData(
 
   if (hmac !== hash) throw new Error("Invalid initData signature");
 
-  const data = Object.fromEntries(urlParams.entries());
+  // Parse the user data from the 'user' parameter
+  const userParam = urlParams.get("user");
+  if (!userParam) throw new Error("Missing user data in initData");
+
+  let userData;
+  try {
+    userData = JSON.parse(userParam);
+  } catch (error) {
+    throw new Error("Invalid user data format in initData");
+  }
+
+  if (!userData.id) throw new Error("Missing user ID in Telegram data");
 
   return {
-    ...data,
-    id: Number(data.id), // Telegram ID as number
+    ...userData,
+    id: Number(userData.id), // Ensure ID is a number
   };
 }
