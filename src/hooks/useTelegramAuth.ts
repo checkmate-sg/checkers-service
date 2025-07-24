@@ -18,12 +18,6 @@ export function useTelegramAuth() {
       try {
         console.log("[Auth] Starting authentication process...");
 
-        // Development mode: sign out first
-        // if (process.env.NODE_ENV === "development") {
-        //   console.log("[Auth] Development mode - signing out first");
-        //   await signOut({ redirect: false });
-        // }
-
         // Wait for CSRF token to be available
         console.log("[Auth] Getting CSRF token...");
         const csrfToken = await getCsrfToken();
@@ -44,25 +38,48 @@ export function useTelegramAuth() {
           console.log("[Auth] Telegram WebApp context found");
 
           let initData = window.Telegram.WebApp.initData;
+          console.log(
+            "[Auth] Real initData from Telegram:",
+            initData ? "present" : "missing"
+          );
 
-          // Dev fallback - uncomment for development testing
-          if (!initData && process.env.NODE_ENV === "development") {
-            console.log("[Auth] No initData in dev mode, using dummy data");
-            const dummyData = {
-              user: JSON.stringify({
-                id: 123456789,
-                first_name: "Test",
-                last_name: "User",
-                username: "testuser",
-              }),
-              chat_instance: "test_instance",
-              chat_type: "private",
-              auth_date: Math.floor(Date.now() / 1000).toString(),
-            };
+          // Log the real Telegram data for debugging
+          if (initData) {
+            console.log("[Auth] Real Telegram initData received:");
+            console.log(
+              "[Auth] InitData preview:",
+              initData.substring(0, 100) + "..."
+            );
 
-            const params = new URLSearchParams(dummyData);
-            params.set("hash", "dummy_hash_for_dev");
-            initData = params.toString();
+            // Parse and log the real user data from Telegram
+            try {
+              const params = new URLSearchParams(initData);
+              const userParam = params.get("user");
+              if (userParam) {
+                const telegramUser = JSON.parse(userParam);
+                console.log("[Auth] Real Telegram user ID:", telegramUser.id);
+                console.log("[Auth] Real Telegram user data:", telegramUser);
+                console.log(
+                  "[Auth] Telegram user ID type:",
+                  typeof telegramUser.id
+                );
+              } else {
+                console.warn("[Auth] No 'user' parameter found in initData");
+              }
+
+              // Log other parameters for debugging
+              console.log("[Auth] Auth date:", params.get("auth_date"));
+              console.log(
+                "[Auth] Hash:",
+                params.get("hash") ? "present" : "missing"
+              );
+            } catch (parseError) {
+              console.error("[Auth] Error parsing initData:", parseError);
+            }
+          } else {
+            console.log(
+              "[Auth] No initData found - user needs to access via Telegram WebApp"
+            );
           }
 
           if (initData) {
@@ -91,6 +108,9 @@ export function useTelegramAuth() {
                 console.log("- User not found in database");
                 console.log("- Telegram initData verification failed");
                 console.log("- Bot token invalid or missing");
+                console.log(
+                  "- TelegramId mismatch between dummy data and database"
+                );
                 setError(
                   "Authentication failed: Invalid credentials or user not found"
                 );
