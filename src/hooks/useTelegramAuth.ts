@@ -100,11 +100,10 @@ export function useTelegramAuth() {
               callbackUrl: "/dashboard",
             });
 
-            console.log("[Auth] SignIn result:", result);
+            console.log("[Auth] SignIn result:", result.code);
 
             if (result?.error) {
               console.error("[Auth] NextAuth sign-in failed:", result.error);
-              console.log("[Auth] Result URL", result.url);
 
               // Handle specific error types
               if (result.error === "CredentialsSignin") {
