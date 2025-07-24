@@ -18,6 +18,12 @@ export const authConfig: NextAuthConfig = {
         const initData = credentials?.initData;
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
 
+        console.log("[Auth Config] Environment check:", {
+          hasBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
+          hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+          hasMongoUri: !!process.env.MONGODB_URI,
+        });
+
         console.log(
           "[Auth Config] Received initData:",
           initData ? "present" : "missing"
@@ -143,7 +149,7 @@ export const authConfig: NextAuthConfig = {
         sameSite: "none", // Required for Telegram WebApp iframe
         path: "/",
         secure: true, // Always true for Telegram WebApp
-        domain: process.env.AUTH_COOKIE_DOMAIN,
+        // Remove domain setting - let browser handle it
       },
     },
     csrfToken: {
@@ -153,7 +159,7 @@ export const authConfig: NextAuthConfig = {
         sameSite: "none", // Required for Telegram WebApp iframe
         path: "/",
         secure: true, // Always true for Telegram WebApp
-        domain: process.env.AUTH_COOKIE_DOMAIN,
+        // Remove domain setting - let browser handle it
       },
     },
     pkceCodeVerifier: {
@@ -163,7 +169,7 @@ export const authConfig: NextAuthConfig = {
         sameSite: "none",
         path: "/",
         secure: true,
-        domain: process.env.AUTH_COOKIE_DOMAIN,
+        // Remove domain setting - let browser handle it
       },
     },
   },
