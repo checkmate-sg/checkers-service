@@ -1,6 +1,8 @@
-// src/app/api/auth/[...nextauth]/route.ts
 export const runtime = "nodejs";
 
-import { handlers } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
+
+const { handlers } = NextAuth(authConfig);
 
 export const { GET, POST } = handlers;
