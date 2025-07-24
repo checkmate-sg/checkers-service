@@ -83,7 +83,10 @@ export function useTelegramAuth() {
           }
 
           if (initData) {
-            console.log("[Auth] Found initData, attempting authentication...");
+            console.log(
+              "[Auth] Found initData, attempting authentication...",
+              initData
+            );
             console.log("[Auth] InitData length:", initData.length);
 
             // Wait a bit more for NextAuth to be ready
