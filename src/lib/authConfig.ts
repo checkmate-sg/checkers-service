@@ -28,24 +28,8 @@ export const authConfig: NextAuthConfig = {
 
         let telegramUser;
         try {
-          // In development, handle dummy data
-          if (
-            process.env.NODE_ENV === "development" &&
-            initData.includes("dummy_hash_for_dev")
-          ) {
-            console.log("[Auth] Development mode - parsing dummy data");
-            const params = new URLSearchParams(initData);
-            const userParam = params.get("user");
-            if (userParam) {
-              const userData = JSON.parse(userParam);
-              telegramUser = { id: userData.id, ...userData };
-            } else {
-              throw new Error("No user data in dummy initData");
-            }
-          } else {
-            // Production verification
-            telegramUser = verifyTelegramInitData(initData, botToken);
-          }
+          // Production verification only
+          telegramUser = verifyTelegramInitData(initData, botToken);
 
           console.log("[Auth] Parsed Telegram user:", {
             id: telegramUser.id,
@@ -103,24 +87,16 @@ export const authConfig: NextAuthConfig = {
     signIn: "/unauthorized",
     error: "/unauthorized",
   },
-  debug: process.env.NODE_ENV === "development",
   trustHost: true,
-  // Improved cookie configuration for Telegram Web Apps
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
+      name: "__Secure-next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "none", // Required for Telegram WebApp iframe
         path: "/",
         secure: true, // Always true for Telegram WebApp
-        domain:
-          process.env.NODE_ENV === "production"
-            ? process.env.AUTH_COOKIE_DOMAIN
-            : undefined,
+        domain: process.env.AUTH_COOKIE_DOMAIN,
       },
     },
     csrfToken: {
@@ -130,10 +106,7 @@ export const authConfig: NextAuthConfig = {
         sameSite: "none", // Required for Telegram WebApp iframe
         path: "/",
         secure: true, // Always true for Telegram WebApp
-        domain:
-          process.env.NODE_ENV === "production"
-            ? process.env.AUTH_COOKIE_DOMAIN
-            : undefined,
+        domain: process.env.AUTH_COOKIE_DOMAIN,
       },
     },
     pkceCodeVerifier: {
@@ -143,13 +116,9 @@ export const authConfig: NextAuthConfig = {
         sameSite: "none",
         path: "/",
         secure: true,
-        domain:
-          process.env.NODE_ENV === "production"
-            ? process.env.AUTH_COOKIE_DOMAIN
-            : undefined,
+        domain: process.env.AUTH_COOKIE_DOMAIN,
       },
     },
   },
-  // Add secret explicitly
   secret: process.env.NEXTAUTH_SECRET,
 };
