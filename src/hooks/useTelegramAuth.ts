@@ -92,6 +92,8 @@ export function useTelegramAuth() {
             // Wait a bit more for NextAuth to be ready
             await new Promise((resolve) => setTimeout(resolve, 500));
 
+            console.log("[Auth] Commencing sign in");
+
             const result = await signIn("telegram", {
               redirect: false,
               initData: initData,
@@ -102,18 +104,11 @@ export function useTelegramAuth() {
 
             if (result?.error) {
               console.error("[Auth] NextAuth sign-in failed:", result.error);
+              console.log("[Auth] Result URL", result.url);
 
               // Handle specific error types
               if (result.error === "CredentialsSignin") {
-                console.log(
-                  "[Auth] Credentials sign-in failed - possible issues:"
-                );
-                console.log("- User not found in database");
-                console.log("- Telegram initData verification failed");
-                console.log("- Bot token invalid or missing");
-                console.log(
-                  "- TelegramId mismatch between dummy data and database"
-                );
+                console.log("[Auth] Credentials sign-in failed");
                 setError(
                   "Authentication failed: Invalid credentials or user not found"
                 );
