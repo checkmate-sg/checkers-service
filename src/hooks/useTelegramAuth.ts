@@ -1,7 +1,7 @@
 // src/hooks/useTelegramAuth.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { signIn, signOut, useSession, getCsrfToken } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
@@ -13,8 +13,20 @@ export function useTelegramAuth() {
   const router = useRouter();
   const { setCheckerDetails } = useUser();
 
+  // Use ref to track if authentication has been attempted
+  const authAttempted = useRef(false);
+  const userDetailsSet = useRef(false);
+
   useEffect(() => {
     const authenticateWithTelegram = async () => {
+      // Prevent multiple authentication attempts
+      if (authAttempted.current) {
+        console.log("[Auth] Authentication already attempted, skipping");
+        return;
+      }
+
+      authAttempted.current = true;
+
       try {
         console.log("[Auth] Starting authentication process...");
 
@@ -100,7 +112,7 @@ export function useTelegramAuth() {
               callbackUrl: "/dashboard",
             });
 
-            console.log("[Auth] SignIn result:", result.code);
+            console.log("[Auth] SignIn result:", result);
 
             if (result?.error) {
               console.error("[Auth] NextAuth sign-in failed:", result.error);
@@ -174,7 +186,11 @@ export function useTelegramAuth() {
       "[Auth] useEffect triggered - status:",
       status,
       "session:",
-      !!session
+      !!session,
+      "authAttempted:",
+      authAttempted.current,
+      "userDetailsSet:",
+      userDetailsSet.current
     );
 
     // Wait for NextAuth to load
@@ -183,22 +199,51 @@ export function useTelegramAuth() {
       return;
     }
 
-    // If we don't have a session, try to authenticate
-    if (!session) {
-      console.log("[Auth] No session found, attempting authentication");
-      authenticateWithTelegram();
-    } else {
+    // If we have a session and haven't set user details yet
+    if (session && !userDetailsSet.current) {
       console.log("[Auth] Session found, updating global state");
       console.log("[Auth] Session user:", session.user);
+
       setCheckerDetails((currentChecker) => ({
         ...currentChecker,
         checkerId: session.user.id,
         checkerName: session.user.name || "Unknown",
         telegramId: session.user.telegramId,
       }));
+
+      userDetailsSet.current = true;
       setIsLoading(false);
+      return;
+    }
+
+    // If we don't have a session and haven't attempted auth yet
+    if (!session && !authAttempted.current) {
+      console.log("[Auth] No session found, attempting authentication");
+      authenticateWithTelegram();
+      return;
+    }
+
+    // If we have session but already set details, just ensure loading is false
+    if (session && userDetailsSet.current) {
+      setIsLoading(false);
+      return;
+    }
+
+    // If no session and auth was attempted, loading should be false
+    if (!session && authAttempted.current) {
+      setIsLoading(false);
+      return;
     }
   }, [session, status, router, setCheckerDetails]);
+
+  // Reset refs when session changes from truthy to falsy (logout)
+  useEffect(() => {
+    if (!session && userDetailsSet.current) {
+      console.log("[Auth] Session lost, resetting auth state");
+      authAttempted.current = false;
+      userDetailsSet.current = false;
+    }
+  }, [session]);
 
   return { isLoading, error, session };
 }
