@@ -1,4 +1,4 @@
-// src/auth.config.ts
+// src/auth.config.ts - Updated cookie configuration
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
@@ -114,6 +114,7 @@ export const authConfig: NextAuthConfig = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -143,33 +144,40 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   cookies: {
     sessionToken: {
-      name: "__Secure-next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "none", // Required for Telegram WebApp iframe
-        path: "/",
-        secure: true, // Always true for Telegram WebApp
-        // Remove domain setting - let browser handle it
-      },
-    },
-    csrfToken: {
-      name: "next-auth.csrf-token",
-      options: {
-        httpOnly: true,
-        sameSite: "none", // Required for Telegram WebApp iframe
-        path: "/",
-        secure: true, // Always true for Telegram WebApp
-        // Remove domain setting - let browser handle it
-      },
-    },
-    pkceCodeVerifier: {
-      name: "next-auth.pkce.code_verifier",
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "none",
         path: "/",
-        secure: true,
-        // Remove domain setting - let browser handle it
+        secure: true, // Always true for Telegram WebApp (even in dev)
+        // Don't set domain - let the browser handle it
+      },
+    },
+    csrfToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.csrf-token"
+          : "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true, // Always true for Telegram WebApp
+      },
+    },
+    pkceCodeVerifier: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.pkce.code_verifier"
+          : "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true, // Always true for Telegram WebApp
       },
     },
   },

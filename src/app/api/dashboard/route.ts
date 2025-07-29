@@ -8,19 +8,99 @@ import { getToken } from "next-auth/jwt";
 export async function GET(request: NextRequest) {
   try {
     console.log("[Dashboard API] Starting dashboard data fetch");
-
-    // Get the user from the session
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
+    console.log("[Dashboard API] Request headers:", {
+      cookie: request.headers.get("cookie"),
+      userAgent: request.headers.get("user-agent"),
+      referer: request.headers.get("referer"),
     });
 
-    if (!token) {
-      console.log("[Dashboard API] No valid session found");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Try multiple ways to get the token for Telegram WebApp compatibility
+    let token;
+
+    // First try: standard getToken
+    try {
+      token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      console.log("[Dashboard API] Standard getToken result:", !!token);
+    } catch (error) {
+      console.log("[Dashboard API] Standard getToken failed:", error);
     }
 
-    console.log("[Dashboard API] Session found for user:", token.id);
+    // Second try: getToken with different cookie names for Telegram WebApp
+    if (!token) {
+      try {
+        token = await getToken({
+          req: request,
+          secret: process.env.NEXTAUTH_SECRET,
+          cookieName: "__Secure-next-auth.session-token",
+        });
+        console.log("[Dashboard API] Secure cookie getToken result:", !!token);
+      } catch (error) {
+        console.log("[Dashboard API] Secure cookie getToken failed:", error);
+      }
+    }
+
+    // Third try: non-secure cookie name for development
+    if (!token) {
+      try {
+        token = await getToken({
+          req: request,
+          secret: process.env.NEXTAUTH_SECRET,
+          cookieName: "next-auth.session-token",
+        });
+        console.log(
+          "[Dashboard API] Non-secure cookie getToken result:",
+          !!token
+        );
+      } catch (error) {
+        console.log(
+          "[Dashboard API] Non-secure cookie getToken failed:",
+          error
+        );
+      }
+    }
+
+    // Fourth try: manual cookie parsing as fallback
+    if (!token) {
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        console.log("[Dashboard API] Attempting manual cookie parsing");
+        console.log("[Dashboard API] Available cookies:", cookieHeader);
+
+        // Look for session tokens in cookies
+        const sessionTokenMatch = cookieHeader.match(
+          /(?:__Secure-)?next-auth\.session-token=([^;]+)/
+        );
+        if (sessionTokenMatch) {
+          console.log(
+            "[Dashboard API] Found session token in cookies, but getToken still failed"
+          );
+        }
+      }
+    }
+
+    if (!token) {
+      console.log("[Dashboard API] No valid session found after all attempts");
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          debug: {
+            hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+            cookieHeader:
+              request.headers.get("cookie")?.substring(0, 100) + "...",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log("[Dashboard API] Session found for user:", {
+      id: token.id,
+      telegramId: token.telegramId,
+      name: token.name,
+    });
 
     const db = await connectToDB();
     const checkers = db.collection("checkers");
