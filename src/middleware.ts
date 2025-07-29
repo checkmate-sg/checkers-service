@@ -1,66 +1,79 @@
-// src/middleware.ts - Updated for NextAuth v5
+// src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/auth"; // Import from the new auth.ts file
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   console.log(`[Middleware] Checking path: ${pathname}`);
-  console.log(`[Middleware] Has auth: ${!!req.auth}`);
 
-  // Skip middleware for API routes and static files
-  if (
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/_next/") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
+  try {
+    // Get the session token
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
 
-  const isAuthenticated = !!req.auth;
+    console.log(`[Middleware] Token exists: ${!!token}`);
 
-  // Define protected routes that require authentication
-  const protectedRoutes = ["/dashboard", "/leaderboard", "/my-votes", "/vote"];
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  console.log(`[Middleware] Is protected route: ${isProtectedRoute}`);
-  console.log(`[Middleware] Is authenticated: ${isAuthenticated}`);
-
-  // If accessing a protected route without authentication
-  if (isProtectedRoute && !isAuthenticated) {
-    console.log(`[Middleware] Redirecting to home - not authenticated`);
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  // If accessing root with authentication, redirect to dashboard
-  if (pathname === "/" && isAuthenticated) {
-    console.log(`[Middleware] Redirecting to dashboard - user authenticated`);
-    const dashboardUrl = new URL("/dashboard", req.url);
-    const response = NextResponse.redirect(dashboardUrl);
-
-    // Add headers to prevent caching of this redirect
-    response.headers.set(
-      "Cache-Control",
-      "no-cache, no-store, must-revalidate"
+    // Define protected routes that require authentication
+    const protectedRoutes = [
+      "/dashboard",
+      "/leaderboard",
+      "/my-votes",
+      "/vote",
+    ];
+    const isProtectedRoute = protectedRoutes.some((route) =>
+      pathname.startsWith(route)
     );
-    response.headers.set("Pragma", "no-cache");
-    response.headers.set("Expires", "0");
 
-    return response;
-  }
+    console.log(`[Middleware] Is protected route: ${isProtectedRoute}`);
 
-  // Allow access to unauthorized page regardless of auth status
-  if (pathname === "/unauthorized") {
-    console.log(`[Middleware] Allowing access to unauthorized page`);
+    // If accessing a protected route without a valid session
+    if (isProtectedRoute && !token) {
+      console.log(`[Middleware] Redirecting to home - no valid session`);
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // If accessing root with a valid session, redirect to dashboard
+    if (pathname === "/" && token) {
+      console.log(`[Middleware] Redirecting to dashboard - user authenticated`);
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Allow access to unauthorized page regardless of auth status
+    if (pathname === "/unauthorized") {
+      console.log(`[Middleware] Allowing access to unauthorized page`);
+      return NextResponse.next();
+    }
+
+    console.log(`[Middleware] Allowing request to proceed`);
+    return NextResponse.next();
+  } catch (error) {
+    console.error(`[Middleware] Error checking authentication:`, error);
+
+    // If there's an error checking auth and it's a protected route, redirect to home
+    const protectedRoutes = [
+      "/dashboard",
+      "/leaderboard",
+      "/my-votes",
+      "/vote",
+    ];
+    const isProtectedRoute = protectedRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+
+    if (isProtectedRoute) {
+      console.log(
+        `[Middleware] Error occurred, redirecting protected route to home`
+      );
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
     return NextResponse.next();
   }
-
-  console.log(`[Middleware] Allowing request to proceed`);
-  return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

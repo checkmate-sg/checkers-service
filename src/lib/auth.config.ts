@@ -1,4 +1,4 @@
-// src/auth.config.ts - Updated for NextAuth v5
+// src/auth.config.ts
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
@@ -18,6 +18,21 @@ export const authConfig: NextAuthConfig = {
         const initData = credentials?.initData;
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
 
+        console.log("[Auth Config] Environment check:", {
+          hasBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
+          hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+          hasMongoUri: !!process.env.MONGODB_URI,
+        });
+
+        console.log(
+          "[Auth Config] Received initData:",
+          initData ? "present" : "missing"
+        );
+        console.log(
+          "[Auth Config] Bot token:",
+          botToken ? "present" : "missing"
+        );
+
         if (!initData || typeof initData !== "string") {
           console.error("[Auth Config] No initData received or invalid format");
           return null;
@@ -33,18 +48,43 @@ export const authConfig: NextAuthConfig = {
           console.log("[Auth Config] Attempting to verify Telegram initData");
           telegramUser = verifyTelegramInitData(initData, botToken);
           console.log("[Auth Config] Telegram verification successful");
+          console.log("[Auth Config] Parsed Telegram user:", {
+            id: telegramUser.id,
+            first_name: telegramUser.first_name,
+            username: telegramUser.username,
+          });
         } catch (err) {
           console.error(
             "[Auth Config] Telegram initData verification failed:",
             err
           );
+          console.error(
+            "[Auth Config] Error details:",
+            err instanceof Error ? err.message : "Unknown error"
+          );
           return null;
         }
 
         const telegramId = telegramUser.id.toString();
+        console.log(
+          "[Auth Config] Looking up user with telegramId:",
+          telegramId
+        );
 
         try {
           const user = await findUserByTelegramID(telegramId);
+          console.log(
+            "[Auth Config] Database lookup result:",
+            user ? "user found" : "user not found"
+          );
+
+          if (user) {
+            console.log("[Auth Config] Found user:", {
+              id: user.id,
+              name: user.name,
+              telegramId: user.telegramId || telegramId,
+            });
+          }
 
           if (!user) {
             console.warn(
@@ -54,15 +94,19 @@ export const authConfig: NextAuthConfig = {
             return null;
           }
 
-          console.log("[Auth Config] Authorization successful");
+          console.log(
+            "[Auth Config] Authorization successful, returning user data"
+          );
           return {
             id: user.id,
             telegramId,
             name: user.name || telegramUser.first_name || "Unknown",
-            email: `${telegramId}@telegram.user`, // Required by NextAuth v5
           };
         } catch (dbError) {
-          console.error("[Auth Config] Database error:", dbError);
+          console.error(
+            "[Auth Config] Database error during user lookup:",
+            dbError
+          );
           return null;
         }
       },
@@ -70,7 +114,6 @@ export const authConfig: NextAuthConfig = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -82,41 +125,15 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.telegramId = token.telegramId as string;
-        session.user.name = token.name as string;
+      if (token) {
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          telegramId: token.telegramId as string,
+          name: token.name as string,
+        };
       }
       return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // Handle redirect after successful authentication
-      console.log(
-        "[Auth Config] Redirect callback - url:",
-        url,
-        "baseUrl:",
-        baseUrl
-      );
-
-      // If the URL contains hash fragments (Telegram WebApp data), clean it
-      if (url.includes("#")) {
-        const cleanUrl = url.split("#")[0];
-        console.log("[Auth Config] Cleaned URL:", cleanUrl);
-        return cleanUrl;
-      }
-
-      // If it's a relative URL, make it absolute
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-
-      // If it's the same origin, allow it
-      if (url.startsWith(baseUrl)) {
-        return url;
-      }
-
-      // Default to base URL
-      return baseUrl;
     },
   },
   pages: {
@@ -124,5 +141,37 @@ export const authConfig: NextAuthConfig = {
     error: "/unauthorized",
   },
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: "__Secure-next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none", // Required for Telegram WebApp iframe
+        path: "/",
+        secure: true, // Always true for Telegram WebApp
+        // Remove domain setting - let browser handle it
+      },
+    },
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none", // Required for Telegram WebApp iframe
+        path: "/",
+        secure: true, // Always true for Telegram WebApp
+        // Remove domain setting - let browser handle it
+      },
+    },
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+        // Remove domain setting - let browser handle it
+      },
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 };
