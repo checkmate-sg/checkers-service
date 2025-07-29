@@ -28,17 +28,17 @@ export default function HomePage() {
         console.log("[HomePage] Redirecting to dashboard");
         hasRedirected.current = true;
         setTimeout(() => {
-          router.replace("/dashboard");
-        }, 0); // slight delay ensures router hydration
+          window.location.href = "/dashboard";
+        }, 0);
       } else if (error) {
         console.log("[HomePage] Redirecting to unauthorized");
         hasRedirected.current = true;
         setTimeout(() => {
-          router.replace("/unauthorized");
+          window.location.href = "/unauthorized";
         }, 0);
       }
     }
-  }, [isLoading, error, session, router]);
+  }, [isLoading, error, session]);
 
   if (isLoading) {
     return (
