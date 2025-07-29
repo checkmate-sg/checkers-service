@@ -16,7 +16,11 @@ export function verifyTelegramInitData(
 ): VerifiedTelegramData {
   console.log("[VerifyTelegram] Starting verification process");
 
-  const secret = crypto.createHash("sha256").update(botToken).digest();
+  // For Telegram Web Apps, use "WebAppData" as the constant string
+  const secret = crypto
+    .createHmac("sha256", "WebAppData")
+    .update(botToken)
+    .digest();
 
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get("hash");
@@ -27,6 +31,7 @@ export function verifyTelegramInitData(
 
   urlParams.delete("hash");
 
+  // Sort parameters alphabetically by key
   const sorted = [...urlParams.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
@@ -39,6 +44,9 @@ export function verifyTelegramInitData(
 
   const hmac = crypto.createHmac("sha256", secret).update(sorted).digest("hex");
 
+  console.log("[VerifyTelegram] Expected hash:", hash);
+  console.log("[VerifyTelegram] Calculated hash:", hmac);
+
   if (hmac !== hash) {
     console.error(
       "[VerifyTelegram] Hash mismatch - expected:",
@@ -46,10 +54,26 @@ export function verifyTelegramInitData(
       "got:",
       hmac
     );
+    console.error("[VerifyTelegram] Sorted data string:", sorted);
     throw new Error("Invalid initData signature");
   }
 
   console.log("[VerifyTelegram] Signature verification successful");
+
+  // Check auth_date to ensure the data is recent (within 24 hours)
+  const authDate = urlParams.get("auth_date");
+  if (authDate) {
+    const authTimestamp = parseInt(authDate, 10);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const timeDiff = currentTimestamp - authTimestamp;
+
+    // Allow 24 hours (86400 seconds) + some buffer
+    if (timeDiff > 86400) {
+      console.warn("[VerifyTelegram] Auth data is older than 24 hours");
+      // You might want to throw an error here in production
+      // throw new Error("Auth data is too old");
+    }
+  }
 
   // Parse the user data from the 'user' parameter
   const userParam = urlParams.get("user");

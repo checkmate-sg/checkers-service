@@ -2,10 +2,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { connectToDB } from "@/lib/mongodb";
-import { processVotingLogic } from "@/lib/seed"; // Import the processing function
+import { processVotingLogic } from "@/lib/seed";
+import { getToken } from "next-auth/jwt";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("[Dashboard API] Starting dashboard data fetch");
+
+    // Get the user from the session
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      console.log("[Dashboard API] No valid session found");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    console.log("[Dashboard API] Session found for user:", token.id);
+
     const db = await connectToDB();
     const checkers = db.collection("checkers");
     const votes = db.collection("votes");
@@ -13,14 +29,22 @@ export async function GET(request: NextRequest) {
     // Process any pending votes before showing dashboard
     await processVotingLogic(votes, checkers);
 
-    // For now, hardcode the checker ID - you'll want to get this from session/auth later
-    const checkerId = "665eaaaa0000000000000001";
+    // Use the actual user ID from the session
+    const checkerId = token.id;
+    console.log("[Dashboard API] Looking up checker with ID:", checkerId);
 
-    // Get the checker's data (now without voteHistory)
+    // Get the checker's data
     const checker = await checkers.findOne({ _id: new ObjectId(checkerId) });
     if (!checker) {
+      console.log("[Dashboard API] Checker not found with ID:", checkerId);
       return NextResponse.json({ error: "Checker not found" }, { status: 404 });
     }
+
+    console.log("[Dashboard API] Checker found:", {
+      name: checker.name,
+      totalVotes: checker.totalVotes,
+      correctVotes: checker.correctVotes,
+    });
 
     // Get recent votes where this checker participated for activity feed
     const recentVotesWithThisChecker = await votes
@@ -31,6 +55,12 @@ export async function GET(request: NextRequest) {
       .sort({ processedAt: -1 }) // Sort by when they were processed
       .limit(5)
       .toArray();
+
+    console.log(
+      "[Dashboard API] Found",
+      recentVotesWithThisChecker.length,
+      "recent votes"
+    );
 
     // Calculate stats from checker document (now updated by processVotingLogic)
     const totalVotes = checker.totalVotes || 0;
@@ -110,9 +140,10 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    console.log("[Dashboard API] Returning dashboard data:", dashboardData);
     return NextResponse.json(dashboardData);
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
+    console.error("[Dashboard API] Error fetching dashboard data:", error);
     return NextResponse.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }
