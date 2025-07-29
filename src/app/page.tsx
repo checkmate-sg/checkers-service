@@ -10,12 +10,37 @@ export default function HomePage() {
   const router = useRouter();
   const hasRedirected = useRef(false);
 
+  // Debug logging
+  console.log(
+    "[HomePage] Render - isLoading:",
+    isLoading,
+    "error:",
+    error,
+    "session:",
+    !!session,
+    "hasRedirected:",
+    hasRedirected.current
+  );
+
   useEffect(() => {
     // Only redirect once when we have a session and haven't redirected yet
     if (!isLoading && !error && session && !hasRedirected.current) {
       console.log("[HomePage] Redirecting to dashboard");
       hasRedirected.current = true;
-      router.replace("/dashboard");
+
+      // Try multiple redirect methods to ensure it works
+      const redirect = () => {
+        try {
+          router.replace("/dashboard");
+        } catch (err) {
+          console.error("[HomePage] Router redirect failed:", err);
+          // Fallback to window location
+          window.location.href = "/dashboard";
+        }
+      };
+
+      // Small delay to ensure everything is ready
+      setTimeout(redirect, 100);
     }
   }, [isLoading, error, session, router]);
 
@@ -57,6 +82,18 @@ export default function HomePage() {
         <div className="text-center">
           <Loader2 className="animate-spin mx-auto mb-4" size={32} />
           <p>Redirecting to dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Session: {session.user?.name || "Unknown"}
+          </p>
+          <button
+            onClick={() => {
+              console.log("[HomePage] Manual redirect clicked");
+              window.location.href = "/dashboard";
+            }}
+            className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Go to Dashboard Manually
+          </button>
         </div>
       </div>
     );

@@ -16,6 +16,9 @@ export async function middleware(request: NextRequest) {
     });
 
     console.log(`[Middleware] Token exists: ${!!token}`);
+    if (token) {
+      console.log(`[Middleware] User ID: ${token.sub}, Name: ${token.name}`);
+    }
 
     // Define protected routes that require authentication
     const protectedRoutes = [
@@ -39,7 +42,18 @@ export async function middleware(request: NextRequest) {
     // If accessing root with a valid session, redirect to dashboard
     if (pathname === "/" && token) {
       console.log(`[Middleware] Redirecting to dashboard - user authenticated`);
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      const dashboardUrl = new URL("/dashboard", request.url);
+      const response = NextResponse.redirect(dashboardUrl);
+
+      // Add headers to prevent caching of this redirect
+      response.headers.set(
+        "Cache-Control",
+        "no-cache, no-store, must-revalidate"
+      );
+      response.headers.set("Pragma", "no-cache");
+      response.headers.set("Expires", "0");
+
+      return response;
     }
 
     // Allow access to unauthorized page regardless of auth status
