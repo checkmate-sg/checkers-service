@@ -37,11 +37,23 @@ export function useTelegramAuth() {
       "HasAttempted:",
       hasAttemptedAuth.current,
       "IsAuthenticating:",
-      isAuthenticating.current
+      isAuthenticating.current,
+      "UserDetailsSet:",
+      userDetailsSet.current
     );
+
+    // Log session details if available
+    if (session) {
+      console.log("[Auth] Session details:", {
+        id: session.user?.id,
+        name: session.user?.name,
+        telegramId: (session.user as any)?.telegramId,
+      });
+    }
 
     // Still loading NextAuth
     if (status === "loading") {
+      console.log("[Auth] NextAuth is still loading...");
       return;
     }
 
@@ -52,7 +64,7 @@ export function useTelegramAuth() {
         ...current,
         checkerId: session.user.id,
         checkerName: session.user.name || "Unknown",
-        telegramId: session.user.telegramId,
+        telegramId: (session.user as any).telegramId,
       }));
       userDetailsSet.current = true;
       setIsLoading(false);
@@ -74,72 +86,107 @@ export function useTelegramAuth() {
 
     // No session and we haven't tried to authenticate yet
     if (!session && !hasAttemptedAuth.current && !isAuthenticating.current) {
-      console.log("[Auth] No session, attempting Telegram auth");
+      console.log("[Auth] No session, checking for Telegram WebApp context");
+
+      // Check if we're in a Telegram WebApp environment
+      const isTelegramWebApp =
+        typeof window !== "undefined" && window.Telegram?.WebApp;
+
+      console.log("[Auth] Telegram WebApp context:", {
+        hasTelegram: !!window.Telegram,
+        hasWebApp: !!window.Telegram?.WebApp,
+        hasInitData: !!window.Telegram?.WebApp?.initData,
+        initDataLength: window.Telegram?.WebApp?.initData?.length || 0,
+      });
+
+      if (!isTelegramWebApp) {
+        console.error("[Auth] Not running in Telegram WebApp context");
+        setError("This app must be opened from Telegram");
+        setIsLoading(false);
+        hasAttemptedAuth.current = true;
+
+        redirectTimeout.current = setTimeout(() => {
+          router.push("/unauthorized");
+        }, 3000);
+        return;
+      }
+
+      const initData = window.Telegram.WebApp.initData;
+
+      if (!initData) {
+        console.error("[Auth] No Telegram initData available");
+        setError("No Telegram authentication data found");
+        setIsLoading(false);
+        hasAttemptedAuth.current = true;
+
+        redirectTimeout.current = setTimeout(() => {
+          router.push("/unauthorized");
+        }, 3000);
+        return;
+      }
+
+      console.log("[Auth] Starting Telegram authentication...");
       hasAttemptedAuth.current = true;
       isAuthenticating.current = true;
 
-      // Check for Telegram WebApp
-      if (typeof window !== "undefined" && window.Telegram?.WebApp?.initData) {
-        const initData = window.Telegram.WebApp.initData;
-        console.log("[Auth] Found Telegram initData, signing in...");
+      signIn("telegram", {
+        redirect: false,
+        initData: initData,
+      })
+        .then((result) => {
+          console.log("[Auth] Sign in result:", result);
+          isAuthenticating.current = false;
 
-        signIn("telegram", {
-          redirect: false,
-          initData: initData,
-        })
-          .then((result) => {
-            console.log("[Auth] Sign in result:", result);
-            isAuthenticating.current = false;
-
-            if (result?.error) {
-              console.error("[Auth] Sign in failed:", result.error);
-              setError(`Authentication failed: ${result.error}`);
-              setIsLoading(false);
-
-              // Delay redirect to allow user to see error
-              redirectTimeout.current = setTimeout(() => {
-                router.push("/unauthorized");
-              }, 2000);
-            } else if (result?.ok) {
-              console.log("[Auth] Sign in successful, session should update");
-              // Don't set loading to false here - wait for session to update
-            }
-          })
-          .catch((err) => {
-            console.error("[Auth] Sign in error:", err);
-            isAuthenticating.current = false;
-            setError("Authentication failed");
+          if (result?.error) {
+            console.error("[Auth] Sign in failed:", result.error);
+            setError(`Authentication failed: ${result.error}`);
             setIsLoading(false);
 
             redirectTimeout.current = setTimeout(() => {
               router.push("/unauthorized");
-            }, 2000);
-          });
-      } else {
-        console.error("[Auth] No Telegram WebApp context");
-        isAuthenticating.current = false;
-        setError("This app must be opened from Telegram");
-        setIsLoading(false);
+            }, 3000);
+          } else if (result?.ok) {
+            console.log(
+              "[Auth] Sign in successful, waiting for session update"
+            );
+            // Don't set loading to false here - wait for session to update
+          } else {
+            console.warn("[Auth] Unexpected sign in result:", result);
+            setError("Unexpected authentication result");
+            setIsLoading(false);
 
-        redirectTimeout.current = setTimeout(() => {
-          router.push("/unauthorized");
-        }, 2000);
-      }
+            redirectTimeout.current = setTimeout(() => {
+              router.push("/unauthorized");
+            }, 3000);
+          }
+        })
+        .catch((err) => {
+          console.error("[Auth] Sign in error:", err);
+          isAuthenticating.current = false;
+          setError("Authentication failed");
+          setIsLoading(false);
+
+          redirectTimeout.current = setTimeout(() => {
+            router.push("/unauthorized");
+          }, 3000);
+        });
+
       return;
     }
 
     // No session and we already tried - authentication failed
     if (!session && hasAttemptedAuth.current && !isAuthenticating.current) {
       console.log("[Auth] No session after auth attempt");
-      setIsLoading(false);
       if (!error) {
         setError("Authentication failed - please try again");
+        setIsLoading(false);
+
         redirectTimeout.current = setTimeout(() => {
           router.push("/unauthorized");
-        }, 2000);
+        }, 3000);
       }
     }
-  }, [session, status, setCheckerDetails, router]);
+  }, [session, status, setCheckerDetails, router, error]);
 
   return {
     isLoading,
