@@ -8,6 +8,16 @@ export async function middleware(request: NextRequest) {
 
   console.log(`[Middleware] Checking path: ${pathname}`);
 
+  // Always allow API routes, auth routes, and static files
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/unauthorized"
+  ) {
+    return NextResponse.next();
+  }
+
   try {
     // Get the session token
     const token = await getToken({
@@ -30,22 +40,38 @@ export async function middleware(request: NextRequest) {
 
     console.log(`[Middleware] Is protected route: ${isProtectedRoute}`);
 
-    // If accessing a protected route without a valid session
-    if (isProtectedRoute && !token) {
-      console.log(`[Middleware] Redirecting to home - no valid session`);
-      return NextResponse.redirect(new URL("/", request.url));
+    // If accessing root path
+    if (pathname === "/") {
+      if (token) {
+        // Authenticated user accessing root - redirect to dashboard
+        console.log(
+          `[Middleware] Redirecting to dashboard - user authenticated`
+        );
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      } else {
+        // Unauthenticated user at root - allow them to stay for auth
+        console.log(`[Middleware] Allowing access to root for authentication`);
+        return NextResponse.next();
+      }
     }
 
-    // If accessing root with a valid session, redirect to dashboard
-    if (pathname === "/" && token) {
-      console.log(`[Middleware] Redirecting to dashboard - user authenticated`);
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    // For protected routes
+    if (isProtectedRoute) {
+      if (!token) {
+        // Check if this is a Telegram WebApp context
+        const userAgent = request.headers.get("user-agent") || "";
+        const referer = request.headers.get("referer") || "";
 
-    // Allow access to unauthorized page regardless of auth status
-    if (pathname === "/unauthorized") {
-      console.log(`[Middleware] Allowing access to unauthorized page`);
-      return NextResponse.next();
+        // If this looks like a Telegram WebApp request, allow it through
+        // so the auth hook can handle the authentication
+        if (userAgent.includes("TelegramBot") || referer.includes("t.me")) {
+          console.log(`[Middleware] Allowing Telegram WebApp access for auth`);
+          return NextResponse.next();
+        }
+
+        console.log(`[Middleware] Redirecting to home - no valid session`);
+        return NextResponse.redirect(new URL("/", request.url));
+      }
     }
 
     console.log(`[Middleware] Allowing request to proceed`);
@@ -53,7 +79,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error(`[Middleware] Error checking authentication:`, error);
 
-    // If there's an error checking auth and it's a protected route, redirect to home
+    // If there's an error, be more permissive to allow auth flow
     const protectedRoutes = [
       "/dashboard",
       "/leaderboard",
@@ -65,6 +91,17 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isProtectedRoute) {
+      // Check if this might be a Telegram WebApp - if so, allow through
+      const userAgent = request.headers.get("user-agent") || "";
+      const referer = request.headers.get("referer") || "";
+
+      if (userAgent.includes("TelegramBot") || referer.includes("t.me")) {
+        console.log(
+          `[Middleware] Auth error but allowing Telegram WebApp access`
+        );
+        return NextResponse.next();
+      }
+
       console.log(
         `[Middleware] Error occurred, redirecting protected route to home`
       );

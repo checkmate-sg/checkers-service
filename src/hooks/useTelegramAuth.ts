@@ -17,6 +17,16 @@ export function useTelegramAuth() {
   const hasAttemptedAuth = useRef(false);
   const isAuthenticating = useRef(false);
   const userDetailsSet = useRef(false);
+  const redirectTimeout = useRef<NodeJS.Timeout>();
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout.current) {
+        clearTimeout(redirectTimeout.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     console.log(
@@ -52,6 +62,7 @@ export function useTelegramAuth() {
 
     // If we already have a session and details are set, don't do anything
     if (session && userDetailsSet.current) {
+      setIsLoading(false);
       return;
     }
 
@@ -84,23 +95,35 @@ export function useTelegramAuth() {
               console.error("[Auth] Sign in failed:", result.error);
               setError(`Authentication failed: ${result.error}`);
               setIsLoading(false);
-              router.push("/unauthorized");
+
+              // Delay redirect to allow user to see error
+              redirectTimeout.current = setTimeout(() => {
+                router.push("/unauthorized");
+              }, 2000);
+            } else if (result?.ok) {
+              console.log("[Auth] Sign in successful, session should update");
+              // Don't set loading to false here - wait for session to update
             }
-            // If successful, the session will update and trigger this useEffect again
           })
           .catch((err) => {
             console.error("[Auth] Sign in error:", err);
             isAuthenticating.current = false;
             setError("Authentication failed");
             setIsLoading(false);
-            router.push("/unauthorized");
+
+            redirectTimeout.current = setTimeout(() => {
+              router.push("/unauthorized");
+            }, 2000);
           });
       } else {
         console.error("[Auth] No Telegram WebApp context");
         isAuthenticating.current = false;
-        setError("Telegram WebApp not available");
+        setError("This app must be opened from Telegram");
         setIsLoading(false);
-        router.push("/unauthorized");
+
+        redirectTimeout.current = setTimeout(() => {
+          router.push("/unauthorized");
+        }, 2000);
       }
       return;
     }
@@ -110,11 +133,18 @@ export function useTelegramAuth() {
       console.log("[Auth] No session after auth attempt");
       setIsLoading(false);
       if (!error) {
-        setError("Authentication failed");
-        router.push("/unauthorized");
+        setError("Authentication failed - please try again");
+        redirectTimeout.current = setTimeout(() => {
+          router.push("/unauthorized");
+        }, 2000);
       }
     }
-  }, [session, status]); // Removed dependencies that were causing loops
+  }, [session, status, setCheckerDetails, router]);
 
-  return { isLoading, error, session };
+  return {
+    isLoading,
+    error,
+    session,
+    isAuthenticated: !!session && userDetailsSet.current,
+  };
 }
