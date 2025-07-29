@@ -23,24 +23,20 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    // Only redirect once when we have a session and haven't redirected yet
-    if (!isLoading && !error && session && !hasRedirected.current) {
-      console.log("[HomePage] Redirecting to dashboard");
-      hasRedirected.current = true;
-
-      // Try multiple redirect methods to ensure it works
-      const redirect = () => {
-        try {
+    if (!isLoading && !hasRedirected.current) {
+      if (session) {
+        console.log("[HomePage] Redirecting to dashboard");
+        hasRedirected.current = true;
+        setTimeout(() => {
           router.replace("/dashboard");
-        } catch (err) {
-          console.error("[HomePage] Router redirect failed:", err);
-          // Fallback to window location
-          window.location.href = "/dashboard";
-        }
-      };
-
-      // Small delay to ensure everything is ready
-      setTimeout(redirect, 100);
+        }, 0); // slight delay ensures router hydration
+      } else if (error) {
+        console.log("[HomePage] Redirecting to unauthorized");
+        hasRedirected.current = true;
+        setTimeout(() => {
+          router.replace("/unauthorized");
+        }, 0);
+      }
     }
   }, [isLoading, error, session, router]);
 
