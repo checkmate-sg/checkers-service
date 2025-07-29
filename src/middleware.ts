@@ -8,11 +8,21 @@ export async function middleware(request: NextRequest) {
 
   console.log(`[Middleware] Checking path: ${pathname}`);
 
+  // Skip middleware for API routes and static files
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
   try {
-    // Get the session token
+    // Get the session token with explicit cookie name
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      cookieName: "next-auth.session-token", // Match the cookie name from config
     });
 
     console.log(`[Middleware] Token exists: ${!!token}`);

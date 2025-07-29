@@ -1,14 +1,10 @@
 "use client";
 
 import { useTelegramAuth } from "@/hooks/useTelegramAuth";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const { isLoading, error, session } = useTelegramAuth();
-  const router = useRouter();
-  const hasRedirected = useRef(false);
 
   // Debug logging
   console.log(
@@ -17,28 +13,8 @@ export default function HomePage() {
     "error:",
     error,
     "session:",
-    !!session,
-    "hasRedirected:",
-    hasRedirected.current
+    !!session
   );
-
-  useEffect(() => {
-    if (!isLoading && !hasRedirected.current) {
-      if (session) {
-        console.log("[HomePage] Redirecting to dashboard");
-        hasRedirected.current = true;
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 0);
-      } else if (error) {
-        console.log("[HomePage] Redirecting to unauthorized");
-        hasRedirected.current = true;
-        setTimeout(() => {
-          window.location.href = "/unauthorized";
-        }, 0);
-      }
-    }
-  }, [isLoading, error, session]);
 
   if (isLoading) {
     return (
@@ -58,8 +34,6 @@ export default function HomePage() {
           <p className="text-red-500 mb-4">Authentication failed: {error}</p>
           <button
             onClick={() => {
-              // Reset the redirect flag and reload
-              hasRedirected.current = false;
               window.location.reload();
             }}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -71,29 +45,39 @@ export default function HomePage() {
     );
   }
 
-  // Show loading while waiting for redirect
+  // If we have a session, middleware will handle the redirect
+  // Just show a loading state briefly
   if (session) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="animate-spin mx-auto mb-4" size={32} />
-          <p>Redirecting to dashboard...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Session: {session.user?.name || "Unknown"}
-          </p>
-          <button
-            onClick={() => {
-              console.log("[HomePage] Manual redirect clicked");
-              window.location.href = "/dashboard";
-            }}
-            className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Go to Dashboard Manually
-          </button>
+          <p>Welcome, {session.user?.name || "Unknown"}!</p>
+          <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
         </div>
       </div>
     );
   }
 
-  return null;
+  // No session and not loading - show generic message
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Welcome</h1>
+        <p className="text-gray-600 mb-4">
+          Please open this app through Telegram to continue.
+        </p>
+        <button
+          onClick={() => {
+            window.location.reload();
+          }}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+  );
 }
+
+export const runtime = "nodejs";

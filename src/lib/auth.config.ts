@@ -114,6 +114,7 @@ export const authConfig: NextAuthConfig = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -143,33 +144,30 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   cookies: {
     sessionToken: {
-      name: "__Secure-next-auth.session-token",
+      name: "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: "none", // Required for Telegram WebApp iframe
+        sameSite: "lax", // Changed from "none" to "lax" for better compatibility
         path: "/",
-        secure: true, // Always true for Telegram WebApp
-        // Remove domain setting - let browser handle it
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: "none", // Required for Telegram WebApp iframe
+        sameSite: "lax", // Changed from "none" to "lax"
         path: "/",
-        secure: true, // Always true for Telegram WebApp
-        // Remove domain setting - let browser handle it
+        secure: process.env.NODE_ENV === "production",
       },
     },
     pkceCodeVerifier: {
       name: "next-auth.pkce.code_verifier",
       options: {
         httpOnly: true,
-        sameSite: "none",
+        sameSite: "lax", // Changed from "none" to "lax"
         path: "/",
-        secure: true,
-        // Remove domain setting - let browser handle it
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
