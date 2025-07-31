@@ -51,7 +51,7 @@ export function useTelegramAuth() {
       signOut({ redirect: false });
       return;
     }
-
+    console.log("[Auth] Signed out");
     // Step 2: After successful authentication, set user details
     if (session && hasSignedOut.current && !isAuthenticating.current) {
       console.log("[Auth] New session found, setting user details");
