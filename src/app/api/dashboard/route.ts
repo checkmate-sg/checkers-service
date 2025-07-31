@@ -18,15 +18,15 @@ export async function GET(request: NextRequest) {
     let token;
 
     // First try: standard getToken
-    // try {
-    //   token = await getToken({
-    //     req: request,
-    //     secret: process.env.NEXTAUTH_SECRET,
-    //   });
-    //   console.log("[Dashboard API] Standard getToken result:", !!token);
-    // } catch (error) {
-    //   console.log("[Dashboard API] Standard getToken failed:", error);
-    // }
+    try {
+      token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      console.log("[Dashboard API] Standard getToken result:", !!token);
+    } catch (error) {
+      console.log("[Dashboard API] Standard getToken failed:", error);
+    }
 
     // Second try: getToken with different cookie names for Telegram WebApp
     if (!token) {
@@ -42,44 +42,44 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // // Third try: non-secure cookie name for development
-    // if (!token) {
-    //   try {
-    //     token = await getToken({
-    //       req: request,
-    //       secret: process.env.NEXTAUTH_SECRET,
-    //       cookieName: "next-auth.session-token",
-    //     });
-    //     console.log(
-    //       "[Dashboard API] Non-secure cookie getToken result:",
-    //       !!token
-    //     );
-    //   } catch (error) {
-    //     console.log(
-    //       "[Dashboard API] Non-secure cookie getToken failed:",
-    //       error
-    //     );
-    //   }
-    // }
+    // Third try: non-secure cookie name for development
+    if (!token) {
+      try {
+        token = await getToken({
+          req: request,
+          secret: process.env.NEXTAUTH_SECRET,
+          cookieName: "next-auth.session-token",
+        });
+        console.log(
+          "[Dashboard API] Non-secure cookie getToken result:",
+          !!token
+        );
+      } catch (error) {
+        console.log(
+          "[Dashboard API] Non-secure cookie getToken failed:",
+          error
+        );
+      }
+    }
 
-    // // Fourth try: manual cookie parsing as fallback
-    // if (!token) {
-    //   const cookieHeader = request.headers.get("cookie");
-    //   if (cookieHeader) {
-    //     console.log("[Dashboard API] Attempting manual cookie parsing");
-    //     console.log("[Dashboard API] Available cookies:", cookieHeader);
+    // Fourth try: manual cookie parsing as fallback
+    if (!token) {
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        console.log("[Dashboard API] Attempting manual cookie parsing");
+        console.log("[Dashboard API] Available cookies:", cookieHeader);
 
-    //     // Look for session tokens in cookies
-    //     const sessionTokenMatch = cookieHeader.match(
-    //       /(?:__Secure-)?next-auth\.session-token=([^;]+)/
-    //     );
-    //     if (sessionTokenMatch) {
-    //       console.log(
-    //         "[Dashboard API] Found session token in cookies, but getToken still failed"
-    //       );
-    //     }
-    //   }
-    // }
+        // Look for session tokens in cookies
+        const sessionTokenMatch = cookieHeader.match(
+          /(?:__Secure-)?next-auth\.session-token=([^;]+)/
+        );
+        if (sessionTokenMatch) {
+          console.log(
+            "[Dashboard API] Found session token in cookies, but getToken still failed"
+          );
+        }
+      }
+    }
 
     if (!token) {
       console.log("[Dashboard API] No valid session found after all attempts");
