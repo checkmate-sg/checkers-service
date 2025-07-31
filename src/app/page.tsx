@@ -30,13 +30,8 @@ export default function HomePage() {
 
       // Try multiple redirect methods to ensure it works
       const redirect = () => {
-        try {
-          router.replace("/dashboard");
-        } catch (err) {
-          console.error("[HomePage] Router redirect failed:", err);
-          // Fallback to window location
-          window.location.href = "/dashboard";
-        }
+        console.log("[HomePage] Redirecting using window.location.replace");
+        window.location.replace("/dashboard");
       };
 
       // Small delay to ensure everything is ready
