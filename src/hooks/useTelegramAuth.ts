@@ -15,6 +15,7 @@ export function useTelegramAuth() {
   const hasStartedAuth = useRef(false);
   const redirectTimeout = useRef<NodeJS.Timeout>();
 
+  // Clear redirect timer on unmount
   useEffect(() => {
     return () => {
       if (redirectTimeout.current) {
@@ -23,11 +24,14 @@ export function useTelegramAuth() {
     };
   }, []);
 
+  // 🚀 Authenticate ONCE on mount
   useEffect(() => {
+    if (hasStartedAuth.current) return;
+    hasStartedAuth.current = true;
+
     const authenticate = async () => {
-      // Not in Telegram WebApp context
       if (typeof window === "undefined" || !window.Telegram?.WebApp) {
-        console.error("[Auth] Not in Telegram WebApp context");
+        console.error("[Auth] Not in Telegram WebApp");
         setError("This app must be opened from Telegram");
         setIsLoading(false);
         redirectTimeout.current = setTimeout(
@@ -39,7 +43,7 @@ export function useTelegramAuth() {
 
       const initData = window.Telegram.WebApp.initData;
       if (!initData) {
-        console.error("[Auth] No initData found");
+        console.error("[Auth] Missing initData");
         setError("Missing Telegram data");
         setIsLoading(false);
         redirectTimeout.current = setTimeout(
@@ -49,17 +53,13 @@ export function useTelegramAuth() {
         return;
       }
 
-      // Start sign-in
-      console.log("[Auth] Triggering signIn with initData...");
-      hasStartedAuth.current = true;
-
       const result = await signIn("telegram", {
         redirect: false,
         initData,
       });
 
       if (!result?.ok) {
-        console.error("[Auth] signIn failed:", result?.error);
+        console.error("[Auth] Sign in failed:", result?.error);
         setError("Authentication failed");
         setIsLoading(false);
         redirectTimeout.current = setTimeout(
@@ -67,17 +67,16 @@ export function useTelegramAuth() {
           3000
         );
       } else {
-        console.log("[Auth] signIn succeeded, forcing session update");
-        setTimeout(() => update(), 500);
+        console.log("[Auth] Sign in successful");
+        // No need to call update(), let session naturally appear
       }
     };
 
-    // Start sign-in immediately once
-    if (!hasStartedAuth.current) {
-      authenticate();
-    }
+    authenticate();
+  }, [router]);
 
-    // Once session is available, set context
+  // ✅ When session becomes available, set user and stop loading
+  useEffect(() => {
     if (session) {
       console.log("[Auth] Session available:", session.user);
       setCheckerDetails((current) => ({
@@ -89,7 +88,7 @@ export function useTelegramAuth() {
       setIsLoading(false);
       setError(null);
     }
-  }, []);
+  }, [session, setCheckerDetails]);
 
   return {
     isLoading,
