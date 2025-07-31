@@ -7,11 +7,29 @@ async function getTokenWithFallback(request: NextRequest) {
   let token = null;
 
   try {
+    // First try the default cookie
     token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
-      cookieName: "__Secure-next-auth.session-token",
     });
+
+    if (!token) {
+      // Fallback to secure cookie for production/HTTPS
+      token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "__Secure-next-auth.session-token",
+      });
+    }
+
+    // Additional fallback for development
+    if (!token) {
+      token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "next-auth.session-token",
+      });
+    }
   } catch (error) {
     console.error("[Middleware] Error getting token:", error);
   }
@@ -30,7 +48,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
     pathname === "/unauthorized" ||
-    pathname.startsWith("/auth/") // Allow auth pages
+    pathname.startsWith("/auth/") || // Allow auth pages
+    pathname === "/" // TEMPORARILY: Always allow root for debugging
   ) {
     return NextResponse.next();
   }
@@ -70,7 +89,8 @@ export async function middleware(request: NextRequest) {
         );
         return NextResponse.redirect(new URL("/dashboard", request.url));
       } else {
-        // Unauthenticated user at root - allow them to stay for auth
+        // Unauthenticated user at root - ALWAYS allow them to stay for auth
+        // Don't redirect them away as this breaks the Telegram auth flow
         console.log(`[Middleware] Allowing access to root for authentication`);
         return NextResponse.next();
       }
