@@ -3,27 +3,41 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+async function getTokenWithFallback(request: NextRequest) {
+  let token = null;
+
+  try {
+    token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: "__Secure-next-auth.session-token",
+    });
+  } catch (error) {
+    console.error("[Middleware] Error getting token:", error);
+  }
+
+  return token;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   console.log(`[Middleware] Checking path: ${pathname}`);
 
-  // Always allow API routes, auth routes, static files, and unauthorized page
+  // Always allow API routes, auth routes, static files, and public pages
   if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
-    pathname === "/unauthorized"
+    pathname === "/unauthorized" ||
+    pathname.startsWith("/auth/") // Allow auth pages
   ) {
     return NextResponse.next();
   }
 
   try {
-    // Get the session token
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
+    // Get the session token with fallback options
+    const token = await getTokenWithFallback(request);
 
     console.log(`[Middleware] Token exists: ${!!token}`);
     if (token) {
@@ -62,19 +76,17 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // For protected routes - be more permissive during development/testing
+    // For protected routes - ACTUALLY BLOCK unauthorized access
     if (isProtectedRoute) {
       if (!token) {
-        // Instead of immediately redirecting, let's check if there's an active session
-        // by allowing the request through and letting the client handle it
         console.log(
-          `[Middleware] No token for protected route, allowing through for client-side auth check`
+          `[Middleware] No token for protected route, redirecting to auth`
         );
 
-        // Add a custom header to indicate this is a protected route without auth
-        const response = NextResponse.next();
-        response.headers.set("x-auth-required", "true");
-        return response;
+        // Redirect to your auth page or root with a return URL
+        const url = new URL("/", request.url);
+        url.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(url);
       } else {
         console.log(
           `[Middleware] Valid token found, allowing access to protected route`
@@ -87,14 +99,28 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error(`[Middleware] Error checking authentication:`, error);
 
-    // If there's an error checking auth, allow the request through
-    // and let the client-side handle authentication
-    console.log(
-      `[Middleware] Auth error, allowing request through for client handling`
+    // If there's an error and it's a protected route, redirect to auth
+    const protectedRoutes = [
+      "/dashboard",
+      "/leaderboard",
+      "/my-votes",
+      "/vote",
+    ];
+    const isProtectedRoute = protectedRoutes.some((route) =>
+      pathname.startsWith(route)
     );
-    const response = NextResponse.next();
-    response.headers.set("x-auth-error", "true");
-    return response;
+
+    if (isProtectedRoute) {
+      console.log(
+        `[Middleware] Auth error on protected route, redirecting to auth`
+      );
+      const url = new URL("/", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    // For non-protected routes, allow through
+    return NextResponse.next();
   }
 }
 

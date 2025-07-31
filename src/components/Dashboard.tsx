@@ -85,70 +85,14 @@ export default function Dashboard() {
 
   if (!session) {
     return (
-      <div className="p-4 max-w-md mx-auto">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-red-500">No session found. Please sign in.</p>
-          </CardContent>
-        </Card>
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
       </div>
     );
   }
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      {/* DEBUG INFO */}
-      <Card className="mb-6 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-sm text-blue-600">🐛 Debug Info</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-xs">
-          <div>
-            <strong>Session Status:</strong> {status}
-          </div>
-          <div>
-            <strong>Session User ID:</strong> {session?.user?.id || "null"}
-          </div>
-          <div>
-            <strong>Session User Name:</strong> {session?.user?.name || "null"}
-          </div>
-          <div>
-            <strong>Session Telegram ID:</strong>{" "}
-            {(session?.user as any)?.telegramId || "null"}
-          </div>
-          <div>
-            <strong>Global Checker ID:</strong> {checkerId || "null"}
-          </div>
-          <div>
-            <strong>Global Checker Name:</strong> {checkerName || "null"}
-          </div>
-          <div>
-            <strong>Global Telegram ID:</strong> {telegramId || "null"}
-          </div>
-          <div>
-            <strong>Dashboard Loading:</strong> {loading.toString()}
-          </div>
-          <div>
-            <strong>Dashboard Error:</strong> {error || "null"}
-          </div>
-          <div>
-            <strong>Dashboard Data:</strong> {dashboardData ? "loaded" : "null"}
-          </div>
-          <div>
-            <strong>Telegram WebApp Available:</strong>{" "}
-            {typeof window !== "undefined" && window.Telegram?.WebApp
-              ? "yes"
-              : "no"}
-          </div>
-          <div>
-            <strong>InitData Present:</strong>{" "}
-            {typeof window !== "undefined" && window.Telegram?.WebApp?.initData
-              ? "yes"
-              : "no"}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* MAIN DASHBOARD CONTENT */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[200px]">
