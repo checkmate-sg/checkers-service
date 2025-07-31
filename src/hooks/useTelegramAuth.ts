@@ -9,7 +9,7 @@ import { useUser } from "@/contexts/UserContext";
 export function useTelegramAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { setCheckerDetails } = useUser();
 
@@ -131,8 +131,13 @@ export function useTelegramAuth() {
               () => router.push("/unauthorized"),
               3000
             );
+          } else {
+            // Force session refresh after successful sign in
+            console.log("[Auth] Sign in successful, forcing session update");
+            setTimeout(() => {
+              update();
+            }, 500);
           }
-          // If result.ok is true, we wait for the session to update in the next effect run
         })
         .catch((err) => {
           console.error("[Auth] Sign in error:", err);
