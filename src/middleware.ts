@@ -30,26 +30,40 @@ export async function middleware(request: NextRequest) {
   console.log(`[Middleware] Protected route detected: ${pathname}`);
 
   try {
-    // Get the session token
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: "__Secure-next-auth.session-token",
-    });
+    // Make a request to your session API to get the current session
+    // This will go through NextAuth's session callback which validates against DB
+    const sessionResponse = await fetch(
+      new URL("/api/auth/session", request.url),
+      {
+        headers: {
+          cookie: request.headers.get("cookie") || "",
+        },
+      }
+    );
 
-    console.log(`[Middleware] Token exists: ${!!token}`);
+    const session = await sessionResponse.json();
 
-    // If no token, redirect to unauthorized
-    if (!token) {
-      console.log(`[Middleware] No token, redirecting to unauthorized`);
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    console.log(`[Middleware] Session check result:`, !!session?.user);
+
+    // If no valid session (NextAuth returns empty object if invalid), redirect
+    if (!session?.user) {
+      console.log(`[Middleware] No valid session, redirecting to unauthorized`);
+
+      // Clear cookies and redirect
+      const response = NextResponse.redirect(
+        new URL("/unauthorized", request.url)
+      );
+      response.cookies.delete("__Secure-next-auth.session-token");
+      response.cookies.delete("next-auth.session-token");
+
+      return response;
     }
 
-    // Token exists, allow access
-    console.log(`[Middleware] Token found, allowing access`);
+    // Valid session exists, allow access
+    console.log(`[Middleware] Valid session found, allowing access`);
     return NextResponse.next();
   } catch (error) {
-    console.error(`[Middleware] Error checking authentication:`, error);
+    console.error(`[Middleware] Error checking session:`, error);
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 }
