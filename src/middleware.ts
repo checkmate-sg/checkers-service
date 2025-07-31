@@ -8,70 +8,63 @@ export async function middleware(request: NextRequest) {
 
   console.log(`[Middleware] Checking path: ${pathname}`);
 
+  // Define protected routes that require authentication
+  const protectedRoutes = [
+    "/dashboard",
+    "/leaderboard",
+    "/my-votes",
+    "/vote",
+    "/votepage",
+  ];
+
+  // Check if current path is a protected route
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // If not a protected route, allow access
+  if (!isProtectedRoute) {
+    return NextResponse.next();
+  }
+
+  console.log(`[Middleware] Protected route detected: ${pathname}`);
+
   try {
-    // Get the session token
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    console.log(`[Middleware] Token exists: ${!!token}`);
-
-    // Define protected routes that require authentication
-    const protectedRoutes = [
-      "/dashboard",
-      "/leaderboard",
-      "/my-votes",
-      "/vote",
-    ];
-    const isProtectedRoute = protectedRoutes.some((route) =>
-      pathname.startsWith(route)
+    // Make a request to your session API to get the current session
+    // This will go through NextAuth's session callback which validates against DB
+    const sessionResponse = await fetch(
+      new URL("/api/auth/session", request.url),
+      {
+        headers: {
+          cookie: request.headers.get("cookie") || "",
+        },
+      }
     );
 
-    console.log(`[Middleware] Is protected route: ${isProtectedRoute}`);
+    const session = await sessionResponse.json();
 
-    // If accessing a protected route without a valid session
-    if (isProtectedRoute && !token) {
-      console.log(`[Middleware] Redirecting to home - no valid session`);
-      return NextResponse.redirect(new URL("/", request.url));
+    console.log(`[Middleware] Session check result:`, !!session?.user);
+
+    // If no valid session (NextAuth returns empty object if invalid), redirect
+    if (!session?.user) {
+      console.log(`[Middleware] No valid session, redirecting to unauthorized`);
+
+      // Clear cookies and redirect
+      const response = NextResponse.redirect(
+        new URL("/unauthorized", request.url)
+      );
+      response.cookies.delete("__Secure-next-auth.session-token");
+      response.cookies.delete("next-auth.session-token");
+
+      return response;
     }
 
-    // If accessing root with a valid session, redirect to dashboard
-    if (pathname === "/" && token) {
-      console.log(`[Middleware] Redirecting to dashboard - user authenticated`);
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-
-    // Allow access to unauthorized page regardless of auth status
-    if (pathname === "/unauthorized") {
-      console.log(`[Middleware] Allowing access to unauthorized page`);
-      return NextResponse.next();
-    }
-
-    console.log(`[Middleware] Allowing request to proceed`);
+    // Valid session exists, allow access
+    console.log(`[Middleware] Valid session found, allowing access`);
     return NextResponse.next();
   } catch (error) {
-    console.error(`[Middleware] Error checking authentication:`, error);
-
-    // If there's an error checking auth and it's a protected route, redirect to home
-    const protectedRoutes = [
-      "/dashboard",
-      "/leaderboard",
-      "/my-votes",
-      "/vote",
-    ];
-    const isProtectedRoute = protectedRoutes.some((route) =>
-      pathname.startsWith(route)
-    );
-
-    if (isProtectedRoute) {
-      console.log(
-        `[Middleware] Error occurred, redirecting protected route to home`
-      );
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    return NextResponse.next();
+    console.error(`[Middleware] Error checking session:`, error);
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 }
 
