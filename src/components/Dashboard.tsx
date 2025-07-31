@@ -169,7 +169,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-checkmate-text mb-2">
               Check<span className="text-checkmate-primary">Mate</span>
             </h1>
-            <p className="text-gray-600">Fighting LOLLIPOP together</p>
+            <p className="text-gray-600">Fighting Misinformation together</p>
             <p className="text-sm text-gray-500 mt-1">
               Welcome back, {dashboardData.userData.name}!
             </p>
