@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 
@@ -41,6 +41,10 @@ export function useTelegramAuth() {
       "UserDetailsSet:",
       userDetailsSet.current
     );
+
+    console.log("[Auth] forced sign out");
+
+    signOut({ redirect: false }); // Clear any existing session
 
     // Log session details if available
     if (session) {
