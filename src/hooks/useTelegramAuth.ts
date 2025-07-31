@@ -9,57 +9,89 @@ import { useUser } from "@/contexts/UserContext";
 export function useTelegramAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [authStep, setAuthStep] = useState<
+    "initial" | "signed-out" | "authenticating" | "complete"
+  >("initial");
 
   const { data: session, status, update } = useSession();
   const router = useRouter();
-  const { setCheckerDetails } = useUser();
+  const { setCheckerDetails, clearCheckerDetails } = useUser();
 
   useEffect(() => {
-    // Only run once when component mounts
-    if (hasInitialized || status === "loading") {
+    if (status === "loading") {
       return;
     }
 
-    const initializeAuth = async () => {
-      setHasInitialized(true);
-
+    const handleAuth = async () => {
       try {
-        console.log("[Auth] Starting fresh authentication flow...");
-
-        // Step 1: Clear any existing session
-        await signOut({ redirect: false });
-
-        // Step 2: Check Telegram WebApp context
-        const isTelegramWebApp =
-          typeof window !== "undefined" && window.Telegram?.WebApp;
-
-        if (!isTelegramWebApp) {
-          throw new Error("This app must be opened from Telegram");
+        // Step 1: Initial state - sign out existing session
+        if (authStep === "initial") {
+          console.log("[Auth] Starting fresh authentication - signing out...");
+          clearCheckerDetails(); // Clear user context immediately
+          setAuthStep("signed-out");
+          await signOut({ redirect: false });
+          return;
         }
 
-        const initData = window.Telegram.WebApp.initData;
+        // Step 2: After sign out, start fresh authentication
+        if (authStep === "signed-out" && !session) {
+          console.log("[Auth] Session cleared, starting Telegram auth...");
 
-        if (!initData) {
-          throw new Error("No Telegram authentication data found");
+          // Check Telegram WebApp context
+          const isTelegramWebApp =
+            typeof window !== "undefined" && window.Telegram?.WebApp;
+
+          if (!isTelegramWebApp) {
+            throw new Error("This app must be opened from Telegram");
+          }
+
+          const initData = window.Telegram.WebApp.initData;
+
+          if (!initData) {
+            throw new Error("No Telegram authentication data found");
+          }
+
+          setAuthStep("authenticating");
+
+          // Sign in with Telegram
+          const result = await signIn("telegram", {
+            redirect: false,
+            initData: initData,
+          });
+
+          if (result?.error || !result?.ok) {
+            throw new Error(result?.error || "Authentication failed");
+          }
+
+          console.log("[Auth] Sign in successful, waiting for session...");
+          return;
         }
 
-        // Step 3: Sign in with Telegram
-        const result = await signIn("telegram", {
-          redirect: false,
-          initData: initData,
-        });
+        // Step 3: Session established after authentication
+        if (authStep === "authenticating" && session) {
+          console.log("[Auth] New session established, updating user details");
 
-        if (result?.error || !result?.ok) {
-          throw new Error(result?.error || "Authentication failed");
+          // Force a fresh session update to ensure we have latest DB data
+          await update();
+
+          setAuthStep("complete");
+          return;
         }
 
-        console.log(
-          "[Auth] Authentication successful - forcing session refresh"
-        );
+        // Step 4: Complete - set user details
+        if (authStep === "complete" && session) {
+          console.log("[Auth] Setting user details from fresh session");
 
-        // Force session refresh to get latest data from database
-        await update();
+          setCheckerDetails((current) => ({
+            ...current,
+            checkerId: session.user.id,
+            checkerName: session.user.name || "Unknown",
+            telegramId: (session.user as any).telegramId,
+          }));
+
+          setIsLoading(false);
+          setError(null);
+        }
       } catch (err) {
         console.error("[Auth] Authentication error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
@@ -70,30 +102,40 @@ export function useTelegramAuth() {
       }
     };
 
-    initializeAuth();
-  }, [status, hasInitialized, router]);
+    handleAuth();
+  }, [
+    session,
+    status,
+    authStep,
+    setCheckerDetails,
+    clearCheckerDetails,
+    router,
+    update,
+  ]);
 
-  // Handle successful session
+  // Debug logging
   useEffect(() => {
-    if (session && hasInitialized) {
-      console.log("[Auth] Session established, setting user details");
-
-      setCheckerDetails((current) => ({
-        ...current,
-        checkerId: session.user.id,
-        checkerName: session.user.name || "Unknown",
-        telegramId: (session.user as any).telegramId,
-      }));
-
-      setIsLoading(false);
-      setError(null);
+    console.log(
+      "[Auth Debug] Step:",
+      authStep,
+      "Session:",
+      !!session,
+      "Status:",
+      status
+    );
+    if (session) {
+      console.log("[Auth Debug] Session details:", {
+        id: session.user?.id,
+        name: session.user?.name,
+        telegramId: (session.user as any)?.telegramId,
+      });
     }
-  }, [session, hasInitialized, setCheckerDetails]);
+  }, [authStep, session, status]);
 
   return {
     isLoading,
     error,
     session,
-    isAuthenticated: !!session,
+    isAuthenticated: !!session && authStep === "complete",
   };
 }
