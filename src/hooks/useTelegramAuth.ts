@@ -11,7 +11,7 @@ export function useTelegramAuth() {
   const [error, setError] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { setCheckerDetails } = useUser();
 
@@ -54,7 +54,12 @@ export function useTelegramAuth() {
           throw new Error(result?.error || "Authentication failed");
         }
 
-        console.log("[Auth] Authentication successful");
+        console.log(
+          "[Auth] Authentication successful - forcing session refresh"
+        );
+
+        // Force session refresh to get latest data from database
+        await update();
       } catch (err) {
         console.error("[Auth] Authentication error:", err);
         setError(err instanceof Error ? err.message : "Authentication failed");
