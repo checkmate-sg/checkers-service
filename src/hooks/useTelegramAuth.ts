@@ -9,7 +9,7 @@ import { useUser } from "@/contexts/UserContext";
 export function useTelegramAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { setCheckerDetails } = useUser();
 
@@ -19,6 +19,7 @@ export function useTelegramAuth() {
   const userDetailsSet = useRef(false);
   const redirectTimeout = useRef<NodeJS.Timeout>();
   const hasSignedOut = useRef(false);
+  const isCleaningUp = useRef(false);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -28,6 +29,38 @@ export function useTelegramAuth() {
       }
     };
   }, []);
+
+  // Reset function to clear all state and restart authentication
+  const resetAndReauth = async () => {
+    if (isCleaningUp.current) return;
+
+    console.log("[Auth] Resetting authentication state");
+    isCleaningUp.current = true;
+
+    // Reset all refs
+    hasAttemptedAuth.current = false;
+    isAuthenticating.current = false;
+    userDetailsSet.current = false;
+    hasSignedOut.current = false;
+
+    // Clear any existing session
+    try {
+      await signOut({
+        redirect: false,
+        callbackUrl: window.location.href,
+      });
+      console.log("[Auth] Session cleared successfully");
+    } catch (err) {
+      console.error("[Auth] Error clearing session:", err);
+    }
+
+    // Small delay to ensure session is cleared
+    setTimeout(() => {
+      isCleaningUp.current = false;
+      // Force session update
+      update();
+    }, 100);
+  };
 
   useEffect(() => {
     console.log(
@@ -42,8 +75,16 @@ export function useTelegramAuth() {
       "UserDetailsSet:",
       userDetailsSet.current,
       "HasSignedOut:",
-      hasSignedOut.current
+      hasSignedOut.current,
+      "IsCleaningUp:",
+      isCleaningUp.current
     );
+
+    // Don't proceed if we're cleaning up
+    if (isCleaningUp.current) {
+      console.log("[Auth] Currently cleaning up, waiting...");
+      return;
+    }
 
     // Still loading NextAuth
     if (status === "loading") {
@@ -51,25 +92,36 @@ export function useTelegramAuth() {
       return;
     }
 
-    // Step 1: Clear any existing session first (only once)
-    if (session && !hasSignedOut.current) {
+    // If we have a session but haven't cleared it for re-auth, clear it first
+    if (session && !hasSignedOut.current && !userDetailsSet.current) {
       console.log("[Auth] Clearing existing session before re-authentication");
-      hasSignedOut.current = true;
-      signOut({ redirect: false });
-      return; // Exit and wait for the session to be cleared
+      resetAndReauth();
+      return;
     }
 
-    // Step 2: We have a fresh session after successful authentication
-    if (session && hasSignedOut.current && !userDetailsSet.current) {
-      console.log(
-        "[Auth] Fresh session found after re-authentication, setting user details"
-      );
+    // We have a fresh session after successful authentication
+    if (
+      session &&
+      hasSignedOut.current &&
+      !userDetailsSet.current &&
+      !isAuthenticating.current
+    ) {
+      console.log("[Auth] Fresh session found, setting user details");
+
+      // Log session details
+      console.log("[Auth] Session details:", {
+        id: session.user?.id,
+        name: session.user?.name,
+        telegramId: (session.user as any)?.telegramId,
+      });
+
       setCheckerDetails((current) => ({
         ...current,
         checkerId: session.user.id,
         checkerName: session.user.name || "Unknown",
         telegramId: (session.user as any).telegramId,
       }));
+
       userDetailsSet.current = true;
       setIsLoading(false);
       setError(null);
@@ -78,6 +130,7 @@ export function useTelegramAuth() {
 
     // If we already have a session and details are set, we're done
     if (session && userDetailsSet.current) {
+      console.log("[Auth] Already authenticated and details set");
       setIsLoading(false);
       return;
     }
@@ -88,9 +141,14 @@ export function useTelegramAuth() {
       return;
     }
 
-    // Step 3: No session and we haven't tried to authenticate yet (or session was cleared)
-    if (!session && !hasAttemptedAuth.current && !isAuthenticating.current) {
-      console.log("[Auth] No session, checking for Telegram WebApp context");
+    // No session and we haven't tried to authenticate yet (after clearing)
+    if (
+      !session &&
+      hasSignedOut.current &&
+      !hasAttemptedAuth.current &&
+      !isAuthenticating.current
+    ) {
+      console.log("[Auth] Starting fresh authentication attempt");
 
       // Check if we're in a Telegram WebApp environment
       const isTelegramWebApp =
@@ -132,10 +190,12 @@ export function useTelegramAuth() {
       console.log("[Auth] Starting Telegram authentication...");
       hasAttemptedAuth.current = true;
       isAuthenticating.current = true;
+      setError(null);
 
       signIn("telegram", {
         redirect: false,
         initData: initData,
+        callbackUrl: window.location.href,
       })
         .then((result) => {
           console.log("[Auth] Sign in result:", result);
@@ -153,7 +213,8 @@ export function useTelegramAuth() {
             console.log(
               "[Auth] Sign in successful, waiting for session update"
             );
-            // Don't set loading to false here - wait for session to update
+            // Force session update
+            update();
           } else {
             console.warn("[Auth] Unexpected sign in result:", result);
             setError("Unexpected authentication result");
@@ -178,29 +239,38 @@ export function useTelegramAuth() {
       return;
     }
 
-    // No session and we already tried - authentication failed
+    // No session and we already tried - authentication might have failed
     if (
       !session &&
       hasAttemptedAuth.current &&
       !isAuthenticating.current &&
       hasSignedOut.current
     ) {
-      console.log("[Auth] No session after auth attempt");
-      if (!error) {
-        setError("Authentication failed - please try again");
-        setIsLoading(false);
+      console.log("[Auth] No session after auth attempt, checking for failure");
 
+      // Give it a moment for the session to potentially update
+      if (!redirectTimeout.current) {
         redirectTimeout.current = setTimeout(() => {
-          router.push("/unauthorized");
-        }, 3000);
+          if (!session && !error) {
+            console.log("[Auth] Authentication appears to have failed");
+            setError("Authentication failed - please try again");
+            setIsLoading(false);
+
+            // Redirect to unauthorized after showing error
+            setTimeout(() => {
+              router.push("/unauthorized");
+            }, 3000);
+          }
+        }, 2000); // Wait 2 seconds for session to potentially arrive
       }
     }
-  }, [session, status, setCheckerDetails, router, error]);
+  }, [session, status, setCheckerDetails, router, error, update]);
 
   return {
     isLoading,
     error,
     session,
     isAuthenticated: !!session && userDetailsSet.current,
+    resetAuth: resetAndReauth, // Expose reset function if needed
   };
 }
