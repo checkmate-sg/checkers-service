@@ -89,7 +89,7 @@ export function useTelegramAuth() {
       setIsLoading(false);
       setError(null);
     }
-  }, [session, setCheckerDetails, router, update]);
+  }, []);
 
   return {
     isLoading,
