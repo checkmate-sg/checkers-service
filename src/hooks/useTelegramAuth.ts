@@ -18,6 +18,7 @@ export function useTelegramAuth() {
   const isAuthenticating = useRef(false);
   const userDetailsSet = useRef(false);
   const redirectTimeout = useRef<NodeJS.Timeout>();
+  const hasSignedOut = useRef(false);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -39,21 +40,10 @@ export function useTelegramAuth() {
       "IsAuthenticating:",
       isAuthenticating.current,
       "UserDetailsSet:",
-      userDetailsSet.current
+      userDetailsSet.current,
+      "HasSignedOut:",
+      hasSignedOut.current
     );
-
-    console.log("[Auth] forced sign out");
-
-    signOut({ redirect: false }); // Clear any existing session
-
-    // Log session details if available
-    if (session) {
-      console.log("[Auth] Session details:", {
-        id: session.user?.id,
-        name: session.user?.name,
-        telegramId: (session.user as any)?.telegramId,
-      });
-    }
 
     // Still loading NextAuth
     if (status === "loading") {
@@ -61,9 +51,19 @@ export function useTelegramAuth() {
       return;
     }
 
-    // We have a session - set user details once and we're done
-    if (session && !userDetailsSet.current) {
-      console.log("[Auth] Session found, setting user details");
+    // Step 1: Clear any existing session first (only once)
+    if (session && !hasSignedOut.current) {
+      console.log("[Auth] Clearing existing session before re-authentication");
+      hasSignedOut.current = true;
+      signOut({ redirect: false });
+      return; // Exit and wait for the session to be cleared
+    }
+
+    // Step 2: We have a fresh session after successful authentication
+    if (session && hasSignedOut.current && !userDetailsSet.current) {
+      console.log(
+        "[Auth] Fresh session found after re-authentication, setting user details"
+      );
       setCheckerDetails((current) => ({
         ...current,
         checkerId: session.user.id,
@@ -76,7 +76,7 @@ export function useTelegramAuth() {
       return;
     }
 
-    // If we already have a session and details are set, don't do anything
+    // If we already have a session and details are set, we're done
     if (session && userDetailsSet.current) {
       setIsLoading(false);
       return;
@@ -88,7 +88,7 @@ export function useTelegramAuth() {
       return;
     }
 
-    // No session and we haven't tried to authenticate yet
+    // Step 3: No session and we haven't tried to authenticate yet (or session was cleared)
     if (!session && !hasAttemptedAuth.current && !isAuthenticating.current) {
       console.log("[Auth] No session, checking for Telegram WebApp context");
 
@@ -179,7 +179,12 @@ export function useTelegramAuth() {
     }
 
     // No session and we already tried - authentication failed
-    if (!session && hasAttemptedAuth.current && !isAuthenticating.current) {
+    if (
+      !session &&
+      hasAttemptedAuth.current &&
+      !isAuthenticating.current &&
+      hasSignedOut.current
+    ) {
       console.log("[Auth] No session after auth attempt");
       if (!error) {
         setError("Authentication failed - please try again");
