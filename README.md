@@ -34,6 +34,8 @@ npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
+
+Run the webhook setup: npm run setup-webhook
 ```
 
 **Edit a file directly in GitHub**
@@ -86,7 +88,7 @@ This project is built with:
 - In the dropdown to the right of Text, select JSON.
 - Follow the submissions below
 
-POST http://localhost:3000/api/votes/webhook
+POST <replace this with the link it is hosted on>/api/votes/webhook
 
 Example body for submission:
 {
