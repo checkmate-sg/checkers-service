@@ -20,9 +20,16 @@ export default function RootLayout({ children }: LayoutProps) {
 
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
           <Providers>
-            <UserProvider>{children}</UserProvider>
+            <UserProvider>
+              {/* Main content area with bottom padding to prevent overlap */}
+              <main className="flex-1 pb-20 overflow-y-auto">{children}</main>
+            </UserProvider>
           </Providers>
-          <BottomNavigation />
+
+          {/* Fixed bottom navigation */}
+          <div className="fixed bottom-0 left-0 right-0 z-50">
+            <BottomNavigation />
+          </div>
         </div>
       </body>
     </html>

@@ -35,19 +35,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -97,5 +90,34 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Ensure bottom navigation doesn't interfere with content */
+@layer components {
+  .page-content {
+    @apply pb-20; /* Add padding bottom to prevent content being hidden */
+  }
+
+  .dashboard-content {
+    @apply pb-0; /* Remove bottom padding for dashboard since it has sidebar */
+  }
+}
+
+/* Fix for Telegram Mini App viewport */
+@layer base {
+  html,
+  body {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    overflow-x: hidden;
+  }
+
+  /* Ensure proper scrolling on mobile */
+  .main-content {
+    height: calc(100vh - 5rem); /* Subtract bottom nav height */
+    height: calc(100dvh - 5rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
 }
