@@ -40,7 +40,7 @@ const VotePage = () => {
   const [userPreviousVote, setUserPreviousVote] = useState(null);
 
   const { data: session, status } = useSession();
-  const checkerId = (session.user as any).id;
+  const checkerId = session?.user?.id;
 
   // Fetch vote data from MongoDB
   useEffect(() => {
