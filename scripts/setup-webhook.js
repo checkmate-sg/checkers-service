@@ -1,5 +1,7 @@
-const TelegramBot = require("node-telegram-bot-api");
-require("dotenv").config({ path: ".env.local" });
+import TelegramBot from "node-telegram-bot-api";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
 
