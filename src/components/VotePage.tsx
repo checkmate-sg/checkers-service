@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CategoryTooltip from "@/components/CategoryTooltip";
+import { useSession } from "next-auth/react";
 
 const VotePage = () => {
   const params = useParams();
@@ -38,8 +39,8 @@ const VotePage = () => {
   const [isVoteCompleted, setIsVoteCompleted] = useState(false);
   const [userPreviousVote, setUserPreviousVote] = useState(null);
 
-  // Hardcoded checker ID
-  const checkerId = "665eaaaa0000000000000001";
+  const { data: session, status } = useSession();
+  const checkerId = session?.user?.id;
 
   // Fetch vote data from MongoDB
   useEffect(() => {

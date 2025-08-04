@@ -2,17 +2,110 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { connectToDB } from "@/lib/mongodb";
+import { getToken } from "next-auth/jwt";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("[Votes API] Starting votes data fetch");
+    console.log("[Votes API] Request headers:", {
+      cookie: request.headers.get("cookie"),
+      userAgent: request.headers.get("user-agent"),
+      referer: request.headers.get("referer"),
+    });
+
+    // Try multiple ways to get the token for Telegram WebApp compatibility
+    let token;
+
+    // First try: standard getToken
+    try {
+      token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      console.log("[Votes API] Standard getToken result:", !!token);
+    } catch (error) {
+      console.log("[Votes API] Standard getToken failed:", error);
+    }
+
+    // Second try: getToken with different cookie names for Telegram WebApp
+    if (!token) {
+      try {
+        token = await getToken({
+          req: request,
+          secret: process.env.NEXTAUTH_SECRET,
+          cookieName: "__Secure-next-auth.session-token",
+        });
+        console.log("[Votes API] Secure cookie getToken result:", !!token);
+      } catch (error) {
+        console.log("[Votes API] Secure cookie getToken failed:", error);
+      }
+    }
+
+    // Third try: non-secure cookie name for development
+    if (!token) {
+      try {
+        token = await getToken({
+          req: request,
+          secret: process.env.NEXTAUTH_SECRET,
+          cookieName: "next-auth.session-token",
+        });
+        console.log("[Votes API] Non-secure cookie getToken result:", !!token);
+      } catch (error) {
+        console.log("[Votes API] Non-secure cookie getToken failed:", error);
+      }
+    }
+
+    // Fourth try: manual cookie parsing as fallback
+    if (!token) {
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        console.log("[Votes API] Attempting manual cookie parsing");
+        console.log("[Votes API] Available cookies:", cookieHeader);
+
+        // Look for session tokens in cookies
+        const sessionTokenMatch = cookieHeader.match(
+          /(?:__Secure-)?next-auth\.session-token=([^;]+)/
+        );
+        if (sessionTokenMatch) {
+          console.log(
+            "[Votes API] Found session token in cookies, but getToken still failed"
+          );
+        }
+      }
+    }
+
+    if (!token) {
+      console.log("[Votes API] No valid session found after all attempts");
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          debug: {
+            hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+            cookieHeader:
+              request.headers.get("cookie")?.substring(0, 100) + "...",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log("[Votes API] Session found for user:", {
+      id: token.id,
+      telegramId: token.telegramId,
+      name: token.name,
+    });
+
     const db = await connectToDB();
     const votes = db.collection("votes");
 
-    // For now, hardcode the checker ID - you'll want to get this from session/auth later
-    const checkerId = "665eaaaa0000000000000001";
+    // Use the actual user ID from the session
+    const checkerId = token.id;
+    console.log("[Votes API] Looking up votes for checker ID:", checkerId);
 
     // Get all votes and check if this checker has voted on each one
     const allVotes = await votes.find({}).toArray();
+
+    console.log("[Votes API] Found", allVotes.length, "total votes");
 
     // Transform votes into the format needed for My Votes page
     const myVotes = allVotes.map((vote) => {
@@ -35,9 +128,20 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Count votes where this user participated
+    const votedCount = myVotes.filter((vote) => vote.myVote !== null).length;
+    console.log(
+      "[Votes API] User has voted on",
+      votedCount,
+      "out of",
+      myVotes.length,
+      "votes"
+    );
+
+    console.log("[Votes API] Returning", myVotes.length, "votes for user");
     return NextResponse.json(myVotes);
   } catch (error) {
-    console.error("Error fetching votes:", error);
+    console.error("[Votes API] Error fetching votes:", error);
     return NextResponse.json(
       { error: "Failed to fetch votes" },
       { status: 500 }
