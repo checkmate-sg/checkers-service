@@ -188,7 +188,7 @@ async function handleStartCommand(
             [
               {
                 text: "Checker's Portal",
-                web_app: { url: `${process.env.CHECKER_APP_HOST}/` },
+                web_app: { url: `${process.env.NEXTAUTH_URL}/` },
               },
             ],
           ],
@@ -227,7 +227,7 @@ async function handleOnboardCommand(
               [
                 {
                   text: "Checker's Portal",
-                  web_app: { url: `${process.env.CHECKER_APP_HOST}/` },
+                  web_app: { url: `${process.env.NEXTAUTH_URL}/` },
                 },
                 {
                   text: "Go through onboarding again",
@@ -793,7 +793,7 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
             [
               {
                 text: "🚀 Open Checker's Portal",
-                web_app: { url: `${process.env.CHECKER_APP_HOST}/` },
+                web_app: { url: `${process.env.NEXTAUTH_URL}/` },
               },
             ],
             [
