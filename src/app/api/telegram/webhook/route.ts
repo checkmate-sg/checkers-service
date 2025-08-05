@@ -198,107 +198,14 @@ async function handleOnboardCommand(
   telegramId: string,
   telegramUsername: string | null
 ) {
-  let existingUser = await findUserByTelegramID(telegramId);
-  let currentStep = "name";
+  // Check if user already exists in database
+  const db = await connectToDB();
+  const checkers = db.collection("checkers");
+  const existingUser = await checkers.findOne({ telegramId });
 
-  if (!existingUser) {
-    // Create new user
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-
-    const userData = {
-      name: null,
-      telegramUsername: telegramUsername,
-      type: "human",
-      isActive: false,
-      lastActivatedDate: null,
-      isOnboardingComplete: false,
-      onboardingTime: null,
-      isQuizComplete: false,
-      quizScore: null,
-      onboardingStatus: "name",
-      lastTrackedMessageId: null,
-      isAdmin: false,
-      singpassOpenId: null,
-      telegramId: telegramId,
-      // COMMENTED OUT: WhatsApp related fields - not needed for current implementation
-      // whatsappId: null,
-      phoneNumber: null,
-      voteWeight: 1,
-      level: 0,
-      experience: 0,
-      tier: "beginner",
-      numVoted: 0,
-      numReferred: 0,
-      numReported: 0,
-      numCorrectVotes: 0,
-      numNonUnsureVotes: 0,
-      numVerifiedLinks: 0,
-      preferredPlatform: "telegram",
-      lastVotedTimestamp: null,
-      getNameMessageId: null,
-      hasReceivedExtension: false,
-      hasCompletedProgram: false,
-      certificateUrl: null,
-      correctVotes: 0,
-      totalVotes: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      offboardingTime: null,
-      dailyAssignmentCount: 0,
-      isTester: false,
-      hasBlockedTelegramMessages: false,
-    };
-
-    await checkers.insertOne(userData);
-    // Refresh existingUser with the new data including all fields
-    existingUser = await findUserByTelegramID(telegramId);
-  }
-
-  // Get current step from database
   if (existingUser) {
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-    const fullUser = await checkers.findOne({ telegramId });
-    currentStep = fullUser?.onboardingStatus || "name";
-  }
-
-  // Handle different onboarding steps
-  switch (currentStep) {
-    case "name":
-      await sendNamePrompt(chatId, telegramId);
-      break;
-    case "number":
-      await sendNumberPrompt(chatId, telegramId);
-      break;
-    // COMMENTED OUT: OTP verification steps - not needed for current implementation
-    // case "otpSent":
-    // case "verify":
-    //   await sendOTPPrompt(chatId, telegramId, existingUser.whatsappId);
-    //   break;
-    case "quiz":
-      const db = await connectToDB();
-      const checkers = db.collection("checkers");
-      const fullUser = await checkers.findOne({ telegramId });
-      await sendQuizPrompt(
-        chatId,
-        telegramId,
-        fullUser?.name,
-        fullUser?.phoneNumber,
-        true
-      );
-      break;
-    // COMMENTED OUT: WhatsApp bot onboarding - not needed for current implementation
-    // case "onboardWhatsapp":
-    //   await sendWABotPrompt(chatId, telegramId, true);
-    //   break;
-    case "joinGroupChat":
-      await sendTGGroupPrompt(chatId, telegramId, true);
-      break;
-    case "nlb":
-      await sendNLBPrompt(chatId, telegramId);
-      break;
-    case "completed":
+    // User already exists, check if onboarding is complete
+    if (existingUser.isOnboardingComplete) {
       await bot.sendMessage(
         chatId,
         `Hi there! You have already onboarded as a CheckMate Checker. Do explore the Checker's Portal to check out what you can do. Otherwise if you would like to go through onboarding again, click on the respective button below.`,
@@ -319,8 +226,89 @@ async function handleOnboardCommand(
           },
         }
       );
-      break;
+      return NextResponse.json({ ok: true });
+    } else {
+      // User exists but onboarding not complete, continue from where they left off
+      const currentStep = existingUser.onboardingStatus || "name";
+
+      switch (currentStep) {
+        case "name":
+          await sendNamePrompt(chatId, telegramId);
+          break;
+        case "number":
+          await sendNumberPrompt(chatId, telegramId);
+          break;
+        case "quiz":
+          await sendQuizPrompt(
+            chatId,
+            telegramId,
+            existingUser.name,
+            existingUser.phoneNumber,
+            true
+          );
+          break;
+        case "joinGroupChat":
+          await sendTGGroupPrompt(chatId, telegramId, true);
+          break;
+        case "nlb":
+          await sendNLBPrompt(chatId, telegramId);
+          break;
+        default:
+          await sendNamePrompt(chatId, telegramId);
+      }
+      return NextResponse.json({ ok: true });
+    }
   }
+
+  // User doesn't exist, create new user and start onboarding
+  const userData = {
+    name: null,
+    telegramUsername: telegramUsername,
+    type: "human",
+    isActive: false,
+    lastActivatedDate: null,
+    isOnboardingComplete: false,
+    onboardingTime: null,
+    isQuizComplete: false,
+    quizScore: null,
+    onboardingStatus: "name",
+    lastTrackedMessageId: null,
+    isAdmin: false,
+    singpassOpenId: null,
+    telegramId: telegramId,
+    // COMMENTED OUT: WhatsApp related fields - not needed for current implementation
+    // whatsappId: null,
+    phoneNumber: null,
+    voteWeight: 1,
+    level: 0,
+    experience: 0,
+    tier: "beginner",
+    numVoted: 0,
+    numReferred: 0,
+    numReported: 0,
+    numCorrectVotes: 0,
+    numNonUnsureVotes: 0,
+    numVerifiedLinks: 0,
+    preferredPlatform: "telegram",
+    lastVotedTimestamp: null,
+    getNameMessageId: null,
+    hasReceivedExtension: false,
+    hasCompletedProgram: false,
+    certificateUrl: null,
+    correctVotes: 0,
+    totalVotes: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    offboardingTime: null,
+    dailyAssignmentCount: 0,
+    isTester: false,
+    hasBlockedTelegramMessages: false,
+  };
+
+  await checkers.insertOne(userData);
+
+  // Start onboarding with name prompt
+  await sendNamePrompt(chatId, telegramId);
 
   return NextResponse.json({ ok: true });
 }
@@ -472,27 +460,28 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   switch (action) {
     case "QUIZ_COMPLETED":
-      if (fullUser.isQuizComplete) {
-        // COMMENTED OUT: WhatsApp user checking - skip WhatsApp onboarding
-        // const isUser = await checkCheckerIsUser(user.whatsappId);
-        await bot.sendMessage(
-          chatId,
-          `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(
-            3
-          )}`
-        );
+      // COMMENTED OUT: Quiz completion check - skip for now to avoid loop
+      // if (fullUser.isQuizComplete) {
+      // COMMENTED OUT: WhatsApp user checking - skip WhatsApp onboarding
+      // const isUser = await checkCheckerIsUser(user.whatsappId);
+      await bot.sendMessage(
+        chatId,
+        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(
+          3
+        )}`
+      );
 
-        // MODIFIED: Skip WhatsApp onboarding, go directly to Telegram group
-        await sendTGGroupPrompt(chatId, telegramId, true);
-      } else {
-        await sendQuizPrompt(
-          chatId,
-          telegramId,
-          fullUser.name,
-          fullUser.phoneNumber,
-          false
-        );
-      }
+      // MODIFIED: Skip WhatsApp onboarding, go directly to Telegram group
+      await sendTGGroupPrompt(chatId, telegramId, true);
+      // } else {
+      //   await sendQuizPrompt(
+      //     chatId,
+      //     telegramId,
+      //     fullUser.name,
+      //     fullUser.phoneNumber,
+      //     false
+      //   );
+      // }
       break;
 
     // COMMENTED OUT: WhatsApp bot completion - not needed for current implementation
