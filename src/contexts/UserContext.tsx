@@ -6,6 +6,7 @@ interface CheckerDetails {
   checkerId: string | null;
   checkerName: string | null;
   telegramId: string | null;
+  isOnboardingComplete: boolean | null;
 }
 
 interface UserContextType extends CheckerDetails {
@@ -22,6 +23,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     checkerId: null,
     checkerName: null,
     telegramId: null,
+    isOnboardingComplete: null,
   });
 
   const setCheckerDetails = (
@@ -35,6 +37,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       checkerId: null,
       checkerName: null,
       telegramId: null,
+      isOnboardingComplete: null,
     });
   };
 

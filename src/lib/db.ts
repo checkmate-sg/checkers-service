@@ -32,11 +32,11 @@ export async function findUserByTelegramID(telegramId: string) {
       phoneNumber: checker.phoneNumber || null,
       correctVotes: checker.correctVotes || 0,
       totalVotes: checker.totalVotes || 0,
-      // Calculate accuracy percentage
       accuracy:
         checker.totalVotes > 0
           ? Math.round((checker.correctVotes / checker.totalVotes) * 100)
           : 0,
+      isOnboardingComplete: checker.isOnboardingComplete || false,
     };
 
     console.log("[DB] ✅ Returning processed result:", result);
