@@ -143,5 +143,5 @@ Expected response:
 - Onboarding whatsapp bot link is not an actual link.
 - Onboarding does not check if user has completed quiz, does not verify otp. In the code file, everything the current bot does for onboarding that this new bot cannot do, is being commented out.
 - Most of the variables stored for a checker is not being used in current logic except those present in the seeded checkers.
-- Leaderboard score calculation does not follow current checkers webapp rules.
+- Leaderboard score calculation does not follow current checkers webapp rules. It also does not show current placement of checker.
 - Integration with AI responses, whatsapp messages. Api to receive this messages is exposed via the postman link
