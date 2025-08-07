@@ -12,24 +12,80 @@ interface VoteData {
   aiRating: string;
   comment: string;
   votedAt: string;
+  veracityScore?: number; // New field for News/Info/Opinion
+  sourceCredibility?: string; // New field for No Verifiable Content
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { voteId: string } }
+  { params }: { params: { voteid: string } }
 ) {
   try {
-    const voteId = params.voteId;
+    const voteId = params.voteid; // Note: using voteid to match your route structure
     const body = await request.json();
 
     // Validate required fields
-    const { category, tags, aiRating, comment, checkerId } = body;
+    const {
+      category,
+      tags,
+      aiRating,
+      comment,
+      checkerId,
+      veracityScore,
+      sourceCredibility,
+    } = body;
 
     if (!category) {
       return NextResponse.json(
         { error: "Category is required" },
         { status: 400 }
       );
+    }
+
+    // Additional validation for News/Info/Opinion
+    if (category === "News/Info/Opinion") {
+      if (
+        veracityScore === undefined ||
+        veracityScore === null ||
+        veracityScore === ""
+      ) {
+        return NextResponse.json(
+          {
+            error: "Veracity score is required for News/Info/Opinion category",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Validate veracity score range
+      const score = parseInt(veracityScore);
+      if (isNaN(score) || score < 0 || score > 5) {
+        return NextResponse.json(
+          { error: "Veracity score must be between 0 and 5" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Additional validation for No Verifiable Content
+    if (category === "No Verifiable Content") {
+      if (!sourceCredibility) {
+        return NextResponse.json(
+          {
+            error:
+              "Source credibility assessment is required for No Verifiable Content category",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Validate source credibility options
+      if (!["Yes", "Cannot tell"].includes(sourceCredibility)) {
+        return NextResponse.json(
+          { error: "Invalid source credibility value" },
+          { status: 400 }
+        );
+      }
     }
 
     if (!aiRating) {
@@ -85,6 +141,15 @@ export async function POST(
       votedAt: new Date().toISOString(),
     };
 
+    // Add conditional fields based on category
+    if (category === "News/Info/Opinion" && veracityScore !== undefined) {
+      voteData.veracityScore = parseInt(veracityScore);
+    }
+
+    if (category === "No Verifiable Content" && sourceCredibility) {
+      voteData.sourceCredibility = String(sourceCredibility);
+    }
+
     // Check if user has already voted
     const existingUserVoteIndex = existingVote.votes?.findIndex(
       (vote: any) => vote.checkerId === checkerId
@@ -105,15 +170,12 @@ export async function POST(
         }
       );
     } else {
-      // Add new vote - MongoDB should accept this since votes is an array in the DB
-      result = await votes.updateOne(
-        { _id: new ObjectId(voteId) },
-        {
-          $push: {
-            votes: voteData,
-          },
-        } as any // Apply type assertion to the entire update operation
-      );
+      // Add new vote
+      result = await votes.updateOne({ _id: new ObjectId(voteId) }, {
+        $push: {
+          votes: voteData,
+        },
+      } as any);
     }
 
     if (result.matchedCount === 0) {
