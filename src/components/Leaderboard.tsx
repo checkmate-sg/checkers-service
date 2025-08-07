@@ -147,7 +147,20 @@ const Leaderboard = () => {
   }
 
   const top3 = leaderboardData.slice(0, 3);
-  const remainingEntries = leaderboardData.slice(3);
+  const currentUser = leaderboardData.find((user) => user.isCurrentUser);
+  const isCurrentUserInTop3 = currentUser && currentUser.rank <= 3;
+
+  // For the full rankings display, show top 3 + current user if not in top 3
+  const getDisplayEntries = () => {
+    if (isCurrentUserInTop3 || !currentUser) {
+      return leaderboardData;
+    }
+
+    // Show top 3, then separator, then current user
+    return [...top3, currentUser];
+  };
+
+  const displayEntries = getDisplayEntries();
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -243,66 +256,77 @@ const Leaderboard = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-0">
-              {leaderboardData.map((user) => (
-                <div
-                  key={user.rank}
-                  className={`p-4 border-b last:border-b-0 ${
-                    user.isCurrentUser
-                      ? "bg-checkmate-info"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Rank */}
-                    <div className="w-8 flex justify-center">
-                      {getRankIcon(user.rank)}
-                    </div>
+              {displayEntries.map((user, index) => (
+                <div key={user.rank}>
+                  {/* Show separator before current user if they're not in top 3 */}
+                  {!isCurrentUserInTop3 &&
+                    currentUser &&
+                    index === 3 &&
+                    user.isCurrentUser && (
+                      <div className="p-2 text-center border-b">
+                        <span className="text-gray-400 text-sm">...</span>
+                      </div>
+                    )}
 
-                    {/* Avatar */}
-                    <Avatar className="w-10 h-10">
-                      <AvatarFallback
-                        className={
-                          user.isCurrentUser
-                            ? "bg-checkmate-primary text-white"
-                            : ""
-                        }
-                      >
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
+                  <div
+                    className={`p-4 border-b last:border-b-0 ${
+                      user.isCurrentUser
+                        ? "bg-checkmate-info border-l-4 border-l-checkmate-primary"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Rank */}
+                      <div className="w-8 flex justify-center">
+                        {getRankIcon(user.rank)}
+                      </div>
 
-                    {/* User Info */}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-1">
-                        <span
-                          className={`font-medium text-sm ${
-                            user.isCurrentUser ? "text-checkmate-primary" : ""
-                          }`}
+                      {/* Avatar */}
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback
+                          className={
+                            user.isCurrentUser
+                              ? "bg-checkmate-primary text-white"
+                              : ""
+                          }
                         >
-                          {user.name} {user.isCurrentUser ? "(You)" : ""}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {user.points} pts
-                        </span>
-                      </div>
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
 
-                      <div className="flex justify-between items-center text-xs text-gray-600 mb-2">
-                        <span>{user.votes} votes</span>
-                        <span>{user.accuracy}% accuracy</span>
-                      </div>
-
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1">
-                        {user.badges.map((badge, index) => (
-                          <Badge
-                            key={index}
-                            className={`text-xs px-2 py-0 ${getBadgeColor(
-                              badge
-                            )}`}
+                      {/* User Info */}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <span
+                            className={`font-medium text-sm ${
+                              user.isCurrentUser ? "text-checkmate-primary" : ""
+                            }`}
                           >
-                            {badge}
-                          </Badge>
-                        ))}
+                            {user.name} {user.isCurrentUser ? "(You)" : ""}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {user.points} pts
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs text-gray-600 mb-2">
+                          <span>{user.votes} votes</span>
+                          <span>{user.accuracy}% accuracy</span>
+                        </div>
+
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-1">
+                          {user.badges.map((badge, badgeIndex) => (
+                            <Badge
+                              key={badgeIndex}
+                              className={`text-xs px-2 py-0 ${getBadgeColor(
+                                badge
+                              )}`}
+                            >
+                              {badge}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

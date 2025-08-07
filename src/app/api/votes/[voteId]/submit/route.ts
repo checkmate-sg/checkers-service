@@ -1,4 +1,4 @@
-// src/app/api/votes/[voteid]/submit/route.ts
+// src/app/api/votes/[voteId]/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { connectToDB } from "@/lib/mongodb";
@@ -18,10 +18,10 @@ interface VoteData {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { voteid: string } }
+  { params }: { params: { voteId: string } }
 ) {
   try {
-    const voteId = params.voteid; // Note: using voteid to match your route structure
+    const voteId = params.voteId; // Fixed: using voteId consistently
     const body = await request.json();
 
     // Validate required fields
@@ -38,6 +38,20 @@ export async function POST(
     if (!category) {
       return NextResponse.json(
         { error: "Category is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!aiRating) {
+      return NextResponse.json(
+        { error: "AI rating is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!checkerId) {
+      return NextResponse.json(
+        { error: "Checker ID is required" },
         { status: 400 }
       );
     }
@@ -86,20 +100,6 @@ export async function POST(
           { status: 400 }
         );
       }
-    }
-
-    if (!aiRating) {
-      return NextResponse.json(
-        { error: "AI rating is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!checkerId) {
-      return NextResponse.json(
-        { error: "Checker ID is required" },
-        { status: 400 }
-      );
     }
 
     // Validate ObjectId format
@@ -170,12 +170,15 @@ export async function POST(
         }
       );
     } else {
-      // Add new vote
-      result = await votes.updateOne({ _id: new ObjectId(voteId) }, {
-        $push: {
-          votes: voteData,
-        },
-      } as any);
+      // Add new vote - MongoDB should accept this since votes is an array in the DB
+      result = await votes.updateOne(
+        { _id: new ObjectId(voteId) },
+        {
+          $push: {
+            votes: voteData,
+          },
+        } as any // Apply type assertion to the entire update operation
+      );
     }
 
     if (result.matchedCount === 0) {
