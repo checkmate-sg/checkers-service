@@ -39,6 +39,10 @@ const VotePage = () => {
   const [isVoteCompleted, setIsVoteCompleted] = useState(false);
   const [userPreviousVote, setUserPreviousVote] = useState(null);
 
+  // New state for additional selections
+  const [veracityScore, setVeracityScore] = useState<string>("");
+  const [sourceCredibility, setSourceCredibility] = useState<string>("");
+
   const { data: session, status } = useSession();
   const checkerId = session?.user?.id;
 
@@ -78,7 +82,7 @@ const VotePage = () => {
           setUserPreviousVote(userVote);
 
           // Pre-populate form with user's previous selections
-          console.log("Previous user vote:", userVote); // Debug log
+          console.log("Previous user vote:", userVote);
 
           // Set category (handle both 'vote' and 'category' fields)
           const category = userVote.vote || userVote.category;
@@ -88,9 +92,8 @@ const VotePage = () => {
 
           // Set tags (ensure it's an array)
           if (userVote.tags && Array.isArray(userVote.tags)) {
-            setSelectedTags([...userVote.tags]); // Create a new array to trigger re-render
+            setSelectedTags([...userVote.tags]);
           } else if (userVote.tags && typeof userVote.tags === "string") {
-            // Handle case where tags might be stored as a string
             try {
               const parsedTags = JSON.parse(userVote.tags);
               if (Array.isArray(parsedTags)) {
@@ -109,10 +112,18 @@ const VotePage = () => {
             setAiRating(userVote.aiRating);
           }
 
-          // Set comment (handle both 'comment' and 'comments' fields)
+          // Set comment
           const userComment = userVote.comment;
           if (userComment) {
             setComment(userComment);
+          }
+
+          // Set new fields
+          if (userVote.veracityScore !== undefined) {
+            setVeracityScore(userVote.veracityScore.toString());
+          }
+          if (userVote.sourceCredibility) {
+            setSourceCredibility(userVote.sourceCredibility);
           }
         }
       } catch (err) {
@@ -133,42 +144,41 @@ const VotePage = () => {
 
   const categories = [
     "Scam",
-    "Satire",
     "Illicit",
-    "Misleading",
-    "False",
-    "Spam",
-    "Legitimate",
+    "News/Info/Opinion",
+    "Satire",
+    "Marketing/Spam",
+    "No Verifiable Content",
+    "Unsure",
+    "Pass",
   ];
 
-  const availableTags = [
-    "Health",
-    "Politics",
-    "Finance",
-    "Technology",
-    "Urgent",
-    "Chain Message",
-    "Verified",
-    "Suspicious",
-    "News",
-    "Medical",
-    "Investment",
-    "Scam",
-    "Tutorial",
-    "Analysis",
-  ];
+  const availableTags = ["Ai Generated", "Incorrect Usage"];
 
   const handleTagToggle = (tag: string) => {
-    if (isVoteCompleted) return; // Don't allow changes if vote is completed
+    if (isVoteCompleted) return;
 
     setSelectedTags((prev) => {
       const newTags = prev.includes(tag)
         ? prev.filter((t) => t !== tag)
         : [...prev, tag];
 
-      console.log("Updated tags:", newTags); // Debug log
+      console.log("Updated tags:", newTags);
       return newTags;
     });
+  };
+
+  // Reset additional fields when category changes
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+
+    // Reset additional fields when category changes
+    if (category !== "News/Info/Opinion") {
+      setVeracityScore("");
+    }
+    if (category !== "No Verifiable Content") {
+      setSourceCredibility("");
+    }
   };
 
   const handleSubmit = async () => {
@@ -176,6 +186,26 @@ const VotePage = () => {
       toast({
         title: "Category Required",
         description: "Please select a message category before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional validation for News/Info/Opinion
+    if (selectedCategory === "News/Info/Opinion" && !veracityScore) {
+      toast({
+        title: "Veracity Score Required",
+        description: "Please assess the veracity of the claims (0-5 scale).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional validation for No Verifiable Content
+    if (selectedCategory === "No Verifiable Content" && !sourceCredibility) {
+      toast({
+        title: "Source Credibility Required",
+        description: "Please assess if the source is credible/reputable.",
         variant: "destructive",
       });
       return;
@@ -195,11 +225,18 @@ const VotePage = () => {
         category: selectedCategory,
         tags: selectedTags,
         aiRating,
-        comment: comment.trim(), // Trim whitespace
+        comment: comment.trim(),
         checkerId,
+        // Include additional fields
+        ...(selectedCategory === "News/Info/Opinion" && {
+          veracityScore: parseInt(veracityScore),
+        }),
+        ...(selectedCategory === "No Verifiable Content" && {
+          sourceCredibility,
+        }),
       };
 
-      console.log("Submitting vote data:", submitData); // Debug log
+      console.log("Submitting vote data:", submitData);
 
       const response = await fetch(`/api/votes/${voteId}/submit`, {
         method: "POST",
@@ -401,7 +438,7 @@ const VotePage = () => {
         {/* Only show voting form if vote is not completed */}
         {!isVoteCompleted && (
           <>
-            {/* Category Selection */}
+            {/* Category Selection - Fixed Layout */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
@@ -416,9 +453,9 @@ const VotePage = () => {
               <CardContent>
                 <RadioGroup
                   value={selectedCategory}
-                  onValueChange={setSelectedCategory}
+                  onValueChange={handleCategoryChange}
                 >
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     {categories.map((category) => (
                       <div
                         key={category}
@@ -427,7 +464,7 @@ const VotePage = () => {
                         <RadioGroupItem value={category} id={category} />
                         <Label
                           htmlFor={category}
-                          className="text-sm flex items-center"
+                          className="text-sm flex items-center flex-1"
                         >
                           {category}
                           <CategoryTooltip category={category} />
@@ -438,6 +475,88 @@ const VotePage = () => {
                 </RadioGroup>
               </CardContent>
             </Card>
+
+            {/* Veracity Assessment for News/Info/Opinion */}
+            {selectedCategory === "News/Info/Opinion" && (
+              <Card className="border-blue-200">
+                <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
+                  <CardTitle className="text-base">
+                    Veracity Assessment *
+                  </CardTitle>
+                  <p className="text-xs text-gray-600">
+                    Please assess the veracity of the claim(s) in the message on
+                    a scale from 0 (entirely false) to 5 (entirely true).
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup
+                    value={veracityScore}
+                    onValueChange={setVeracityScore}
+                  >
+                    <div className="grid grid-cols-3 gap-3">
+                      {[0, 1, 2, 3, 4, 5].map((score) => (
+                        <div
+                          key={score}
+                          className="flex items-center space-x-2"
+                        >
+                          <RadioGroupItem
+                            value={score.toString()}
+                            id={`veracity-${score}`}
+                          />
+                          <Label
+                            htmlFor={`veracity-${score}`}
+                            className="text-sm"
+                          >
+                            {score}{" "}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Source Credibility for No Verifiable Content */}
+            {selectedCategory === "No Verifiable Content" && (
+              <Card className="border-orange-200">
+                <CardHeader className="pb-3 bg-orange-50 rounded-t-lg">
+                  <CardTitle className="text-base">
+                    Source Credibility *
+                  </CardTitle>
+                  <p className="text-xs text-gray-600">
+                    Is this source a credible/reputable entity?
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup
+                    value={sourceCredibility}
+                    onValueChange={setSourceCredibility}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="Yes" id="credible-yes" />
+                        <Label htmlFor="credible-yes" className="text-sm">
+                          Yes
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem
+                          value="Cannot tell"
+                          id="credible-cannot-tell"
+                        />
+                        <Label
+                          htmlFor="credible-cannot-tell"
+                          className="text-sm"
+                        >
+                          Cannot tell
+                        </Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Tags */}
             <Card>
@@ -569,6 +688,20 @@ const VotePage = () => {
                     Your vote:{" "}
                     <span className="font-medium">{selectedCategory}</span>
                   </p>
+                  {selectedCategory === "News/Info/Opinion" &&
+                    veracityScore && (
+                      <p>
+                        Veracity Score:{" "}
+                        <span className="font-medium">{veracityScore}/5</span>
+                      </p>
+                    )}
+                  {selectedCategory === "No Verifiable Content" &&
+                    sourceCredibility && (
+                      <p>
+                        Source Credibility:{" "}
+                        <span className="font-medium">{sourceCredibility}</span>
+                      </p>
+                    )}
                   {userPreviousVote?.aiRating && (
                     <p>
                       AI Rating:{" "}

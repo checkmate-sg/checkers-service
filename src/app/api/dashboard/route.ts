@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
         // New checker stats
         votes: totalVotes,
         accuracy: accuracy,
-        messagesSent: 1, // You'll need to track this separately or add to schema
+        messagesSent: checker.numReferred, //this maybe wrong
 
         // Certified checker stats (same as above for now, but could be different)
         lifetimeVotes: totalVotes,

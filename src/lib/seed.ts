@@ -145,10 +145,12 @@ export async function seedDatabase() {
   await checkers.insertMany([
     {
       _id: new ObjectId("665eaaaa0000000000000001"), // Fixed ID for login
-      name: "Zack",
+      name: "John Doe",
       phoneNumber: "+123456789",
       correctVotes: 0, // Will be updated by processVotingLogic
       totalVotes: 0, // Will be updated by processVotingLogic
+      telegramId: "1",
+      numReferred: 0,
     },
     {
       _id: new ObjectId("665eaaaa0000000000000002"),
@@ -156,13 +158,17 @@ export async function seedDatabase() {
       phoneNumber: "+987654321",
       correctVotes: 0, // Will be updated by processVotingLogic
       totalVotes: 0, // Will be updated by processVotingLogic
+      telegramId: "2",
+      numReferred: 0,
     },
     {
       _id: new ObjectId("665eaaaa0000000000000003"),
-      name: "John Smith",
+      name: "Jaden Smith",
       phoneNumber: "+555123456",
       correctVotes: 0, // Will be updated by processVotingLogic
       totalVotes: 0, // Will be updated by processVotingLogic
+      telegramId: "3",
+      numReferred: 0,
     },
   ]);
 

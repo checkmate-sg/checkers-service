@@ -203,7 +203,9 @@ export default function Dashboard() {
                   {/* Messages Sent */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Messages Sent</span>
+                      <span className="text-sm font-medium">
+                        Messages Sent (this is using numReferred)
+                      </span>
                       <span className="text-sm text-gray-600">
                         {dashboardData.userData.messagesSent}/3
                       </span>

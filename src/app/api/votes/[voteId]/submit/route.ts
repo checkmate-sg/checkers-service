@@ -1,4 +1,4 @@
-// src/app/api/votes/[voteid]/submit/route.ts
+// src/app/api/votes/[voteId]/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { connectToDB } from "@/lib/mongodb";
@@ -12,6 +12,8 @@ interface VoteData {
   aiRating: string;
   comment: string;
   votedAt: string;
+  veracityScore?: number; // New field for News/Info/Opinion
+  sourceCredibility?: string; // New field for No Verifiable Content
 }
 
 export async function POST(
@@ -19,11 +21,19 @@ export async function POST(
   { params }: { params: { voteId: string } }
 ) {
   try {
-    const voteId = params.voteId;
+    const voteId = params.voteId; // Fixed: using voteId consistently
     const body = await request.json();
 
     // Validate required fields
-    const { category, tags, aiRating, comment, checkerId } = body;
+    const {
+      category,
+      tags,
+      aiRating,
+      comment,
+      checkerId,
+      veracityScore,
+      sourceCredibility,
+    } = body;
 
     if (!category) {
       return NextResponse.json(
@@ -44,6 +54,52 @@ export async function POST(
         { error: "Checker ID is required" },
         { status: 400 }
       );
+    }
+
+    // Additional validation for News/Info/Opinion
+    if (category === "News/Info/Opinion") {
+      if (
+        veracityScore === undefined ||
+        veracityScore === null ||
+        veracityScore === ""
+      ) {
+        return NextResponse.json(
+          {
+            error: "Veracity score is required for News/Info/Opinion category",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Validate veracity score range
+      const score = parseInt(veracityScore);
+      if (isNaN(score) || score < 0 || score > 5) {
+        return NextResponse.json(
+          { error: "Veracity score must be between 0 and 5" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Additional validation for No Verifiable Content
+    if (category === "No Verifiable Content") {
+      if (!sourceCredibility) {
+        return NextResponse.json(
+          {
+            error:
+              "Source credibility assessment is required for No Verifiable Content category",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Validate source credibility options
+      if (!["Yes", "Cannot tell"].includes(sourceCredibility)) {
+        return NextResponse.json(
+          { error: "Invalid source credibility value" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate ObjectId format
@@ -84,6 +140,15 @@ export async function POST(
       comment: comment ? String(comment).trim() : "",
       votedAt: new Date().toISOString(),
     };
+
+    // Add conditional fields based on category
+    if (category === "News/Info/Opinion" && veracityScore !== undefined) {
+      voteData.veracityScore = parseInt(veracityScore);
+    }
+
+    if (category === "No Verifiable Content" && sourceCredibility) {
+      voteData.sourceCredibility = String(sourceCredibility);
+    }
 
     // Check if user has already voted
     const existingUserVoteIndex = existingVote.votes?.findIndex(
