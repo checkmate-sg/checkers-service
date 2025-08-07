@@ -20,7 +20,7 @@ Follow these steps:
 
 ```sh
 #Step 0: Pre-requisites
-Following steps assume that the following are installed in local device: Node.js, Git and MongoDB
+Following steps assume that the following are installed: Node.js, Git and MongoDB
 This application runs on telegram context
 
 # Step 1: Clone the repository using the project's Git URL and install dependencies.
