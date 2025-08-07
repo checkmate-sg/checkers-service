@@ -438,7 +438,7 @@ const VotePage = () => {
         {/* Only show voting form if vote is not completed */}
         {!isVoteCompleted && (
           <>
-            {/* Category Selection */}
+            {/* Category Selection - Fixed Layout */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
@@ -455,7 +455,7 @@ const VotePage = () => {
                   value={selectedCategory}
                   onValueChange={handleCategoryChange}
                 >
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     {categories.map((category) => (
                       <div
                         key={category}
@@ -464,7 +464,7 @@ const VotePage = () => {
                         <RadioGroupItem value={category} id={category} />
                         <Label
                           htmlFor={category}
-                          className="text-sm flex items-center"
+                          className="text-sm flex items-center flex-1"
                         >
                           {category}
                           <CategoryTooltip category={category} />
@@ -508,11 +508,6 @@ const VotePage = () => {
                             className="text-sm"
                           >
                             {score}{" "}
-                            {score === 0
-                              ? "(Entirely false)"
-                              : score === 5
-                              ? "(Entirely true)"
-                              : ""}
                           </Label>
                         </div>
                       ))}
