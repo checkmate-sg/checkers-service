@@ -145,3 +145,4 @@ Expected response:
 - Most of the variables stored for a checker is not being used in current logic except those present in the seeded checkers.
 - Leaderboard score calculation does not follow current checkers webapp rules. It also does not show current placement of checker.
 - Integration with AI responses, whatsapp messages. Api to receive this messages is exposed via the postman link
+- Another improvement would be to relook at the API calls. Currently the API calls use JWT token to pull relevent user data. A higher level, improvement would be to do a simple fetch to retrieve session data, similar to what the middleware is doing. The current direct JWT approach can fail in Telegram Webapp hence the 4 ways of retrieving the token was used.
