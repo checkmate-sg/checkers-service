@@ -153,11 +153,12 @@ const Leaderboard = () => {
   // For the full rankings display, show top 3 + current user if not in top 3
   const getDisplayEntries = () => {
     if (isCurrentUserInTop3 || !currentUser) {
-      return leaderboardData;
+      // If current user is in top 3 or not found, show top 3 only
+      return top3;
+    } else {
+      // Show top 3, then current user with separator
+      return [...top3, currentUser];
     }
-
-    // Show top 3, then separator, then current user
-    return [...top3, currentUser];
   };
 
   const displayEntries = getDisplayEntries();
@@ -185,6 +186,12 @@ const Leaderboard = () => {
         {lastUpdated && (
           <p className="text-xs text-gray-500 mt-1">Updated at {lastUpdated}</p>
         )}
+        {/* Show current user's position if they exist */}
+        {currentUser && !isCurrentUserInTop3 && (
+          <p className="text-xs text-checkmate-primary mt-1 font-medium">
+            Your position: #{currentUser.rank}
+          </p>
+        )}
       </div>
 
       {/* Top 3 Podium */}
@@ -206,6 +213,11 @@ const Leaderboard = () => {
                     <div className="text-xs">{top3[1].accuracy}%</div>
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[1].name}</p>
+                  {top3[1].isCurrentUser && (
+                    <p className="text-xs text-checkmate-primary font-bold">
+                      (You)
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -224,6 +236,11 @@ const Leaderboard = () => {
                     <div className="text-xs">{top3[0].accuracy}%</div>
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[0].name}</p>
+                  {top3[0].isCurrentUser && (
+                    <p className="text-xs text-checkmate-primary font-bold">
+                      (You)
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -241,6 +258,11 @@ const Leaderboard = () => {
                     <div className="text-xs">{top3[2].accuracy}%</div>
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[2].name}</p>
+                  {top3[2].isCurrentUser && (
+                    <p className="text-xs text-checkmate-primary font-bold">
+                      (You)
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -252,7 +274,11 @@ const Leaderboard = () => {
       {leaderboardData.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Full Rankings</CardTitle>
+            <CardTitle className="text-lg">
+              {isCurrentUserInTop3 || !currentUser
+                ? "Top 3"
+                : "Top 3 + Your Position"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-0">
@@ -261,10 +287,12 @@ const Leaderboard = () => {
                   {/* Show separator before current user if they're not in top 3 */}
                   {!isCurrentUserInTop3 &&
                     currentUser &&
-                    index === 3 &&
-                    user.isCurrentUser && (
-                      <div className="p-2 text-center border-b">
-                        <span className="text-gray-400 text-sm">...</span>
+                    user.isCurrentUser &&
+                    index === 3 && (
+                      <div className="p-3 text-center bg-gray-50 border-b">
+                        <span className="text-gray-400 text-sm font-medium">
+                          ...
+                        </span>
                       </div>
                     )}
 

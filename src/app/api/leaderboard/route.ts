@@ -112,46 +112,44 @@ export async function GET(request: NextRequest) {
       entry.rank = index + 1;
     });
 
-    // Mark current user if token exists
+    // Find current user and mark them
     let currentUserId: string | null = null;
+    let currentUserEntry: LeaderboardEntry | null = null;
+
     if (token && token.id) {
       currentUserId = token.id;
-      const currentUserEntry = leaderboardEntries.find(
-        (entry) => entry._id?.toString() === currentUserId
-      );
+      currentUserEntry =
+        leaderboardEntries.find(
+          (entry) => entry._id?.toString() === currentUserId
+        ) || null;
+
       if (currentUserEntry) {
         currentUserEntry.isCurrentUser = true;
       }
     }
 
-    // Get top 10 for the main leaderboard
-    const topEntries = leaderboardEntries.slice(0, 10);
+    // Determine what to return based on current user's position
+    let responseEntries: LeaderboardEntry[];
 
-    // If current user is not in top 10, include them at the end
-    if (token && currentUserId) {
-      const currentUserEntry = leaderboardEntries.find(
-        (entry) => entry._id?.toString() === currentUserId
-      );
-
-      if (currentUserEntry && currentUserEntry.rank > 10) {
-        topEntries.push(currentUserEntry);
-      }
+    if (!currentUserEntry || currentUserEntry.rank <= 3) {
+      // If no current user or they're in top 3, return top 3
+      responseEntries = leaderboardEntries.slice(0, 3);
+    } else {
+      // If current user is not in top 3, return top 3 + current user
+      const top3 = leaderboardEntries.slice(0, 3);
+      responseEntries = [...top3, currentUserEntry];
     }
 
     // Remove _id from response for security
-    const responseEntries = topEntries.map(({ _id, ...entry }) => entry);
+    const finalEntries = responseEntries.map(({ _id, ...entry }) => entry);
 
     // Get total number of participants
     const totalParticipants = leaderboardEntries.length;
 
-    console.log(
-      "[Leaderboard API] Returning",
-      responseEntries.length,
-      "entries"
-    );
+    console.log("[Leaderboard API] Returning", finalEntries.length, "entries");
 
     return NextResponse.json({
-      leaderboard: responseEntries,
+      leaderboard: finalEntries,
       totalParticipants: totalParticipants,
       lastUpdated: new Date().toISOString(),
     });
