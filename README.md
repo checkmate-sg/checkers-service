@@ -132,10 +132,10 @@ Expected response:
 
 - Dashboard messages sent is using checkers num referred, may not be the actual number of whatsapp messages sent (check with big boss BW to know which variable to look at)
 - Voting logic. As of now, there is no conclusive time or way that voting ends. The seed file checks evry 24hrs and concludes voting based on majority vote but seed only works when you manually deploy it on VS terminal. Hence there is no conclusive voting period. Any new postings will not conclude.
-- Voting page also shows all pass and present votes, it does not remove votes that have been concluded or completed.
-- Telegram bot does not alert user that there is no query
+- Voting page also shows all pass and present votes, it does not remove votes that have been concluded or completed. Pagination.
+- Telegram bot does not alert user that there is new query
 - Onboarding whatsapp bot link is not an actual link.
-- Onboarding does not check if user has completed quiz, does not verify otp. In the code file, everything the current bot does for onboarding that this new bot cannot do, is being commented out.
+- Onboarding does not check if user has completed quiz, does not verify otp, if user has joined telegram or whatsapp. In the code file, everything the current bot does for onboarding that this new bot cannot do, is being commented out.
 - Most of the variables stored for a checker is not being used in current logic except those present in the seeded checkers.
 - Leaderboard score calculation does not follow current checkers webapp rules. It also does not show current placement of checker.
 - Integration with AI responses, whatsapp messages. Api to receive this messages is exposed via the postman link
