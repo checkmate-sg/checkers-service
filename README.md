@@ -35,7 +35,7 @@ Modify it to include the DB name: mongodb+srv://<username>:<password>@cluster0.x
 Last step is to ensure your application points to the correct collection within the cluster
 
 # Step 3: Create .env.local in the Root Directory
-Before proceeding, take note we have yet to deploy the project to vercel and telegram bot has yet to be created, hence the values which require the vercel link telegram biot token, leave it as shown first.
+Before proceeding, take note we have yet to deploy the project to vercel and telegram bot has yet to be created, hence the values which require the vercel link telegram bot token, leave it as shown first.
 Paste in the following with your actual values:
 MONGODB_URI=<The URI link from the step above>
 NEXTAUTH_SECRET=<your_generated_secret> (refer to link at bottom of this step to geenrate a secret)
