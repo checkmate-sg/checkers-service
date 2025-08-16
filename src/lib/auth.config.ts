@@ -15,6 +15,49 @@ export const authConfig: NextAuthConfig = {
       async authorize(credentials) {
         console.log("[Auth Config] Starting authorization process");
 
+        // LOCAL DEVELOPMENT BYPASS
+        if (process.env.ENVIRONMENT === "local") {
+          console.log("[Auth Config] LOCAL ENVIRONMENT - Using development bypass");
+          
+          // You can customize this mock user or fetch a real test user from DB
+          const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
+          
+          try {
+            // Try to find a real user for testing
+            const user = await findUserByTelegramID(mockTelegramId);
+            
+            if (user) {
+              console.log("[Auth Config] LOCAL: Found test user:", {
+                id: user.id,
+                name: user.name,
+                telegramId: user.telegramId || mockTelegramId,
+              });
+              
+              return {
+                id: user.id,
+                telegramId: mockTelegramId,
+                name: user.name || "Local Dev User",
+              };
+            } else {
+              // Return a mock user if no real user exists
+              console.log("[Auth Config] LOCAL: Using mock user");
+              return {
+                id: "local-dev-user",
+                telegramId: mockTelegramId,
+                name: "Local Dev User",
+              };
+            }
+          } catch (error) {
+            console.error("[Auth Config] LOCAL: Error during bypass:", error);
+            // Still return mock user even if DB is unavailable
+            return {
+              id: "local-dev-user",
+              telegramId: mockTelegramId,
+              name: "Local Dev User",
+            };
+          }
+        }
+
         const initData = credentials?.initData;
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
 

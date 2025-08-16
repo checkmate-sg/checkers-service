@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Telegraf, Context } from "telegraf";
+import { Telegraf } from "telegraf";
 import { findUserByTelegramID } from "@/lib/db";
 import { connectToDB } from "@/lib/mongodb";
 
@@ -67,6 +67,16 @@ function isNumeric(str: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify webhook secret for security
+    const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
+      if (secretHeader !== webhookSecret) {
+        console.error('[Webhook] Invalid webhook secret');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const body = await request.json();
     const { message, callback_query } = body;
 

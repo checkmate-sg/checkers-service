@@ -35,9 +35,31 @@ export function useTelegramAuth() {
 
         // Step 2: After sign out, start fresh authentication
         if (authStep === "signed-out" && !session) {
-          console.log("[Auth] Session cleared, starting Telegram auth...");
+          console.log("[Auth] Session cleared, starting auth...");
 
-          // Check Telegram WebApp context
+          // LOCAL DEVELOPMENT BYPASS
+          const isLocalEnv = process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
+          
+          if (isLocalEnv) {
+            console.log("[Auth] LOCAL ENVIRONMENT - Bypassing Telegram WebApp check");
+            
+            setAuthStep("authenticating");
+
+            // Sign in with mock data for local development
+            const result = await signIn("telegram", {
+              redirect: false,
+              initData: "mock-local-data", // This will trigger the server-side bypass
+            });
+
+            if (result?.error || !result?.ok) {
+              throw new Error(result?.error || "Authentication failed");
+            }
+
+            console.log("[Auth] Sign in successful (local mode), waiting for session...");
+            return;
+          }
+
+          // PRODUCTION: Check Telegram WebApp context
           const isTelegramWebApp =
             typeof window !== "undefined" && window.Telegram?.WebApp;
 

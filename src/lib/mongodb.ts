@@ -2,7 +2,7 @@
 import { MongoClient, Db } from "mongodb";
 
 const uri = process.env.MONGODB_URI || "";
-const dbName = "checkmate";
+const dbName = "checkmate-checkers-app";
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
