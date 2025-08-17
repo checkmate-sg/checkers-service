@@ -18,10 +18,10 @@ interface VoteData {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { voteId: string } }
+  { params }: { params: Promise<{ voteId: string }> }
 ) {
   try {
-    const voteId = params.voteId; // Fixed: using voteId consistently
+    const { voteId } = await params; // Fixed: using voteId consistently
     const body = await request.json();
 
     // Validate required fields

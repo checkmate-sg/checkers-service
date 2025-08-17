@@ -1,9 +1,9 @@
-import TelegramBot from "node-telegram-bot-api";
+import { Bot } from "grammy";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
 
 async function setupWebhook() {
   try {
@@ -16,11 +16,13 @@ async function setupWebhook() {
 
     console.log("Setting webhook to:", webhookUrl);
 
-    const result = await bot.setWebHook(webhookUrl);
+    const result = await bot.api.setWebhook(webhookUrl, {
+      secret_token: process.env.TELEGRAM_WEBHOOK_SECRET,
+    });
     console.log("Webhook setup result:", result);
 
     // Get webhook info to verify
-    const info = await bot.getWebHookInfo();
+    const info = await bot.api.getWebhookInfo();
     console.log("Current webhook info:", info);
 
     console.log("✅ Webhook setup completed successfully!");

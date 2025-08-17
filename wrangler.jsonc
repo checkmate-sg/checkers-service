@@ -1,8 +1,8 @@
 {
   "main": ".open-next/worker.js",
   "name": "checkmate-checkers-app",
-  "compatibility_date": "2025-03-25",
   "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-08-09",
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -41,7 +41,7 @@
   ],
   "env": {
     "staging": {
-      "name": "checkmate-webapp-staging",
+      "name": "checkmate-checkers-app-staging",
       "vars": {
         "ENVIRONMENT": "staging",
         "NEXTAUTH_URL": "https://checkers.staging.checkmate.sg"
@@ -77,7 +77,7 @@
       }
     },
     "production": {
-      "name": "checkmate-webapp",
+      "name": "checkmate-checkers-app",
       "vars": {
         "ENVIRONMENT": "production",
         "NEXTAUTH_URL": "https://checkers.checkmate.sg"

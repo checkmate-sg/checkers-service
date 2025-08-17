@@ -4,10 +4,10 @@ import { ObjectId } from "mongodb";
 
 export async function GET(
   request: Request,
-  { params }: { params: { voteId: string } }
+  { params }: { params: Promise<{ voteId: string }> }
 ) {
   try {
-    const voteId = params.voteId;
+    const { voteId } = await params;
 
     console.log("voteId:", voteId);
 
