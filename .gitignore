@@ -25,6 +25,9 @@ dist-ssr
 
 # Environment variables
 .env.*
+!.env.example
 
 .open-next
 .next
+.dev.vars
+.wrangler

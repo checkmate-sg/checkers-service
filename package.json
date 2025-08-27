@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3002",
+    "dev:db": "cd workers/checkers-db-service && wrangler dev",
     "build": "next build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
@@ -53,6 +54,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^17.2.1",
     "embla-carousel-react": "^8.3.0",
+    "grammy": "^1.38.1",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "mongodb": "^6.17.0",
@@ -73,6 +75,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250826.0",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/mongodb": "^4.0.7",

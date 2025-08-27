@@ -13,6 +13,13 @@ It then provides an interface for checkers to vote on these messages.
 - React
 - shadcn-ui
 - Tailwind CSS
-- MongoDB
+- MongoDB (via Cloudflare Worker service)
 - NextAuthV5
 - Telegram miniapp/bot
+
+# Architecture Notes:
+
+## Database Service
+Instead of direct MongoDB connections from NextJS, this project uses a dedicated database service (`workers/checkers-db-service/`) implemented as a Cloudflare Worker. This architecture decision was made due to challenges with MongoDB direct connections in Cloudflare Workers environments, as documented in [this article](https://alexbevi.com/blog/2025/04/11/performance-profiling-mongodb-on-cloudflare-workers/).
+
+The deployment uses OpenNextJS/Cloudflare, and the database service acts as an intermediary layer to handle MongoDB operations efficiently within the Cloudflare Workers constraints.

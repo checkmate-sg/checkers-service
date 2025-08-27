@@ -1,7 +1,7 @@
 // src/app/api/votes/[voteId]/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { connectToDB } from "@/lib/mongodb";
+import { connectToDB } from "@/shared/utils/mongodb";
 
 // Define the vote data interface
 interface VoteData {
@@ -22,7 +22,7 @@ export async function POST(
 ) {
   try {
     const { voteId } = await params; // Fixed: using voteId consistently
-    const body = await request.json();
+    const body = (await request.json()) as VoteData;
 
     // Validate required fields
     const {
@@ -58,11 +58,7 @@ export async function POST(
 
     // Additional validation for News/Info/Opinion
     if (category === "News/Info/Opinion") {
-      if (
-        veracityScore === undefined ||
-        veracityScore === null ||
-        veracityScore === ""
-      ) {
+      if (veracityScore === undefined || veracityScore === null) {
         return NextResponse.json(
           {
             error: "Veracity score is required for News/Info/Opinion category",
@@ -72,7 +68,7 @@ export async function POST(
       }
 
       // Validate veracity score range
-      const score = parseInt(veracityScore);
+      const score = parseInt(veracityScore.toString());
       if (isNaN(score) || score < 0 || score > 5) {
         return NextResponse.json(
           { error: "Veracity score must be between 0 and 5" },
@@ -143,7 +139,7 @@ export async function POST(
 
     // Add conditional fields based on category
     if (category === "News/Info/Opinion" && veracityScore !== undefined) {
-      voteData.veracityScore = parseInt(veracityScore);
+      voteData.veracityScore = parseInt(veracityScore.toString());
     }
 
     if (category === "No Verifiable Content" && sourceCredibility) {

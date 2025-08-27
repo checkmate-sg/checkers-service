@@ -1,7 +1,7 @@
 // src/app/api/dashboard/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { connectToDB } from "@/lib/mongodb";
+import { connectToDB } from "@/shared/utils/mongodb";
 import { processVotingLogic } from "@/lib/seed";
 import { getToken } from "next-auth/jwt";
 
@@ -152,7 +152,11 @@ export async function GET(request: NextRequest) {
     const isNewChecker = totalVotes < 50 || accuracy < 60; // Assuming messagesSent requirement is met
 
     // Create recent activity based on completed votes
-    const recentActivity = [];
+    const recentActivity = [] as {
+      message: string;
+      date: string;
+      type: string;
+    }[];
 
     // Add recent votes from completed votes
     recentVotesWithThisChecker.forEach((voteDoc) => {

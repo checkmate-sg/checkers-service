@@ -1,7 +1,7 @@
 // src/app/api/votes/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { connectToDB } from "@/lib/mongodb";
+import { connectToDB } from "@/shared/utils/mongodb";
 import { getToken } from "next-auth/jwt";
 
 export async function GET(request: NextRequest) {

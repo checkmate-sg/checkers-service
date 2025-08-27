@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { connectToDB } from "./mongodb";
+import { connectToDB } from "@/shared/utils/mongodb";
 
 export async function seedDatabase() {
   const db = await connectToDB();

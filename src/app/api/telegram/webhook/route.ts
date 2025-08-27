@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserByTelegramID } from "@/lib/db";
-import { connectToDB } from "@/lib/mongodb";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { Update } from "grammy/types";
 import {
   sendMessage,
   sendPhoto,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, callback_query } = body;
+    const { message, callback_query } = body as Update;
 
     // Handle callback queries (button clicks)
     if (callback_query) {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     console.log(`Received message from ${telegramId}: ${text}`);
 
     // Handle commands
-    if (text?.startsWith("/")) {
+    if (text && text?.startsWith("/")) {
       return await handleCommand(
         text,
         chatId,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     return await handleOnboardingFlow(
       session,
-      text,
+      text || "",
       message,
       chatId,
       telegramId
@@ -186,7 +186,9 @@ async function handleStartCommand(
   telegramId: string,
   firstName: string
 ) {
-  const existingUser = await findUserByTelegramID(telegramId);
+  const { env } = getCloudflareContext();
+  const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+  const existingUser = result.success ? result.data : null;
 
   if (!existingUser) {
     await sendMessage(
@@ -224,9 +226,9 @@ async function handleOnboardCommand(
   telegramUsername: string | null
 ) {
   // Check if user already exists in database
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  const existingUser = await checkers.findOne({ telegramId });
+  const { env } = getCloudflareContext();
+  const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+  const existingUser = result.success ? result.data : null;
 
   if (existingUser) {
     // User already exists, check if onboarding is complete
@@ -265,12 +267,12 @@ async function handleOnboardCommand(
           await sendQuizPrompt(
             chatId,
             telegramId,
-            existingUser.name,
-            existingUser.phoneNumber,
+            existingUser.name || "",
+            existingUser.whatsappId,
             true
           );
           break;
-        case "whatsappService": // Added this case
+        case "onboardWhatsapp": // Added this case
           await sendWAServicePrompt(chatId, telegramId, true);
           break;
         case "joinGroupChat":
@@ -288,48 +290,28 @@ async function handleOnboardCommand(
 
   // User doesn't exist, create new user and start onboarding
   const userData = {
+    // Required fields from Checker interface
     name: null,
-    telegramUsername: telegramUsername,
-    type: "human",
+    telegramId: telegramId,
+    whatsappId: null, // Required field, empty string for now
+    singpassId: null,
     isActive: false,
-    lastActivatedDate: null,
     isOnboardingComplete: false,
     onboardingTime: null,
     isQuizComplete: false,
     quizScore: null,
-    onboardingStatus: "name",
-    lastTrackedMessageId: null,
-    isAdmin: false,
-    singpassOpenId: null,
-    telegramId: telegramId,
-    // COMMENTED OUT: WhatsApp related fields - not needed for current implementation
-    // whatsappId: null,
-    phoneNumber: null,
-    voteWeight: 1,
-    level: 0,
-    experience: 0,
-    tier: "beginner",
-    numReferred: 0,
-    numReported: 0,
-    numNonUnsureVotes: 0,
-    numVerifiedLinks: 0,
-    preferredPlatform: "telegram",
+    onboardingStatus: "name" as const, // Type assertion for union type
+    hasReceivedExtension: false,
+    hasCompletedProgramme: false,
+    certificateUrl: null,
+    numVoted: 0,
     lastVotedTimestamp: null,
     getNameMessageId: null,
-    hasReceivedExtension: false,
-    hasCompletedProgram: false,
-    certificateUrl: null,
-    correctVotes: 0,
-    totalVotes: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    offboardingTime: null,
     dailyAssignmentCount: 0,
-    isTester: false,
-    hasBlockedTelegramMessages: false,
+    // Base document field
   };
 
-  await checkers.insertOne(userData);
+  await env.CHECKERS_DB_SERVICE.insertChecker(userData);
 
   // Start onboarding with name prompt
   await sendNamePrompt(chatId, telegramId);
@@ -344,8 +326,7 @@ async function handleOnboardingFlow(
   chatId: number,
   telegramId: string
 ) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
   switch (session.step) {
     case "collecting_name":
@@ -358,7 +339,7 @@ async function handleOnboardingFlow(
         return NextResponse.json({ ok: true });
       }
 
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
@@ -401,19 +382,28 @@ async function handleOnboardingFlow(
         return NextResponse.json({ ok: true });
       }
 
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
-            phoneNumber: phoneNumber,
+            whatsappId: phoneNumber,
             onboardingStatus: "quiz",
             updatedAt: new Date(),
           },
         }
       );
 
-      const user = await checkers.findOne({ telegramId });
-      await sendQuizPrompt(chatId, telegramId, user?.name, phoneNumber, true);
+      const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+        telegramId,
+      });
+      const user = userResult.success ? userResult.data : null;
+      await sendQuizPrompt(
+        chatId,
+        telegramId,
+        user?.name || "",
+        user?.whatsappId || "",
+        true
+      );
       break;
 
     // COMMENTED OUT: Phone collection and OTP verification - not needed for current implementation
@@ -480,9 +470,11 @@ async function handleCallbackQuery(callbackQuery: any) {
     console.error("Error answering callback query:", error);
   }
 
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  const fullUser = await checkers.findOne({ telegramId });
+  const { env } = getCloudflareContext();
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const fullUser = userResult.success ? userResult.data : null;
 
   if (!fullUser) {
     console.error(
@@ -539,7 +531,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     //   break;
 
     case "ONBOARD_AGAIN":
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
@@ -647,10 +639,10 @@ async function sendQuizPrompt(
   chatId: number,
   telegramId: string,
   name: string,
-  phoneNumber: string | null,
+  whatsappId: string | null,
   isFirstPrompt: boolean
 ) {
-  const linkURL = `${TYPEFORM_URL}#name=${name}&phone=${phoneNumber || ""}`;
+  const linkURL = `${TYPEFORM_URL}#name=${name}&phone=${whatsappId || ""}`;
 
   await sendMessage(
     chatId,
@@ -685,11 +677,10 @@ async function sendWAServicePrompt(
   isFirstPrompt: boolean
 ) {
   if (isFirstPrompt) {
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-    await checkers.updateOne(
+    const { env } = getCloudflareContext();
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
-      { $set: { onboardingStatus: "whatsappService", updatedAt: new Date() } }
+      { $set: { onboardingStatus: "onboardWhatsapp", updatedAt: new Date() } }
     );
   }
 
@@ -720,9 +711,8 @@ async function sendTGGroupPrompt(
   isFirstPrompt: boolean
 ) {
   if (isFirstPrompt) {
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-    await checkers.updateOne(
+    const { env } = getCloudflareContext();
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       { $set: { onboardingStatus: "joinGroupChat", updatedAt: new Date() } }
     );
@@ -752,9 +742,8 @@ async function sendTGGroupPrompt(
 }
 
 async function sendNLBPrompt(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  await checkers.updateOne(
+  const { env } = getCloudflareContext();
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     { $set: { onboardingStatus: "nlb", updatedAt: new Date() } }
   );
@@ -771,11 +760,10 @@ async function sendNLBPrompt(chatId: number, telegramId: string) {
 }
 
 async function sendCompletionPrompt(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
   try {
-    const updateResult = await checkers.updateOne(
+    const updateResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       {
         $set: {
@@ -783,7 +771,6 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
           isOnboardingComplete: true,
           onboardingTime: new Date(),
           isActive: true,
-          lastActivatedDate: new Date(),
           updatedAt: new Date(),
         },
       }
@@ -830,10 +817,12 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
 }
 
 async function handleActivateCommand(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
-  const user = await findUserByTelegramID(telegramId);
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const user = userResult.success ? userResult.data : null;
   if (!user) {
     console.error(
       `Checker with TelegramID ${telegramId} trying to /activate but not found`
@@ -841,12 +830,11 @@ async function handleActivateCommand(chatId: number, telegramId: string) {
     return NextResponse.json({ ok: true });
   }
 
-  await checkers.updateOne(
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     {
       $set: {
         isActive: true,
-        lastActivatedDate: new Date(),
         updatedAt: new Date(),
       },
     }
@@ -861,10 +849,12 @@ async function handleActivateCommand(chatId: number, telegramId: string) {
 }
 
 async function handleDeactivateCommand(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
-  const user = await findUserByTelegramID(telegramId);
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const user = userResult.success ? userResult.data : null;
   if (!user) {
     console.error(
       `Checker with TelegramID ${telegramId} trying to /deactivate but not found`
@@ -872,7 +862,7 @@ async function handleDeactivateCommand(chatId: number, telegramId: string) {
     return NextResponse.json({ ok: true });
   }
 
-  await checkers.updateOne(
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     { $set: { isActive: false, updatedAt: new Date() } }
   );

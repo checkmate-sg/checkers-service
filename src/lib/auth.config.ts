@@ -2,7 +2,7 @@
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
-import { findUserByTelegramID } from "@/lib/db";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -17,26 +17,34 @@ export const authConfig: NextAuthConfig = {
 
         // LOCAL DEVELOPMENT BYPASS
         if (process.env.ENVIRONMENT === "local") {
-          console.log("[Auth Config] LOCAL ENVIRONMENT - Using development bypass");
-          
+          console.log(
+            "[Auth Config] LOCAL ENVIRONMENT - Using development bypass"
+          );
+
           // You can customize this mock user or fetch a real test user from DB
-          const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
-          
+          const mockTelegramId =
+            process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
+
           try {
             // Try to find a real user for testing
-            const user = await findUserByTelegramID(mockTelegramId);
-            
-            if (user) {
-              console.log("[Auth Config] LOCAL: Found test user:", {
-                id: user.id,
-                name: user.name,
-                telegramId: user.telegramId || mockTelegramId,
-              });
-              
-              return {
-                id: user.id,
+            const { env } = getCloudflareContext();
+            const checker = (
+              await env.CHECKERS_DB_SERVICE.findOneChecker({
                 telegramId: mockTelegramId,
-                name: user.name || "Local Dev User",
+              })
+            ).data;
+
+            if (checker) {
+              console.log("[Auth Config] LOCAL: Found test user:", {
+                id: checker._id?.toString() || "",
+                name: checker.name || "Local Dev User",
+                telegramId: checker.telegramId || mockTelegramId,
+              });
+
+              return {
+                id: checker._id?.toString() || "",
+                telegramId: mockTelegramId,
+                name: checker.name || "Local Dev User",
               };
             } else {
               // Return a mock user if no real user exists
@@ -115,7 +123,13 @@ export const authConfig: NextAuthConfig = {
         );
 
         try {
-          const user = await findUserByTelegramID(telegramId);
+          const { env } = getCloudflareContext();
+          const user = (
+            await env.CHECKERS_DB_SERVICE.findOneChecker({
+              telegramId: telegramId,
+            })
+          ).data;
+
           console.log(
             "[Auth Config] Database lookup result:",
             user ? "user found" : "user not found"
@@ -123,7 +137,7 @@ export const authConfig: NextAuthConfig = {
 
           if (user) {
             console.log("[Auth Config] Found user:", {
-              id: user.id,
+              id: user._id?.toString() || "",
               name: user.name,
               telegramId: user.telegramId || telegramId,
             });
@@ -141,7 +155,7 @@ export const authConfig: NextAuthConfig = {
             "[Auth Config] Authorization successful, returning user data"
           );
           return {
-            id: user.id,
+            id: user._id?.toString() || "",
             telegramId,
             name: user.name || telegramUser.first_name || "Unknown",
           };

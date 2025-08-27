@@ -12,7 +12,8 @@
     "target": "es2020",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/shared/*": ["./shared/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
@@ -34,7 +35,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "types": ["@cloudflare/workers-types"]
   },
   "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

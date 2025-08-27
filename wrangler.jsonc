@@ -15,6 +15,10 @@
     {
       "binding": "CHECKMATE_WHATSAPP_SERVICE",
       "service": "whatsapp-webhook-handler"
+    },
+    {
+      "binding": "CHECKERS_DB_SERVICE",
+      "service": "checkers-db-service"
     }
   ],
   // R2 incremental cache
@@ -54,6 +58,10 @@
         {
           "binding": "CHECKMATE_WHATSAPP_SERVICE",
           "service": "whatsapp-webhook-handler-staging"
+        },
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service-staging"
         }
       ],
       "r2_buckets": [
@@ -90,6 +98,10 @@
         {
           "binding": "CHECKMATE_WHATSAPP_SERVICE",
           "service": "whatsapp-webhook-handler"
+        },
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service"
         }
       ],
       "r2_buckets": [
