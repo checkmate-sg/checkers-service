@@ -1,3 +1,6 @@
 
-      import Dashboard from '@/components/Dashboard';
-      export default Dashboard;
+import TempDashboard from '@/components/dashboard/Temp-Dashboard';
+
+export default function Dashboard() {
+      return <TempDashboard />
+};

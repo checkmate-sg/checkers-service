@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const chatId = message.chat.id;
     const telegramId = message.from.id.toString();
-    const text = message.text;
+    const text = message.text; // Text from the user on Telegram
     const firstName = message.from.first_name || "";
     const lastName = message.from.last_name || "";
     const telegramUsername = message.from.username || null;

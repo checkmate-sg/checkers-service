@@ -32,7 +32,7 @@ interface DashboardData {
   };
 }
 
-export default function Dashboard() {
+export default function TempDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );

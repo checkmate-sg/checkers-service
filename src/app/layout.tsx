@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import Script from "next/script";
 import { UserProvider } from "@/contexts/UserContext";
 import { Providers } from "./providers";
+import TopHeaderShell from "@/components/top-header/TopHeaderShell";
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +20,11 @@ export default function RootLayout({ children }: LayoutProps) {
         />
 
         <div className="min-h-screen bg-checkmate-secondary flex flex-col">
+          {/* Add Nav bar at the top*/}
+          <div>
+            <TopHeaderShell />
+          </div>
+
           <Providers>
             <UserProvider>
               {/* Main content area with bottom padding to prevent overlap */}
