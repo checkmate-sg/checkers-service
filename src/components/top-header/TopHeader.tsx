@@ -20,7 +20,7 @@ export default function TopHeader({
     const router = useRouter();
 
     return (
-        <div className="p-2 sticky top-0 bg-white/90 border-b">
+        <div className="p-3 sticky top-0 bg-white/90 border-b">
             <div className="grid grid-cols-3 items-center">
                 <div className="justify-self-start">
                     <Button
@@ -28,6 +28,7 @@ export default function TopHeader({
                         size="xlIcon"
                         aria-label="Go back"
                         onClick={() => router.back()}
+                        className="hover:bg-transaprent" // overrides ghost hover
                     >
                         <ArrowLeft className="text-orange-600" />
                     </Button>
