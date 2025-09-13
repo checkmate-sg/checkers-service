@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 25, 100%, 60%;
+    --primary: 25 100% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -42,6 +42,9 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --bottom-nav-height: 5rem;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .dark {
@@ -81,43 +84,44 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
+  html {
+    color-scheme: light dark;
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available; /* legacy iOS */
+    -webkit-tap-highlight-color: transparent;
   }
 
-  body {
+  *, ::before, ::after { @apply border-border; }
+
+  body { 
     @apply bg-background text-foreground;
+    min-height: inherit;
+    overflow-x: hidden;
   }
+
 }
 
 /* Ensure bottom navigation doesn't interfere with content */
 @layer components {
   .page-content {
-    @apply pb-20; /* Add padding bottom to prevent content being hidden */
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); /* Add padding bottom to prevent content being hidden */
   }
 
   .dashboard-content {
-    @apply pb-0; /* Remove bottom padding for dashboard since it has sidebar */
+    padding-bottom: 0; /* Remove bottom padding for dashboard since it has sidebar */
+  }
+
+  .main-content {
+    height: calc(100dvh - (var(--bottom-nav-height) + var(--safe-bottom))); /* Subtract bottom nav height */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    overscroll-behavior-y: contain;
   }
 }
 
-/* Fix for Telegram Mini App viewport */
-@layer base {
-  html,
-  body {
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
-    overflow-x: hidden;
-  }
-
-  /* Ensure proper scrolling on mobile */
-  .main-content {
-    height: calc(100vh - 5rem); /* Subtract bottom nav height */
-    height: calc(100dvh - 5rem);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
 }

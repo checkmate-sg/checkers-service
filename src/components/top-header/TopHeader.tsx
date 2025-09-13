@@ -23,14 +23,13 @@ export default function TopHeader({
         <div className="p-2 sticky top-0 bg-white/90 border-b">
             <div className="grid grid-cols-3 items-center">
                 <div className="justify-self-start">
-                    {/* Increase the size of the button */}
                     <Button
                         variant="ghost"
+                        size="xlIcon"
                         aria-label="Go back"
                         onClick={() => router.back()}
-                        className="h-12 w-12 hover:bg-orange-50"
                     >
-                        <ArrowLeft className="h-12 w-12 text-orange-600" />
+                        <ArrowLeft className="text-orange-600" />
                     </Button>
                 </div>
 
