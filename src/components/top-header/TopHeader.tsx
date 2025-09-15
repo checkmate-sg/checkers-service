@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import classes from './TopHeader.module.css';
+import { IconMenu2 } from '@tabler/icons-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { useSession } from "next-auth/react";
 
 
 type TopHeaderProps = {
@@ -18,9 +21,22 @@ export default function TopHeader({
     logoLabel="CheckMate",
 }: TopHeaderProps) {
     const router = useRouter();
+    const { data: session, status } = useSession();
+    
+    if (status === "authenticated") {
+        console.log("User is authenticated:", session.user);
+    }
+
+    const handleTakeBreak = () => {
+        console.log("Taking a break");
+    }
+
+    const handleRestartProgram = () => {
+        console.log("Restarting program");
+    }
 
     return (
-        <div className="p-3 sticky top-0 bg-white/90 border-b">
+        <div className="p-3 sticky top-0 bg-white/90">
             <div className="grid grid-cols-3 items-center">
                 <div className="justify-self-start">
                     <Button
@@ -38,7 +54,35 @@ export default function TopHeader({
                     {title}
                 </h1>
 
-                <div className="justify-self-end">
+                <div className="justify-self-end flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                aria-label="Menu"
+                                className="hover:bg-transparent">
+                                <IconMenu2 stroke={2} />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="center"
+                            sideOffset={2}
+                            className="w-[180px] rounded-xl border bg-popover p-2 text-popover-foreground">
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem 
+                                    className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                    onClick={handleTakeBreak}>
+                                    Take a break
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                    onClick={handleRestartProgram}>
+                                    Restart Program
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     {logoSrc && (
                         <img
                             src={logoSrc}
@@ -46,6 +90,7 @@ export default function TopHeader({
                             className={`${classes.orangeGlow} h-[12vw] w-[12vw] rounded-full`}
                         />
                     )}
+                    
                 </div>
             </div>
             
