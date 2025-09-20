@@ -1,0 +1,481 @@
+openapi: 3.0.4
+info:
+  title: Checkmate checkers-service
+  description: This document describes the Full API interface for Checkmate checkers-service
+  version: 1.0.0
+  contact:
+    name: Ke En
+    email: keenlim@checkmate.sg
+
+tags:
+  - name: Checkers
+    description: API for managing checkers
+
+paths:
+  '/checkers/{checkerId}':
+    patch:
+      summary: Partially update a checker
+      description: |
+        Partially updates a checker document. 
+        - Only keys that already exists on the checker are allowed (unknown keys result in 400 error)
+        - Special Cases:
+          - `isActive: true` - server sets `lastActivatedDate` to now
+          - `programData`
+      tags:
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path
+          description: Checker ID 
+          required: true 
+          schema: 
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful updated of checkers details
+          content:
+            application/json:
+              
+        
+  
+components:
+  # Definition of Schemas
+  schemas:
+    # Common Schemas
+    APIError:
+      description: Generic schema for expressing API Errors
+      type: object
+      properties:
+        code:
+          description: API Error code associated with the error
+          type: integer
+          format: int32
+        message:
+          description: Error message associated with the error
+          type: string
+        request:
+          description: Request details associated with the error
+          type: object
+        details:
+          description: Other details associated with the error
+          type: object
+      required:
+        - code
+        
+    # Primitives & Helpers
+    MongoObjectId:
+      type: string
+      description: MongoDB ObjectId (24 hex characters)
+      pattern: "^[a-fA-F0-9]{24}$"
+      example: "60f7a7c8d5c5f6b9a1c2d3e4"
+    
+    ObjectIdString:
+      type: string
+      description: String representation of an ObjectId
+      pattern: "^[a-fA-F0-9]{24}$"
+      example: "60f7a7c8d5c5f6b9a1c2d3e4"
+      
+    DateTime:
+      type: string
+      format: date-time
+      description: ISO-8601 timestamp string
+      example: "2025-09-18T12:34:56Z"
+    
+    BaseDocument:
+      type: object
+      description: Base document interface that all MongoDB documents extend
+      properties:
+        _id: 
+          $ref: '#/components/schemas/MongoObjectId'
+      additionalProperties: false
+    
+    Category:
+      type: string
+      description: crowed source message category 
+      enum:
+        - "scam"
+        - "illicit"
+        - "info"
+        - "satire"
+        - "spam"
+        - "legitimate"
+        - "irrelevant"
+        - "unsure"
+        - null
+    
+    CategoryWithPassNullable:
+      description: Category including 'pass' and allowing null
+      type: string
+      enum:
+        - "scam"
+        - "illicit"
+        - "info"
+        - "satire"
+        - "spam"
+        - "legitimate"
+        - "irrelevant"
+        - "unsure"
+        - "pass"
+        - null
+    
+    OnboardingStatus:
+      type: string
+      description: Onboarding status of the Checker
+      enum:
+        - name
+        - number
+        - verify
+        - quiz
+        - onboardWhatsapp
+        - joinGroupChat
+        - nlb
+        - completed
+        - offboarded
+        
+    ResponseCategory:
+      description: Evaluation for an AI response quality (nullable)
+      type: string
+      enum: 
+        - great
+        - acceptable
+        - unacceptable
+        - null
+        
+    TruthScore:
+      description: Truth score on a 0-5 scale 
+      type: integer
+      minimum: 0
+      maximum: 5
+      
+    Collections:
+      type: string
+      description: Database collections enum for type safety
+      enum: [checkers, polls, votes]
+      
+    Response:
+      type: object
+      description: >- 
+        Format of the AI generated responses passed from CheckMate AI platform
+      required: 
+        - en
+        - cn 
+        - links
+        - timestamp
+      properties:
+        en:
+          type: string
+          description: English response
+        cn:
+          type: string
+          description: Chinese response
+        links:
+          type: array
+          description: Related links cited by the AI response
+          items:
+            type: string
+            format: uri
+        timestamp:
+          $ref: '#/components/schemas/DateTime'
+      additionalProperties: false
+      
+    Checker:
+      description: Representation of a Checker user. 
+      allOf:
+        - $ref: '#/components/schemas/BaseDocument'
+        - type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+              description: >-
+                Name of the Checker, set by them during onboarding
+            telegramId:
+              type: string
+              description: >-
+                Telegram ID of the Checker
+            whatsappId:
+              type: string
+              nullable: true
+              description: >-
+                Whatsapp ID of the Checker
+            singpassId:
+              type: string
+              nullable: true
+              description: >-
+                SingPass ID of the Checker (not used yet)
+            isActive:
+              type: boolean
+              description: >-
+                Whether the Checker is active and will be triggered
+            isOnboardingComplete:
+              type: boolean
+              description: >-
+                Whether the Checker has completed the onboarding process
+            onboardingTime:
+              $ref: '#/components/schemas/DateTime'
+            isQuizComplete:
+              type: boolean
+              description: >-
+                Whether the Checker has completed the onboarding quiz 
+            quizScore:
+              type: integer
+              nullable: true
+              description: >-
+                The score the Checker got in the quiz 
+            onboardingStatus:
+              $ref: '#/components/schemas/OnboardingStatus'
+            hasReceivedExtension:
+              type: boolean
+              description: >-
+                Whether the Checker has received the extension for the program
+            hasCompletedProgramme:
+              type: boolean
+              description: >-
+                Whether the Checker has completed the programme
+            certificateUrl: 
+              type: string
+              nullable: true
+              description: >-
+                The static URL of the Checker's certificate
+            numVoted:
+              type: integer
+              description: >-
+                The number of polls the Checkers has voted on
+            lastVotedTimestamp:
+              $ref: '#/components/schemas/DateTime'
+            getNameMessageId:
+              type: string
+              nullable: true
+              description: >-
+                Message ID of the message the Checker used to set their name
+            dailyAssignmentCount:
+              type: integer
+              description: >-
+                Number of polls the Checker has been assigned to vote on today
+          required:
+            - name
+            - telegramId
+            - whatsappId
+            - singpassId
+            - isActive
+            - isOnboardingComplete
+            - onboardingTime
+            - isQuizComplete
+            - quizScore
+            - onboardingStatus
+            - hasReceivedExtension
+            - hasCompletedProgramme
+            - certificateUrl
+            - numVoted
+            - lastVotedTimestamp
+            - getNameMessageId
+            - dailyAssignmentCount
+    Poll:
+      description: >-
+        Representation of the Messages to be checked 
+      allOf:
+        - $ref: '#/components/schemas/BaseDocument'
+        - type: object
+          properties:
+            externalId: 
+              type: string
+              description: >-
+                CheckID from CheckMate AI platform 
+            text: 
+              type: string
+              nullable: true
+              description: >-
+                Text of the poll, if any
+            imageURL: 
+              type: string
+              nullable: true
+              description: >-
+                URL of the image in the poll, if any 
+            caption: 
+              type: string
+              nullable: true 
+              description: >-
+                Caption of the poll, if any 
+            longformResponse: 
+              $ref: '#/components/schemas/Response'
+            shortformResponse:
+              $ref: '#/components/schemas/Response'
+            crowdSourcedCategory:
+              $ref: '#/components/schemas/Category'
+            startedTimestamp:
+              $ref: '#/components/schemas/DateTime'
+            assessedTimestamp:
+              $ref: '#/components/schemas/DateTime'
+              
+    Vote:
+      description: >-
+        Representation of individual vote on a message 
+      allOf:
+        - $ref: '#/components/schemas/BaseDocument'
+        - type: object
+          properties:
+            pollId: 
+              $ref: '#/components/schemas/MongoObjectId'
+            checkerId: 
+              $ref: '#/components/schemas/MongoObjectId'
+            createTimestamp:
+              $ref: '#/components/schemas/DateTime'
+            votedTimestamp:
+              anyOf:
+                - $ref: '#/components/schemas/DateTime'
+                - nullable: true
+            category:
+              anyOf:
+                - $ref: '#/components/schemas/Category'
+                - nullable: true
+            truthScore: 
+              $ref: '#/components/schemas/TruthScore'
+            responseCategory:
+              $ref: '#/components/schemas/ResponseCategory'
+            commentOnResponse:
+              type: string
+              nullable: true
+              
+  
+  # Definition of Responses
+  responses:
+    CreatedResponse:
+      description: Successfully created resource with ID
+      content:
+        application/json:
+          schema:
+            description: Generated resource ID 
+            type: object
+            properties:
+              id:
+                description: Unique ID of the resource 
+                type: string
+                format: uuid
+            required:
+              - id 
+    UpdatedResponse:
+      description: Successfully updated specified resource
+    DeletedResponse:
+      description: Successfully deleted specified resource(s)
+    TriggeredResponse:
+      description: Successfully triggered an activity
+    InvalidParametersError:
+      description: Invalid parameter(s)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 400
+            message: Invalid parameters provided
+    AuthenticationError:
+      description: Authentication error
+      content: 
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 401
+            message: Unauthorised usage of the API
+    PermissionsError:
+      description: Insufficient permissions error
+      content: 
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 403
+            message: Insufficient permissions to use API
+    NotFoundError:
+      description: Specified resource(s) was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 404
+            message: Specified resource(s) was not found
+    DuplicateEntryError:
+      description: Duplicate entry
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 409
+            message: Attempt to create duplicate entry
+    UnsupportedMediaTypeError:
+      description: Unsupported media content was uploaded 
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 415
+            message: Unsupported media content was uploaded to the server
+    InvalidCreationError:
+      description: Unable to create resource due to errors
+      content: 
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 422
+            message: Unable to create resource
+    InvalidUpdateError:
+      description: Unable to update resource due to errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 422
+            message: Unable to update resource
+    InvalidDeletionError:
+      description: Unable to delete resource as preconditions were not met
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 422
+            message: Unable to delete resource
+    RateLimitError:
+      description: API was called too man times
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example: 
+            code: 429
+            message: API was invoked too many times
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            code: 500
+            message: Internal server error
+    
+        
+        
+        
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+    
+  
