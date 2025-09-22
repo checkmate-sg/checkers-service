@@ -1,10 +1,16 @@
+import { auth } from '@/auth';
+import { CheckersDashboard } from '@/components/dashboard/CheckersDashboard';
 
-import TempDashboard from '@/components/dashboard/Temp-Dashboard';
+export default async function Dashboard() {
+      const session = await auth();
 
-export default function Dashboard() {
+      if (!session?.user) return null;
+      else {
+            console.log(session);
+      }
       return (
             <div>
-                  <TempDashboard />
+                  <CheckersDashboard />
             </div>
       )
 };
