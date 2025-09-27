@@ -8,7 +8,6 @@ export async function GET(req: NextRequest, {params}) {
     const { env } = getCloudflareContext();
 
     try{
-        // Test Authentication
         const session = await auth();
         if (!session?.user) return Err.unauthorized();
 
@@ -20,8 +19,8 @@ export async function GET(req: NextRequest, {params}) {
         if (!result.success) {
             return Err.notFound();
         }
-
-        return NextResponse.json({checker: result})    
+        const checker = result.data;
+        return NextResponse.json(checker, {status: 200})    
 
     } catch (error) {
         return Err.internal();

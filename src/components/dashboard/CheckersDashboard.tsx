@@ -1,23 +1,46 @@
 'use client';
 
+
+
+import { Loader2 } from 'lucide-react';
+
+import { useGetCheckersById } from '@/hooks/checkers/useGetCheckersDetails';
+
 import { ProgressItem } from '../common/progress-item/ProgressItem';
 
-export const CheckersDashboard = () => {
+interface CheckersDashboardProps {
+  checkerId: string;
+}
+
+export const CheckersDashboard = ({ checkerId } : CheckersDashboardProps) => {
     const isProd = process.env.NODE_ENV === "production";
 
     // TODO: Add numReported using API from WhatsApp Service 
     const numReported = 3;
+
+    // TODO: Voting Accuracy 
+    const votingAccuracy = 70;
+
+    // TODO: Set the numVotesTarget, numReportTarget, and numAccuracyTarget dynamically
+
+    const { data: checker, isLoading, error } = useGetCheckersById(checkerId);
+
+    if (isLoading) return (
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
     
     return (
         <div className="flex flex-col gap-y-4 p-4">
             <h6 className="text-orange-600 text-lg font-semibold">
-                Up for a challenge? Attain these 3 milestones to finish the
+                Hello, {checker.name}! Up for a challenge? Attain these 3 milestones to finish the
                 CheckMate Checker's Program and get certified.
             </h6>
             <ProgressItem 
                 name="Messages Voted On"
                 imgSrc="/votes.png"
-                currentNum={20}
+                currentNum={checker.numVoted}
                 targetNum={50}
                 isPercentageTarget={false}
                 tooltipHeader="Messages Voted On"
@@ -26,7 +49,7 @@ export const CheckersDashboard = () => {
             <ProgressItem 
                 name="Voting Accuracy"
                 imgSrc="/accuracy.png"
-                currentNum={70}
+                currentNum={votingAccuracy}
                 targetNum={60}
                 isPercentageTarget={true}
                 tooltipHeader="Voting Accuracy (%)"

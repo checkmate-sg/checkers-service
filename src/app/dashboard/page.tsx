@@ -5,12 +5,8 @@ export default async function Dashboard() {
       const session = await auth();
 
       if (!session?.user) return null;
-      else {
-            console.log(session);
-      }
+
       return (
-            <div>
-                  <CheckersDashboard />
-            </div>
+            <CheckersDashboard checkerId={session.user.id}/>
       )
 };

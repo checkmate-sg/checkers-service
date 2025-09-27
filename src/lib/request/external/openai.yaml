@@ -13,14 +13,10 @@ tags:
 
 paths:
   '/checkers/{checkerId}':
-    patch:
-      summary: Partially update a checker
+    get:
+      summary: Retrieves checkers information based on checkerId
       description: |
-        Partially updates a checker document. 
-        - Only keys that already exists on the checker are allowed (unknown keys result in 400 error)
-        - Special Cases:
-          - `isActive: true` - server sets `lastActivatedDate` to now
-          - `programData`
+       Return all the fields of a checkers based on che checkerId to check if the checkers exist in the database
       tags:
         - Checkers
       parameters:
@@ -29,13 +25,20 @@ paths:
           description: Checker ID 
           required: true 
           schema: 
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
-          description: Successful updated of checkers details
+          description: Successful retrieval of checkers details
           content:
             application/json:
+              schema: 
+                $ref: '#/components/schemas/Checker'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
               
         
   
