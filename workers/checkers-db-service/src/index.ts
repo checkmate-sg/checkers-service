@@ -1,12 +1,13 @@
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 /**
  * Database Service Worker with Durable Objects for Connection Pooling
  *
  * This worker handles database operations for the Checkmate application.
  * Uses Durable Objects to maintain persistent MongoDB connections for improved performance.
  */
-import { MongoClient, ObjectId, Filter, UpdateFilter } from "mongodb";
-import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
-import { Poll, Checker, Vote } from "@/shared/types/schema";
+import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
+
+import { Checker, Poll, Vote } from '@/shared/types/schema';
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -262,6 +263,42 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async findCheckers(
+    filter: Filter<Checker>
+  ): Promise<{ success: boolean; data?: Checker[]; error?: string; total?: number }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const checkersCollection = db.collection<Checker>("checkers");
+
+      // Convert string _id to ObjectId if present
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+
+      // Checker[]
+      const checkers = await checkersCollection.find(processedFilter).toArray();
+
+      if (!checkers) {
+        return { success: true, data: undefined };
+      }
+
+      // Convert ObjectId to string before returning
+      const checkersWithStringId = checkers.map(checker => ({
+        ...checker,
+        _id: checker._id?.toString(),
+      }));
+
+      const totalCheckers = checkersWithStringId.length;
+
+      return { success: true, data: checkersWithStringId as Checker[], total: totalCheckers };
+
+    }catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find checker");
+      return { success: false, error: errorMessage };
+    }
+  }
+
   async findOnePoll(
     filter: Filter<Poll>
   ): Promise<{ success: boolean; data?: Poll; error?: string }> {
@@ -392,6 +429,11 @@ export default class extends WorkerEntrypoint<Env> {
   async findOneChecker(filter: Filter<Checker>) {
     const durableObject = this.getDurableObject();
     return durableObject.findOneChecker(filter);
+  }
+
+  async findCheckers(filter: Filter<Checker>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findCheckers(filter);
   }
 
   async findOnePoll(filter: Filter<Poll>) {

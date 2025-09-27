@@ -8,7 +8,7 @@ import {
   createReplyKeyboard,
   sendMessage,
   sendPhoto
-} from '@/lib/telegram';
+} from '@/lib/telegramHelpers/telegram';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 // User session storage (in production, use Redis or database)

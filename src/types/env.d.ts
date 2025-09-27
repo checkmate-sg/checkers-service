@@ -1,5 +1,5 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, VoteAPI } from "@/shared/types/schema";
+import { CheckerAPI, PollAPI, VoteAPI } from '@/shared/types/schema';
 
 declare global {
   interface CloudflareEnv {
@@ -32,6 +32,9 @@ declare global {
       findOneChecker(
         filter: any
       ): Promise<{ success: boolean; data?: CheckerAPI; error?: string }>;
+      findCheckers(
+        filter: any
+      ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number;}>;
       findOnePoll(
         filter: any
       ): Promise<{ success: boolean; data?: PollAPI; error?: string }>;

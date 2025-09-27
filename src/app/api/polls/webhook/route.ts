@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { PollRequest, PollAPI } from "@/shared/types/schema";
+import { NextResponse } from 'next/server';
+
+import { createForceReply, sendMessage } from '@/lib/telegramHelpers/telegram';
+import { PollAPI, PollRequest } from '@/shared/types/schema';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+
+// User session storage (in production, use Redis or database)
+const userSessions: { [key: string]: { step: string; data: any } } = {};
 
 export async function POST(req: Request) {
   try {
@@ -60,6 +65,7 @@ export async function POST(req: Request) {
       assessedTimestamp: null,
     };
 
+    // Insert the new poll into the database
     const insertResult = await env.CHECKERS_DB_SERVICE.insertPoll(newPoll);
 
     if (!insertResult.success) {
@@ -70,6 +76,26 @@ export async function POST(req: Request) {
       );
     }
 
+    // Despatch Poll 
+
+    // 1. Find all the active checkers who is currently active 
+    const activeCheckersResult = await env.CHECKERS_DB_SERVICE.findCheckers({
+      isActive: true,
+      isOnboardingComplete: true,
+    });
+
+    // Verify webhook secret for security
+    // const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    // if (webhookSecret) {
+    //   const secretHeader = req.headers.get(
+    //     "x-telegram-bot-api-secret-token"
+    //   );
+    //   if (secretHeader !== webhookSecret) {
+    //     console.error("[Webhook] Invalid webhook secret");
+    //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    //   }
+    // }
+
     // Return the string ID from the database service
     return NextResponse.json({
       message: "Poll created successfully",
@@ -79,4 +105,13 @@ export async function POST(req: Request) {
     console.error("[WEBHOOK ERROR]", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
+}
+
+// Helper function 
+async function sendNamePrompt(chatId: number, telegramId: string) {
+  userSessions[telegramId] = { step: "collecting_name", data: {} };
+
+  await sendMessage(chatId, `First up, how shall we address you?`, {
+    reply_markup: createForceReply(),
+  });
 }
