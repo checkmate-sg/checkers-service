@@ -1,9 +1,12 @@
 'use client';
 
-import { ProgressItem } from "../common/progress-item/ProgressItem";
+import { ProgressItem } from '../common/progress-item/ProgressItem';
 
 export const CheckersDashboard = () => {
     const isProd = process.env.NODE_ENV === "production";
+
+    // TODO: Add numReported using API from WhatsApp Service 
+    const numReported = 3;
     
     return (
         <div className="flex flex-col gap-y-4 p-4">
@@ -33,7 +36,7 @@ export const CheckersDashboard = () => {
             <ProgressItem 
                 name="Messages Reported"
                 imgSrc="/message.png"
-                currentNum={3}
+                currentNum={numReported}
                 targetNum={10}
                 isPercentageTarget={false}
                 tooltipHeader="Messages Reported"
@@ -43,7 +46,7 @@ export const CheckersDashboard = () => {
                     <a
                       href={
                         isProd
-                          ? "https://wa.me/6580432188"
+                          ? "https://wa.me/6580432188" // TODO: To check if this is still the same
                           : "https://wa.me/6586177848"
                       }
                       target="_blank"

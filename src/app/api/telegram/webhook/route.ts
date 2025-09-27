@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { Update } from "grammy/types";
+import { Update } from 'grammy/types';
+import { NextRequest, NextResponse } from 'next/server';
+
 import {
-  sendMessage,
-  sendPhoto,
   answerCallbackQuery,
+  createForceReply,
   createInlineKeyboard,
   createReplyKeyboard,
-  createForceReply,
-} from "@/lib/telegram";
+  sendMessage,
+  sendPhoto
+} from '@/lib/telegram';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 // User session storage (in production, use Redis or database)
 const userSessions: { [key: string]: { step: string; data: any } } = {};
@@ -188,6 +189,7 @@ async function handleStartCommand(
 ) {
   const { env } = getCloudflareContext();
   const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+
   const existingUser = result.success ? result.data : null;
 
   if (!existingUser) {
