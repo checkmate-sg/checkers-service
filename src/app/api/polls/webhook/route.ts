@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { createForceReply, sendMessage } from '@/lib/telegramHelpers/telegram';
-import { PollAPI, PollRequest } from '@/shared/types/schema';
+import { createInlineKeyboard, sendMessage } from '@/lib/telegramHelpers/telegram';
+import { PollAPI, PollRequest, VoteAPI } from '@/shared/types/schema';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-
-// User session storage (in production, use Redis or database)
-const userSessions: { [key: string]: { step: string; data: any } } = {};
 
 export async function POST(req: Request) {
   try {
@@ -76,25 +73,63 @@ export async function POST(req: Request) {
       );
     }
 
-    // Despatch Poll 
+    // Builds a previewText for notification
+    let previewText = "";
+    if (text) {
+      previewText = text.length > 50 ? text.substring(0, 50) + "..." : text
+    }
 
-    // 1. Find all the active checkers who is currently active 
+    if (imageUrl) {
+      previewText = previewText ? `${previewText}\n <Image 🖼️>` : "<Image 🖼️>"
+    }
+
+    // Despatch Poll 
+    // Get all the active checkers who is currently active 
     const activeCheckersResult = await env.CHECKERS_DB_SERVICE.findCheckers({
       isActive: true,
       isOnboardingComplete: true,
-    });
+    }, {dailyAssignmentCount: 1}); // activeCheckerResult.data is Checker[]
 
-    // Verify webhook secret for security
-    // const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    // if (webhookSecret) {
-    //   const secretHeader = req.headers.get(
-    //     "x-telegram-bot-api-secret-token"
-    //   );
-    //   if (secretHeader !== webhookSecret) {
-    //     console.error("[Webhook] Invalid webhook secret");
-    //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    //   }
-    // }
+    const voteRequestPath = `${process.env.NEXTAUTH_URL}/vote/${checkId}`;
+
+    for (const checker of activeCheckersResult.data) {
+      // Create a vote request in the database for each checker
+      const voteRequest: Omit<VoteAPI, "_id"> = {
+        pollId: checkId, 
+        checkerId: checker._id?.toString() || checker._id,
+        createdTimestamp: new Date(),
+        votedTimestamp: null,
+        category: null, 
+        truthScore: null,
+        responseCategory: null,
+        commentOnResponse: null,
+      }
+      const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
+
+      if (!insertVoteResult.success) {
+        console.error("[WEBHOOK ERROR]", insertVoteResult.error);
+        return NextResponse.json(
+          { error: insertVoteResult.error || "Failed to create poll" },
+          { status: 500 }
+        );
+      }
+
+      // Send each checker the vote request message 
+      await sendMessage(
+        checker.telegramId,
+        previewText,
+        {
+          reply_markup: createInlineKeyboard([
+            [
+              { text: "Vote 🗳️!",
+                web_app: {url: voteRequestPath}
+              }
+            ]
+          ])
+        }
+      )
+    }
+    
 
     // Return the string ID from the database service
     return NextResponse.json({
@@ -107,11 +142,3 @@ export async function POST(req: Request) {
   }
 }
 
-// Helper function 
-async function sendNamePrompt(chatId: number, telegramId: string) {
-  userSessions[telegramId] = { step: "collecting_name", data: {} };
-
-  await sendMessage(chatId, `First up, how shall we address you?`, {
-    reply_markup: createForceReply(),
-  });
-}

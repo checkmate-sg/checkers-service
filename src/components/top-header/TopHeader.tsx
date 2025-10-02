@@ -1,13 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import classes from './TopHeader.module.css';
-import { IconMenu2 } from '@tabler/icons-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import { useSession } from "next-auth/react";
+import { ArrowLeft } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@radix-ui/react-dropdown-menu';
+import { IconMenu2 } from '@tabler/icons-react';
+
+import classes from './TopHeader.module.css';
 
 type TopHeaderProps = {
     title:string;
@@ -36,7 +43,7 @@ export default function TopHeader({
     }
 
     return (
-        <div className="p-3 sticky top-0 bg-white/90">
+        <div className="sticky p-3 top-0 bg-white/90">
             <div className="grid grid-cols-3 items-center">
                 <div className="justify-self-start">
                     <Button

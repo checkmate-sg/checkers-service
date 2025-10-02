@@ -33,7 +33,8 @@ declare global {
         filter: any
       ): Promise<{ success: boolean; data?: CheckerAPI; error?: string }>;
       findCheckers(
-        filter: any
+        filter: any,
+        options?: any
       ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number;}>;
       findOnePoll(
         filter: any

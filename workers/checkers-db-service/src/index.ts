@@ -73,6 +73,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       await pollsCollection.insertOne({
         ...poll,
         _id: objectId,
+        externalId: typeof poll.externalId === 'string' ? new ObjectId(poll.externalId) : poll.externalId,
       });
 
       return { success: true, id: idString };
@@ -264,7 +265,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   }
 
   async findCheckers(
-    filter: Filter<Checker>
+    filter: Filter<Checker>,
+    options?: {
+      sort?: Record<string, 1 | -1>; // e.g. { dailyAssignmentCount: 1}
+    }
   ): Promise<{ success: boolean; data?: Checker[]; error?: string; total?: number }> {
     try {
       await this.connectPromise;
@@ -275,7 +279,13 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const processedFilter = this.convertStringIdsToObjectIds(filter);
 
       // Checker[]
-      const checkers = await checkersCollection.find(processedFilter).toArray();
+      let findCheckers = await checkersCollection.find(processedFilter);
+
+      if (options?.sort) {
+        findCheckers = findCheckers.sort(options.sort);
+      }
+
+      const checkers = await findCheckers.toArray();
 
       if (!checkers) {
         return { success: true, data: undefined };
@@ -431,9 +441,13 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.findOneChecker(filter);
   }
 
-  async findCheckers(filter: Filter<Checker>) {
+  async findCheckers(filter: Filter<Checker>,
+    options?: {
+      sort?: Record<string, 1 | -1>; // e.g. { dailyAssignmentCount: 1}
+    }
+  ) {
     const durableObject = this.getDurableObject();
-    return durableObject.findCheckers(filter);
+    return durableObject.findCheckers(filter, options);
   }
 
   async findOnePoll(filter: Filter<Poll>) {

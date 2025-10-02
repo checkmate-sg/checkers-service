@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, BarChart3, Trophy } from "lucide-react";
+import { BarChart3, Home, Trophy } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const BottomNavigation = () => {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ const BottomNavigation = () => {
       label: "Dashboard",
     },
     {
-      path: "/my-votes",
+      path: "/votes",
       icon: BarChart3,
       label: "My Votes",
     },
