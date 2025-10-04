@@ -183,6 +183,22 @@ export type Poll = BaseDocument & {
   assessedTimestamp?: DateTime;
 };
 
+/** Poll request to kick off the poll process, received via webhook from CheckMate AI Platform  */
+export type PollRequest = BaseDocument & {
+  /** CheckID from CheckMate AI platform  */
+  externalId?: string;
+  /** Text of the poll, if any */
+  text?: string | null;
+  /** URL of the image in the poll, if any  */
+  imageURL?: string | null;
+  /** Caption of the poll, if any  */
+  caption?: string | null;
+  /** Format of the AI generated responses passed from CheckMate AI platform */
+  longformResponse?: Response;
+  /** Format of the AI generated responses passed from CheckMate AI platform */
+  shortformResponse?: Response;
+};
+
 /** Representation of individual vote on a message  */
 export type Vote = BaseDocument & {
   /** MongoDB ObjectId (24 hex characters) */
@@ -199,3 +215,65 @@ export type Vote = BaseDocument & {
   responseCategory?: ResponseCategory;
   commentOnResponse?: string | null;
 };
+
+/** Representation of individual vote with ALL votes details  */
+export type VotesMessageBrief = Vote & {
+  /** Text of the poll, if any */
+  text?: string | null;
+  /** URL of the image in the poll, if any  */
+  imageURL?: string | null;
+  /** crowed source message category */
+  crowdSourcedCategory?: Category;
+};
+
+/**
+ * the count of the total number of records
+ * @example 100
+ */
+export type PaginationTotal = number;
+
+/**
+ * The maximum number of items returned in the response.
+ * @example 100
+ */
+export type PaginationLimit = number;
+
+/**
+ * The number of items to skipped starting to collect the items. The offset must be a non-negative integer.
+ * @example 100
+ */
+export type PaginationOffset = number;
+
+/** Pagination Response structure */
+export interface PaginationResponse {
+  /** the count of the total number of records */
+  total?: PaginationTotal;
+  /** The number of items to skipped starting to collect the items. The offset must be a non-negative integer. */
+  offset?: PaginationOffset;
+  /** The maximum number of items returned in the response. */
+  limit?: PaginationLimit;
+}
+
+/** Representation of a Paginated Response */
+export interface APIPagination {
+  /**
+   * Total number of objects
+   * @format int32
+   * @default 0
+   */
+  total?: number;
+  /**
+   * Number of items per page
+   * @format int32
+   * @min 0
+   * @max 50
+   * @exclusiveMax false
+   */
+  limit?: number;
+  /**
+   * Number of skipped items
+   * @format int32
+   * @min 0
+   */
+  offset?: number;
+}

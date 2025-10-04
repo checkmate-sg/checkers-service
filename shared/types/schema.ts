@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
 
 //NOSQL DATA TYPES
 
@@ -124,4 +124,27 @@ export enum Collections {
   CHECKERS = "checkers",
   POLLS = "polls",
   VOTES = "votes",
+}
+
+// VoteChecker - join both Vote and Poll 
+export interface VoteChecker extends BaseDocument {
+  pollId: ObjectId;
+  checkerId: ObjectId;
+  createdTimestamp: Date;
+  votedTimestamp: Date | null;
+  category: // The category of the message, either "scam", "illicit", "info", "satire", "spam", "legitimate", "irrelevant", "unsure", "pass". Null means not yet voted
+  | "scam"
+    | "illicit"
+    | "info"
+    | "satire"
+    | "spam"
+    | "legitimate"
+    | "irrelevant"
+    | "unsure"
+    | "pass"
+    | null;
+  truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
+  responseCategory: "great" | "acceptable" | "unacceptable" | null;
+  commentOnResponse: string | null;
+  poll: Poll
 }

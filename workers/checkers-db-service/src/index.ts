@@ -47,6 +47,9 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     if (typeof convertedFilter.checkerId === 'string') {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
     }
+    if (typeof convertedFilter.externalId === 'string') {
+      convertedFilter.externalId = new ObjectId(convertedFilter.externalId);
+    }
 
     // Handle nested objects (like $set, $push, etc.)
     Object.keys(convertedFilter).forEach(key => {
@@ -138,6 +141,118 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
       console.error({ error, errorMessage, vote }, "Failed to insert vote");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findCheckersVote(
+    sortField: string, 
+    limit: number, 
+    offset: number,
+    checkerId: string,
+    voteCheckerStatus: boolean
+  ): Promise<{success: boolean; data?: any; total?: number; error?: string}> {
+    try {
+      await this.connectPromise; 
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+      
+      const baseMatch: any = { checkerId: new ObjectId(checkerId) };
+      if (voteCheckerStatus === true) {
+        // Means voted
+        baseMatch.votedTimestamp = {$ne: null}
+        baseMatch.category = {$ne: null}
+      } else if (voteCheckerStatus === false){
+        // Means not voted
+       baseMatch.votedTimestamp = null;
+       baseMatch.category = null;
+      }
+
+      const basePipeline: any[] = [
+        {$match: baseMatch}
+      ]
+
+      const aggregationPipeline: any[] = [
+        {
+          $lookup: {
+            from: 'polls',
+            localField: 'pollId',
+            foreignField: 'externalId',
+            as: 'poll'
+          }
+        },
+        {
+          $unwind: {
+            path: '$poll',
+            preserveNullAndEmptyArrays: false
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            voteId: { $toString: '$_id' },
+            pollId: { $toString: '$pollId' },
+            checkerId: { $toString: '$checkerId' },
+            createdTimestamp: 1,
+            votedTimestamp: 1,
+            category: 1,
+            truthScore: 1,
+            responseCategory: 1,
+            commentOnResponse: 1,
+            poll: {
+              _id: { $toString: '$poll._id' },
+              externalId: {
+                $toString: '$poll.externalId'
+              },
+              text: '$poll.text',
+              imageUrl: '$poll.imageURl',
+              caption: '$poll.caption',
+              longformResponse:
+                '$poll.longformResponse',
+              shortformResponse:
+                '$poll.shortformResponse',
+              startedTimestamp:
+                '$poll.startedTimestamp',
+              assessedTimestamp:
+                '$poll.assessedTimestamp'
+            }
+          }
+        },
+        {
+          $sort: {
+            'poll.startedTimestamp': -1,
+            _id: -1
+          }
+        },
+        { $skip: offset },
+        { $limit: limit }
+      ]
+
+      const voteChecker = await votesCollection.aggregate(
+        basePipeline
+      ).toArray()
+      const voteCheckerCount = voteChecker.length
+
+      const pipeline = [
+        ...basePipeline,
+        ...aggregationPipeline
+      ]
+
+      const voteCheckerResult = await votesCollection.aggregate(
+        pipeline
+      ).toArray();
+
+
+      if (!voteCheckerResult){
+        return { success: true, data: undefined, total: voteCheckerCount };
+      }
+
+      return { success: true, data: voteCheckerResult, total: voteCheckerCount };
+
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage }, "Failed to find checker's votes");
       return { success: false, error: errorMessage };
     }
   }
@@ -330,6 +445,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const pollWithStringId = {
         ...poll,
         _id: poll._id?.toString(),
+        externalId: poll.externalId?.toString()
       };
 
       return { success: true, data: pollWithStringId as Poll };
@@ -421,6 +537,17 @@ export default class extends WorkerEntrypoint<Env> {
   async updateOnePoll(filter: Filter<Poll>, update: UpdateFilter<Poll>) {
     const durableObject = this.getDurableObject();
     return durableObject.updateOnePoll(filter, update);
+  }
+
+  async findCheckersVote(
+    sortField: string, 
+    offset: number, 
+    limit: number,
+    checkerId: string,
+    voteCheckerStatus: boolean
+  ) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findCheckersVote(sortField, offset, limit, checkerId,voteCheckerStatus)
   }
 
   async updateOneChecker(

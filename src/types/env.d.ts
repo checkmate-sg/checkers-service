@@ -25,6 +25,13 @@ declare global {
         filter: any,
         update: any
       ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+      findCheckersVote(
+        sortField: any,
+        offset: any, 
+        limit: any, 
+        checkerId: any,
+        voteCheckerStatus: any
+      ): Promise<{success: boolean; data?: any; total?: any; error?: string}>
       updateOneVote(
         filter: any,
         update: any

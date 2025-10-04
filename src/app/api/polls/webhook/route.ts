@@ -36,8 +36,10 @@ export async function POST(req: Request) {
 
     // Check if poll with this checkId already exists
     const existingPollResult = await env.CHECKERS_DB_SERVICE.findOnePoll({ 
-      externalId: checkId 
+      externalId: checkId
     });
+
+    console.log(existingPollResult.data);
     
     if (existingPollResult.success && existingPollResult.data) {
       return NextResponse.json(
@@ -130,7 +132,6 @@ export async function POST(req: Request) {
       )
     }
     
-
     // Return the string ID from the database service
     return NextResponse.json({
       message: "Poll created successfully",

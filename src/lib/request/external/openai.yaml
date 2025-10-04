@@ -10,6 +10,8 @@ info:
 tags:
   - name: Checkers
     description: API for managing checkers
+  - name: Polls
+    description: API for managing Polls
 
 paths:
   '/checkers/{checkerId}':
@@ -39,9 +41,94 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-              
-        
+          
+  '/checkers/{checkerId}/votes':
+    get:
+      summary: Retrieves ALL the Votes details based on checkerId
+      description: |
+        Return a paginated list of Votes based on the checkerId 
+      tags:
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path 
+          description: Checker ID
+          required: true 
+          schema:
+            type: string
+        # Sorting Value
+        - description: sort by value, createTimestamp 
+          name: sorting
+          in: query
+          required: false
+          schema: 
+            type: string
+        # Supports pagination
+        - $ref: '#/components/parameters/PaginationLimitParam'
+        - $ref: '#/components/parameters/PaginationOffsetParam'
+        # Vote isPending? 
+        - description: Check if checker have voted 
+          name: VoteCheckerStatus
+          in: query
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successful retrieval of vote details 
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIPagination'
+                  - description: List of VoteMessageBrief based on checkerId
+                    type: object
+                    properties:
+                      items:
+                        description: List of VoteMessageBrief based on checkerid
+                        type: array
+                        default: []
+                        items:
+                          $ref: '#/components/schemas/VotesMessageBrief'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   
+  '/polls/webhook':
+    post:
+      summary: Create a new poll using the webhook 
+      description: |
+        Create a poll in the database and disseminate the vote message to ALL active checkers 
+      tags:
+        - Polls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollRequest'
+      responses:
+        '200':
+          description: Poll created succesfully 
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: 
+                    type: string
+                    example: Poll created successfully 
+                  id: 
+                    type: string
+                    description: The database identifier of the created poll
+        '400':
+          $ref: '#/components/responses/InvalidParametersError'
+        '409':
+          $ref: '#/components/responses/DuplicateEntryError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+          
 components:
   # Definition of Schemas
   schemas:
@@ -310,6 +397,37 @@ components:
               $ref: '#/components/schemas/DateTime'
             assessedTimestamp:
               $ref: '#/components/schemas/DateTime'
+    PollRequest: 
+      description: >-
+        Poll request to kick off the poll process, received via webhook from CheckMate AI Platform 
+      allOf:
+        - $ref: '#/components/schemas/BaseDocument'
+        - type: object
+          properties:
+            externalId: 
+              type: string
+              description: >-
+                CheckID from CheckMate AI platform 
+            text: 
+              type: string
+              nullable: true
+              description: >-
+                Text of the poll, if any
+            imageURL: 
+              type: string
+              nullable: true
+              description: >-
+                URL of the image in the poll, if any 
+            caption: 
+              type: string
+              nullable: true 
+              description: >-
+                Caption of the poll, if any 
+            longformResponse: 
+              $ref: '#/components/schemas/Response'
+            shortformResponse:
+              $ref: '#/components/schemas/Response'
+        
               
     Vote:
       description: >-
@@ -339,8 +457,97 @@ components:
             commentOnResponse:
               type: string
               nullable: true
+    
+    VotesMessageBrief:
+      description: >-
+        Representation of individual vote with ALL votes details 
+      allOf:
+        - $ref: '#/components/schemas/Vote'
+        - type: object
+          properties:
+            text: 
+              type: string
+              nullable: true
+              description: >-
+                Text of the poll, if any
+            imageURL: 
+              type: string
+              nullable: true
+              description: >-
+                URL of the image in the poll, if any 
+            crowdSourcedCategory:
+              $ref: '#/components/schemas/Category'
               
-  
+    PaginationTotal:
+      description: the count of the total number of records
+      type: integer
+      example: 100
+    PaginationLimit:
+      description: The maximum number of items returned in the response.
+      type: integer
+      example: 100
+    PaginationOffset:
+      description: The number of items to skipped starting to collect the items.
+        The offset must be a non-negative integer.
+      type: integer
+      example: 100
+      
+    PaginationResponse:
+      description: Pagination Response structure
+      type: object
+      properties:
+        total:
+          $ref: '#/components/schemas/PaginationTotal'
+        offset:
+          $ref: '#/components/schemas/PaginationOffset'
+        limit:
+          $ref: '#/components/schemas/PaginationLimit'
+          
+    APIPagination:
+      description: Representation of a Paginated Response
+      type: object
+      properties:
+        total:
+          description: Total number of objects
+          type: number
+          format: int32
+          default: 0
+        limit:
+          description: Number of items per page
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 50
+          exclusiveMaximum: false
+        offset:
+          description: Number of skipped items
+          type: integer
+          format: int32
+          minimum: 0
+            
+              
+  parameters:
+    PaginationLimitParam:
+      name: limit
+      description: Number of items per page
+      in: query
+      required: false
+      schema:
+        type: number
+        format: int32
+        default: 50
+        minimum: 0
+    PaginationOffsetParam:
+      name: offset
+      description: Number of items skipped
+      in: query
+      required: false
+      schema:
+        type: number
+        format: int32
+        default: 0
+        minimum: 0
+        
   # Definition of Responses
   responses:
     CreatedResponse:
