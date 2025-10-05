@@ -17,7 +17,7 @@ export const VoteDashboard = ({ checkerId }: VoteDashboardProps) => {
     return (
         <div className="max-w-md mx-auto">
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-[calc(100dvh-9rem)] flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-[calc(100dvh-9rem)] flex-col m-2">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="pending">Pending</TabsTrigger>
                     <TabsTrigger value="voted">Voted</TabsTrigger>

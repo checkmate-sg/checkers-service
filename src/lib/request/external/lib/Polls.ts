@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, PollRequest } from './data-contracts';
+import { APIError, Poll, PollRequest } from './data-contracts';
 import { ContentType, HttpClient, RequestParams } from './http-client';
 
 export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
@@ -36,6 +36,21 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: 'POST',
       body: data,
       type: ContentType.Json,
+      format: 'json',
+      ...params,
+    });
+  /**
+   * @description Return all the of a poll based on the externalId to get all the details of the poll
+   *
+   * @tags Polls
+   * @name PollsDetail
+   * @summary Retrieve the specific Poll detail
+   * @request GET:/polls/{externalId}
+   */
+  pollsDetail = (externalId: string, params: RequestParams = {}) =>
+    this.request<Poll, APIError>({
+      path: `/polls/${externalId}`,
+      method: 'GET',
       format: 'json',
       ...params,
     });

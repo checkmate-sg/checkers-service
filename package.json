@@ -65,6 +65,7 @@
     "next": "^15.4.6",
     "next-auth": "^5.0.0-beta.29",
     "next-themes": "^0.3.0",
+    "normalize-url": "^8.1.0",
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
@@ -75,6 +76,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "telegraf": "^4.16.3",
+    "url-regex-safe": "^4.0.0",
     "vaul": "^0.9.3",
     "zod": "^3.23.8"
   },

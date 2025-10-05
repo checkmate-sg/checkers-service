@@ -24,7 +24,12 @@ export async function GET(req: NextRequest, {params}) {
                 statusParam === "false" ? false :
                 undefined; // no filter if missing
 
-        const result = await env.CHECKERS_DB_SERVICE.findCheckersVote(sorting, limit, offset, checkerId, voteCheckerStatus);
+        const baseFilter = {
+            checkerId,
+            voteCheckerStatus
+        }
+
+        const result = await env.CHECKERS_DB_SERVICE.findCheckersVote(sorting, limit, offset, baseFilter);
 
         const total = result.total
 

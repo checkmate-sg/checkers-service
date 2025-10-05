@@ -18,7 +18,7 @@ paths:
     get:
       summary: Retrieves checkers information based on checkerId
       description: |
-       Return all the fields of a checkers based on che checkerId to check if the checkers exist in the database
+       Return all the fields of a checkers based on the checkerId to check if the checkers exist in the database
       tags:
         - Checkers
       parameters:
@@ -126,6 +126,34 @@ paths:
           $ref: '#/components/responses/InvalidParametersError'
         '409':
           $ref: '#/components/responses/DuplicateEntryError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  '/polls/{externalId}':
+    get:
+      summary: Retrieve the specific Poll detail
+      description: |
+        Return all the of a poll based on the externalId to get all the details of the poll
+      tags: 
+        - Polls
+      parameters:
+        - name: externalId
+          in: path 
+          description: External ID
+          required: true 
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval of checkers details
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Poll'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
           

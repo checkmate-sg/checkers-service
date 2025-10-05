@@ -9,6 +9,8 @@ import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
 
 import { Checker, Poll, Vote } from '@/shared/types/schema';
 
+import { VoteFilter } from './types';
+
 const DB_NAME = "checkmate-checkers-app";
 
 /**
@@ -146,23 +148,22 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   }
 
   async findCheckersVote(
-    sortField: string, 
-    limit: number, 
-    offset: number,
-    checkerId: string,
-    voteCheckerStatus: boolean
+    sortField?: string, 
+    limit?: number, 
+    offset?: number,
+    baseFilter?: VoteFilter
   ): Promise<{success: boolean; data?: any; total?: number; error?: string}> {
     try {
       await this.connectPromise; 
       const db = this.client.db(DB_NAME);
       const votesCollection = db.collection<Vote>("votes");
       
-      const baseMatch: any = { checkerId: new ObjectId(checkerId) };
-      if (voteCheckerStatus === true) {
+      const baseMatch: any = { checkerId: new ObjectId(baseFilter.checkerId) };
+      if (baseFilter?.voteCheckerStatus === true) {
         // Means voted
         baseMatch.votedTimestamp = {$ne: null}
         baseMatch.category = {$ne: null}
-      } else if (voteCheckerStatus === false){
+      } else if (baseFilter?.voteCheckerStatus === false){
         // Means not voted
        baseMatch.votedTimestamp = null;
        baseMatch.category = null;
@@ -540,14 +541,13 @@ export default class extends WorkerEntrypoint<Env> {
   }
 
   async findCheckersVote(
-    sortField: string, 
-    offset: number, 
-    limit: number,
-    checkerId: string,
-    voteCheckerStatus: boolean
+    sortField?: string, 
+    offset?: number, 
+    limit?: number,
+    baseFilter?: any
   ) {
     const durableObject = this.getDurableObject();
-    return durableObject.findCheckersVote(sortField, offset, limit, checkerId,voteCheckerStatus)
+    return durableObject.findCheckersVote(sortField, offset, limit, baseFilter)
   }
 
   async updateOneChecker(

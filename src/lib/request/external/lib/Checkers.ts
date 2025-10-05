@@ -15,7 +15,7 @@ import { HttpClient, RequestParams } from './http-client';
 
 export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
-   * @description Return all the fields of a checkers based on che checkerId to check if the checkers exist in the database
+   * @description Return all the fields of a checkers based on the checkerId to check if the checkers exist in the database
    *
    * @tags Checkers
    * @name CheckersDetail

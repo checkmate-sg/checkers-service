@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import { Loader2 } from 'lucide-react';
 
 import { useGetCheckersById } from '@/hooks/checkers/useGetCheckersDetails';

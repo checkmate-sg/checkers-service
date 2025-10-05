@@ -1,11 +1,12 @@
 'use client';
 
 import { PencilIcon } from 'lucide-react';
+import Link from 'next/link';
 
 import { IconQuestionMark } from '@tabler/icons-react';
 
 interface VoteMessageCardProps {
-    externalId: string // Check ID from CheckMate AI Platform
+    externalId: string; // pollId, _id of polls collection (Common ID)
     text: string | null;
     imageUrl: string | null;
     startedTimestamp: string;
@@ -93,17 +94,22 @@ export const VoteMessageCard = (props : VoteMessageCardProps) => {
     }
 
     return (
-        <div className="flex border-b border-gray-500 h-16 hover-shadow">
-            {renderStatusDot()}
-            
-            <div className="w-11/12 p-2">
-                <p className="font-bold">23 sep 2025</p>
-                <div
-                    className={`truncate inline-block overflow-hidden`}>
-                        {props.text ? props.text : "Image 🖼️"}
+        <Link
+        href={{
+            pathname: `votes/${props.externalId}`
+        }}>
+            <div className="flex border-b border-gray-500 h-16 hover-shadow">
+                {renderStatusDot()}
+                
+                <div className="w-11/12 p-2">
+                    <p className="font-bold">23 sep 2025</p>
+                    <div
+                        className={`truncate inline-block overflow-hidden`}>
+                            {props.text ? props.text : "Image 🖼️"}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     )
 
 }
