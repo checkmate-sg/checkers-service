@@ -94,6 +94,41 @@ paths:
           $ref: '#/components/responses/AuthenticationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+          
+  '/checkers/{checkerId}/votes/{pollId}':
+    get:
+      summary: Retrieve the specific vote details based on checkerId and the pollId
+      description: | 
+        Return a Vote Request object based on the checkerId and the pollId 
+      tags: 
+        - Checkers
+      parameters: 
+        - name: checkerId
+          in: path 
+          description: Checker ID
+          required: true 
+          schema:
+            type: string
+        - name: pollId
+          in: path
+          description: Poll ID 
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval of votes details
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Vote'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      
   
   '/polls/webhook':
     post:
@@ -145,7 +180,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Successful retrieval of checkers details
+          description: Successful retrieval of poll details
           content:
             application/json:
               schema: 

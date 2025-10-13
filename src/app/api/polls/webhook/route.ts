@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const newPoll: Omit<PollAPI, "_id"> = {
       externalId: checkId,
       text: text || null,
-      imageURl: imageUrl || null,
+      imageURL: imageUrl || null,
       caption: caption || null,
       longformResponse,
       shortformResponse,

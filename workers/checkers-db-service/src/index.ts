@@ -438,7 +438,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const poll = await pollsCollection.findOne(processedFilter);
 
-      if (!poll) {
+      if (poll === null) {
         return { success: true, data: undefined };
       }
 

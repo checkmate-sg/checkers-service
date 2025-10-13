@@ -19,6 +19,7 @@
     "gen:api-client": "npx @thangkieu/tools generate-api-client -p ./src/lib/request/external/openai.yaml -o ./src/lib/request/external/lib --axios --custom-axios-import \"../../axios\" -c"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.0",
     "@opennextjs/cloudflare": "^1.7.1",
     "@radix-ui/react-accordion": "^1.2.0",

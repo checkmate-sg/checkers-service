@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, APIPagination, Checker, VotesMessageBrief } from './data-contracts';
+import { APIError, APIPagination, Checker, Vote, VotesMessageBrief } from './data-contracts';
 import { HttpClient, RequestParams } from './http-client';
 
 export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
@@ -74,6 +74,23 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       path: `/checkers/${checkerId}/votes`,
       method: 'GET',
       query: query,
+      format: 'json',
+      ...params,
+    });
+  /**
+   * @description Return a Vote Request object based on the checkerId and the pollId
+   *
+   * @tags Checkers
+   * @name VotesDetail2
+   * @summary Retrieve the specific vote details based on checkerId and the pollId
+   * @request GET:/checkers/{checkerId}/votes/{pollId}
+   * @originalName votesDetail
+   * @duplicate
+   */
+  votesDetail2 = (checkerId: string, pollId: string, params: RequestParams = {}) =>
+    this.request<Vote, APIError>({
+      path: `/checkers/${checkerId}/votes/${pollId}`,
+      method: 'GET',
       format: 'json',
       ...params,
     });
