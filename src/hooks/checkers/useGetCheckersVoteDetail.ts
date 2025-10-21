@@ -58,7 +58,8 @@ export function useGetVotesByCheckersIdNPollId(checkerId: string, pollId: string
     return useQuery({
         queryKey: ['useGetVotesByCheckersIdNPollId', checkerId, pollId],
         queryFn: async () => {
-            const resp = (await checkersAPI.votesDetail2(checkerId, pollId))
+            const resp = await checkersAPI.votesDetail2(checkerId, pollId);
+            
             return resp?.data;
         }
     })

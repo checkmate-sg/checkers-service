@@ -22,6 +22,8 @@ export async function GET(req: NextRequest, {params}) {
             }
         );
 
+        // console.log(result.data);
+
         if (!result.success) {
             return Err.notFound();
         }

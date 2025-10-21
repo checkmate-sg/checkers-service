@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 
 import { UseQueryProvider } from '@/components/common/UseQueryProvider';
 import TopHeaderShell from '@/components/top-header/TopHeaderShell';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { UserProvider } from '@/contexts/UserContext';
 
 import BottomNavigation from '../components/BottomNavigation';
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: LayoutProps) {
 
               {/* Main content area with bottom padding to prevent overlap */}
               <main className="flex-1 pb-20 overflow-y-auto">
-                {children}
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+                
               </main>
 
               {/* Fixed bottom navigation */}
