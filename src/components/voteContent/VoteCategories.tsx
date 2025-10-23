@@ -114,7 +114,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
     }
 
     return (
-        <div className="grid grid-flow-row gap-y-4 items-center my-4">
+        <div className="grid grid-flow-row gap-y-4 items-center mb-4">
             {CATEGORIES.map((cat, index) => (
               <div
                 key={index}
