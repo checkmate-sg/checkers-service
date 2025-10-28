@@ -2,7 +2,6 @@
 
 import { Info } from 'lucide-react';
 
-import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface TooltipProps{
@@ -17,12 +16,14 @@ export default function TooltipWithHelperIcon({
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <Button
-                    type="button"
+                <span
+                    role="button"
+                    tabIndex={0}
                     aria-label={`${header} help`}
-                    className="inline-flex items-center rounded-md p-1 text-blue-gray-500 bg-transparent hover:bg-transparent">
+                    className="inline-flex items-center rounded-md p-1 text-blue-gray-500 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}>
                         <Info />
-                </Button>
+                </span>
             </TooltipTrigger>
 
             <TooltipContent

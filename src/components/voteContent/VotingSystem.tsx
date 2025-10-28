@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { AccordionContent } from '@radix-ui/react-accordion';
 
 import { Accordion, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import CommunityNoteCategories from './CommunityNoteCategories';
+import DoneButton from './DoneButton';
 import VoteCategories from './VoteCategories';
 
 interface VotingSystemProps {
@@ -23,6 +25,31 @@ export default function VotingSystem(
 ) {
     // local state mirrors the original behaviour
     const [openItems, setOpenItems] = useState<number[]>([1]);
+    const [voteCategory, setVoteCategory] = useState<string | null>(props.category);
+    const [truthScore, setTruthScore] = useState<number | null>(props.truthScore);
+    const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<string | null>(props.responseCategory);
+
+    const handleNextStep = (value: number) => {
+        // Enable the next accordion and open it automatically 
+        setOpenItems((prev) => [...prev, value]);
+    }
+
+    const onNextStep = (value: number) => {
+        handleNextStep(value);
+    }
+
+    const handleVoteCategorySelection = (value: string) => {
+        setVoteCategory(value);
+    }
+
+    const handleTruthScoreChange = (value: number | null) => {
+        setTruthScore(value);
+    }
+
+    const handleCrowdSourcedCategory = (value: string ) => {
+        console.log(value);
+        setCrowdSourcedCategory(value);
+    }
 
 
     const StepBadge = ({ n }: { n: number }) => (
@@ -38,12 +65,13 @@ export default function VotingSystem(
        <div className="mx-3">
             <Accordion
                 type="multiple"
-                value={openItems.map(String)} onValueChange={(v) => setOpenItems((v as string[]).map(Number))}
+                value={openItems.map(String)} 
+                onValueChange={(v) => setOpenItems((v as string[]).map(Number))}
             >
-                <AccordionItem 
-                    value="1" 
+                <AccordionItem
+                    value="1"
                     disabled={false}
-                    className={`mb-2 rounded-lg border px-2 relative ${openItems.includes(1) ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}>
+                    className={`mb-6 rounded-lg border px-2 relative ${openItems.includes(1) ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}>
                         <div className="pl-3">
                             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
                                 Select message category: 
@@ -53,8 +81,39 @@ export default function VotingSystem(
 
                         <AccordionContent className="px-4 text-base font-normal">
                             <VoteCategories 
-                                category={props.category}
-                                truthScore={props.truthScore}/>
+                                category={voteCategory}
+                                truthScore={truthScore}
+                                onNextStep={onNextStep}
+                                onVoteCategorySelection={handleVoteCategorySelection}
+                                onTruthScoreChange={handleTruthScoreChange}/>
+                        </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem 
+                    value="2" 
+                    disabled={false}
+                    className={`mb-2 rounded-lg border px-2 relative ${openItems.includes(1) ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}>
+                        <div className="pl-3">
+                            <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
+                                Rate Community Note:
+                            </AccordionTrigger>
+                            <StepBadge n={2} />
+                        </div>
+
+                        <AccordionContent className="px-4 text-base font-normal">
+                           <CommunityNoteCategories 
+                              crowdSourcedCategory={props.responseCategory}
+                              onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
+                            />
+
+                            {voteCategory && crowdSourcedCategory ? (
+                                <DoneButton 
+                                    voteRequestId={props.voteRequestId}
+                                    voteCategory={voteCategory}
+                                    truthScore={truthScore}
+                                    crowdSourcedCategory={crowdSourcedCategory}
+                                />
+                            ): null}
                         </AccordionContent>
                 </AccordionItem>
             </Accordion>

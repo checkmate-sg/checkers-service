@@ -20,6 +20,7 @@ export const VoteContent = ({
 
     // Fetch the poll using pollId 
     const { data: poll, isLoading: isLoading_Poll, error: isError_Poll } = useGetPollDetailsById(pollId);
+    console.log(pollId);
 
     const {data: vote, isLoading: isLoading_Vote, error: isError_Vote} = useGetVotesByCheckersIdNPollId(checkerId, pollId);
     

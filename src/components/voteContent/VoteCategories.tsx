@@ -19,7 +19,9 @@ import NvcOptions from './NvcOptions';
 interface VotingCategoriesProps {
     category: string | null; 
     truthScore: number | null; 
-
+    onNextStep: (value: number) => void; 
+    onVoteCategorySelection: (value: string) => void;
+    onTruthScoreChange: (value: number | null) => void;
 }
 
 const CATEGORIES = [
@@ -101,16 +103,28 @@ export default function VoteCategories(props: VotingCategoriesProps) {
     const [NVCCategory, setNVCCategory] = useState<string | null>(null);
 
     const handleSelection = (value: string) => {
-      console.log("Category: ", value);
       setSelectedCategory(value);
+      switch (value) {
+        case "nvc":
+          props.onVoteCategorySelection("nvc");
+          break;
+        default:
+          props.onVoteCategorySelection(value);
+          props.onNextStep(2);
+          break;
+      }
     };
 
     const handleNVCSelection = (value: string) => {
       setNVCCategory(value);
+      props.onVoteCategorySelection(value);
+      props.onNextStep(2);
     }
 
     const handleTruthScoreChange = (value: string) => {
       setTruthScore(parseInt(value));
+      props.onTruthScoreChange(parseInt(value));
+      props.onNextStep(2);
     }
 
     return (
