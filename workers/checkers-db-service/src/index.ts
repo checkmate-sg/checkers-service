@@ -148,9 +148,9 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   }
 
   async findCheckersVote(
-    sortField?: string, 
-    limit?: number, 
+    sortField?: string,
     offset?: number,
+    limit?: number,
     baseFilter?: VoteFilter
   ): Promise<{success: boolean; data?: any; total?: number; error?: string}> {
     try {
@@ -172,6 +172,14 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const basePipeline: any[] = [
         {$match: baseMatch}
       ]
+
+      // Determine sort field - default to poll.startedTimestamp if not provided
+      let sortFieldToUse = 'poll.startedTimestamp';
+      if (sortField === 'createdTimestamp') {
+        sortFieldToUse = 'createdTimestamp';
+      } else if (sortField === 'votedTimestamp') {
+        sortFieldToUse = 'votedTimestamp';
+      }
 
       const aggregationPipeline: any[] = [
         {
@@ -221,7 +229,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         },
         {
           $sort: {
-            'poll.startedTimestamp': -1,
+            [sortFieldToUse]: -1,
             _id: -1
           }
         },

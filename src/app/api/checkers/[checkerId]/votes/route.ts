@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, {params}) {
             voteCheckerStatus
         }
 
-        const result = await env.CHECKERS_DB_SERVICE.findCheckersVote(sorting, limit, offset, baseFilter);
+        const result = await env.CHECKERS_DB_SERVICE.findCheckersVote(sorting, offset, limit, baseFilter);
 
         const total = result.total
 

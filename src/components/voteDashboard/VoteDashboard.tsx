@@ -28,6 +28,7 @@ export const VoteDashboard = ({ checkerId }: VoteDashboardProps) => {
                         useGetCheckersVoteDetailHook={useGetCheckersVoteDetail}
                         voteCheckerStatus={false}
                         checkerId={checkerId}
+                        sorting="createdTimestamp"
                     />
                 </TabsContent>
 
@@ -36,6 +37,7 @@ export const VoteDashboard = ({ checkerId }: VoteDashboardProps) => {
                         useGetCheckersVoteDetailHook={useGetCheckersVoteDetail}
                         voteCheckerStatus={true}
                         checkerId={checkerId}
+                        sorting="votedTimestamp"
                     />
                 </TabsContent>
                 </div>

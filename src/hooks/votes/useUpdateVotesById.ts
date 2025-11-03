@@ -17,7 +17,7 @@ export const useUpdateVotesById = () => {
         onSuccess: (response, variables) => {
             // INvalidate relevant queries to refetched updated data 
             queryClient.invalidateQueries({
-                queryKey: ['votes']
+                queryKey: ['useGetVotesById', variables.voteId]
             })
         },
         onError: (error) => {

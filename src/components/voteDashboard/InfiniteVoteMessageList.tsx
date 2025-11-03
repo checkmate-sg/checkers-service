@@ -13,6 +13,7 @@ interface InfiniteVoteMessageProps {
     }) => any;
     voteCheckerStatus: boolean;
     checkerId: string;
+    sorting?: string; // Sorting field 
 }
 
 export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
@@ -20,6 +21,7 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
         {
             offset: 0,
             limit: 50,
+            sorting: props?.sorting,
             checkerId: props.checkerId, 
             voteCheckerStatus: props.voteCheckerStatus
         }
