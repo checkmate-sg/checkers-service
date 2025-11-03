@@ -165,8 +165,8 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         baseMatch.category = {$ne: null}
       } else if (baseFilter?.voteCheckerStatus === false){
         // Means not voted
-       baseMatch.votedTimestamp = null;
-       baseMatch.category = null;
+        baseMatch.votedTimestamp = null;
+        baseMatch.category = null;
       }
 
       const basePipeline: any[] = [

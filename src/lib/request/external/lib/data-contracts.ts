@@ -216,6 +216,15 @@ export type Vote = BaseDocument & {
   commentOnResponse?: string | null;
 };
 
+/** POST reqeust body to update the Vote Content of user  */
+export interface VotePOST {
+  category: Category;
+  truthScore?: TruthScore;
+  /** Evaluation for an AI response quality (nullable) */
+  responseCategory: ResponseCategory;
+  commentOnResponse?: string;
+}
+
 /** Representation of individual vote with ALL votes details  */
 export type VotesMessageBrief = Vote & {
   /** Text of the poll, if any */

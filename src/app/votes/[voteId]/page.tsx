@@ -12,7 +12,6 @@ export default async function VotePage({
     if (!session?.user) return null;
     return (
         <VoteContent 
-            checkerId={session.user.id}
-            pollId={voteId} />
+            voteId={voteId} />
     )
 }

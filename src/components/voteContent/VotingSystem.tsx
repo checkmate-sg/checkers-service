@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { Category, ResponseCategory } from '@/lib/request/external/lib/data-contracts';
 import { AccordionContent } from '@radix-ui/react-accordion';
 
 import { Accordion, AccordionItem, AccordionTrigger } from '../ui/accordion';
@@ -9,9 +10,9 @@ import VoteCategories from './VoteCategories';
 
 interface VotingSystemProps {
     voteRequestId: string;
-    category: string | null;
+    category: Category | null;
     truthScore: number | null;
-    responseCategory: string | null;
+    responseCategory: ResponseCategory | null;
     commentOnResponse: string | null;
 }
 
@@ -25,9 +26,9 @@ export default function VotingSystem(
 ) {
     // local state mirrors the original behaviour
     const [openItems, setOpenItems] = useState<number[]>([1]);
-    const [voteCategory, setVoteCategory] = useState<string | null>(props.category);
+    const [voteCategory, setVoteCategory] = useState<Category | null>(props.category);
     const [truthScore, setTruthScore] = useState<number | null>(props.truthScore);
-    const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<string | null>(props.responseCategory);
+    const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<ResponseCategory | null>(props.responseCategory);
 
     const handleNextStep = (value: number) => {
         // Enable the next accordion and open it automatically 
@@ -38,7 +39,7 @@ export default function VotingSystem(
         handleNextStep(value);
     }
 
-    const handleVoteCategorySelection = (value: string) => {
+    const handleVoteCategorySelection = (value: Category) => {
         setVoteCategory(value);
     }
 
@@ -46,11 +47,10 @@ export default function VotingSystem(
         setTruthScore(value);
     }
 
-    const handleCrowdSourcedCategory = (value: string ) => {
+    const handleCrowdSourcedCategory = (value: ResponseCategory ) => {
         console.log(value);
         setCrowdSourcedCategory(value);
     }
-
 
     const StepBadge = ({ n }: { n: number }) => (
         <span

@@ -11,13 +11,13 @@ export async function GET(req: NextRequest, {params}) {
         const session = await auth();
         if (!session?.user) return Err.unauthorized();
 
-        const {checkerId, pollId} = await params; 
+        const {checkerId, voteId} = await params; 
         if (!checkerId) return Err.badParams("Missing checkerId parameter");
-        if (!pollId) return Err.badParams("Missing pollId parameter");
+        if (!voteId) return Err.badParams("Missing pollId parameter");
 
         const result = await env.CHECKERS_DB_SERVICE.findOneVote(
             {
-                pollId: pollId, 
+                pollId: voteId, 
                 checkerId: checkerId
             }
         );

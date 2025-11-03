@@ -12,6 +12,8 @@ tags:
     description: API for managing checkers
   - name: Polls
     description: API for managing Polls
+  - name: Votes 
+    description: API for managing Votes 
 
 paths:
   '/checkers/{checkerId}':
@@ -95,11 +97,11 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
           
-  '/checkers/{checkerId}/votes/{pollId}':
+  '/checkers/{checkerId}/votes/{voteId}':
     get:
       summary: Retrieve the specific vote details based on checkerId and the pollId
       description: | 
-        Return a Vote Request object based on the checkerId and the pollId 
+        Return a Vote Request object based on the checkerId and the voteID 
       tags: 
         - Checkers
       parameters: 
@@ -109,9 +111,9 @@ paths:
           required: true 
           schema:
             type: string
-        - name: pollId
+        - name: voteId
           in: path
-          description: Poll ID 
+          description: Vote ID 
           required: true
           schema:
             type: string
@@ -128,7 +130,6 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      
   
   '/polls/webhook':
     post:
@@ -191,6 +192,75 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  
+  '/votes/{voteId}':
+    get:
+      summary: Retrieve the specific Vote detail
+      description: |
+        Return the specific Vote detail based on the voteId 
+      tags:
+        - Votes 
+      parameters: 
+        - name: voteId 
+          in: path
+          description: Vote ID 
+          required: true 
+          schema: 
+            type: string 
+      responses:
+        '200':
+          description: Successful retrieval of Vote details 
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Update the Vote Detail 
+      description: | 
+        Update the category, truthScore (if any) and responseCategory of the Vote
+      tags:
+        - Votes
+      parameters:
+        - name: voteId
+          in: path 
+          description: Vote ID 
+          required: true 
+          schema:
+            type: string
+      requestBody: 
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/VotePOST'
+      responses:
+        '201':
+          description: Successfully update the category, truthScore (if any) and responseCategory of the Vote 
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      example: Vote successfully updated
+                    id: 
+                      type: string
+                      description: The database identifier of the updated vote 
+        '400':
+          $ref: '#/components/responses/InvalidParametersError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        
           
 components:
   # Definition of Schemas
@@ -520,6 +590,26 @@ components:
             commentOnResponse:
               type: string
               nullable: true
+    
+    VotePOST:
+      description: >-
+        POST reqeust body to update the Vote Content of user 
+      type: object
+      properties:
+        category: 
+          anyOf:
+            - $ref: '#/components/schemas/Category'
+            - nullable: true 
+        truthScore:
+          allOf:
+            - $ref: '#/components/schemas/TruthScore'
+        responseCategory:
+          $ref: '#/components/schemas/ResponseCategory'
+        commentOnResponse:
+          type: string
+      required:
+        - category
+        - responseCategory
     
     VotesMessageBrief:
       description: >-

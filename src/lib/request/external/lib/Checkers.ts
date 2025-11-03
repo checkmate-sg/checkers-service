@@ -78,18 +78,18 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       ...params,
     });
   /**
-   * @description Return a Vote Request object based on the checkerId and the pollId
+   * @description Return a Vote Request object based on the checkerId and the voteID
    *
    * @tags Checkers
    * @name VotesDetail2
    * @summary Retrieve the specific vote details based on checkerId and the pollId
-   * @request GET:/checkers/{checkerId}/votes/{pollId}
+   * @request GET:/checkers/{checkerId}/votes/{voteId}
    * @originalName votesDetail
    * @duplicate
    */
-  votesDetail2 = (checkerId: string, pollId: string, params: RequestParams = {}) =>
+  votesDetail2 = (checkerId: string, voteId: string, params: RequestParams = {}) =>
     this.request<Vote, APIError>({
-      path: `/checkers/${checkerId}/votes/${pollId}`,
+      path: `/checkers/${checkerId}/votes/${voteId}`,
       method: 'GET',
       format: 'json',
       ...params,

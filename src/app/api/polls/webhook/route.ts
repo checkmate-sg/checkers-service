@@ -92,8 +92,6 @@ export async function POST(req: Request) {
       isOnboardingComplete: true,
     }, {dailyAssignmentCount: 1}); // activeCheckerResult.data is Checker[]
 
-    const voteRequestPath = `${process.env.NEXTAUTH_URL}/vote/${checkId}`;
-
     for (const checker of activeCheckersResult.data) {
       // Create a vote request in the database for each checker
       const voteRequest: Omit<VoteAPI, "_id"> = {
@@ -115,6 +113,8 @@ export async function POST(req: Request) {
           { status: 500 }
         );
       }
+
+      const voteRequestPath = `${process.env.TELEGRAM_VOTE_REQUEST}/votes/${insertVoteResult.id}`;
 
       // Send each checker the vote request message 
       await sendMessage(

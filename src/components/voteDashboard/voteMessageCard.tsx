@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { IconQuestionMark } from '@tabler/icons-react';
 
 interface VoteMessageCardProps {
+    voteId: string; // Vote ID 
     externalId: string; // pollId, _id of polls collection (Common ID)
     text: string | null;
     imageUrl: string | null;
@@ -96,7 +97,7 @@ export const VoteMessageCard = (props : VoteMessageCardProps) => {
     return (
         <Link
         href={{
-            pathname: `votes/${props.externalId}`
+            pathname: `votes/${props.voteId}`
         }}>
             <div className="flex border-b border-gray-500 h-16 hover-shadow">
                 {renderStatusDot()}
