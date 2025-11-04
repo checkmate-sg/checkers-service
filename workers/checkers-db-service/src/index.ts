@@ -218,6 +218,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
               caption: '$poll.caption',
               longformResponse:
                 '$poll.longformResponse',
+              crowdSourcedCategory: '$poll.crowdSourcedCategory',
               shortformResponse:
                 '$poll.shortformResponse',
               startedTimestamp:

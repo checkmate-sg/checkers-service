@@ -53,7 +53,7 @@ export const VoteMessageCard = (props : VoteMessageCardProps) => {
 
     function renderStatusDot() {
         // Checking if the status is 'voted'
-        if (props.category !== null) {
+        if (props.category !== null && props.crowdSourcedCategory !== null) {
             // If Checker already vote
             if (props.crowdSourcedCategory === "unsure") {
                 return (
@@ -64,14 +64,14 @@ export const VoteMessageCard = (props : VoteMessageCardProps) => {
                 )
             } else {
                 // Check if users is correct/wrong 
-                if (props.category === props.crowdSourcedCategory) {
+                if (props.category === props.crowdSourcedCategory && props.crowdSourcedCategory !== null) {
                     // Checker is correct 
                     return (
                         <div className="w-1/12 flex items-center justify-center">
                             <div className={`w-5 h-5 rounded-full ${colours.CORRECT}`}></div>
                         </div>
                     )
-                } else if (props.category !== props.crowdSourcedCategory){
+                } else if (props.category !== props.crowdSourcedCategory && props.crowdSourcedCategory !== null){
                     // Checker is wrong
                     return (
                         <div className="w-1/12 flex items-center justify-center">

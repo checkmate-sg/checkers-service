@@ -51,6 +51,7 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
                         text={result.poll.text}
                         imageUrl={result.poll.imageUrl}
                         startedTimestamp={result.poll.startedTimestamp}
+                        crowdSourcedCategory={result.poll.crowdSourcedCategory}
                         category={result.category}
                         truthScore={result.truthScore}
                         responseCategory={result.responseCategory}
