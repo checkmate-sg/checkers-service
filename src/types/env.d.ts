@@ -31,6 +31,10 @@ declare global {
         limit?: any, 
         baseFilter?: any
       ): Promise<{success: boolean; data?: any; total?: any; error?: string}>
+      getVotesDetails(
+        pollId: any,
+        aggregationPipeline: any[]
+      ): Promise<{success: boolean; data?: any; error?: any}>
       updateOneVote(
         filter: any,
         update: any

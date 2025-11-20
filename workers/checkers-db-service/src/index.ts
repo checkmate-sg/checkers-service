@@ -267,6 +267,46 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async getVotesDetails(
+    pollId: string,
+    aggregationPipeline: any[],
+  ): Promise<{ success: boolean; data?: any; error?: string}> {
+    try {
+      await this.connectPromise; 
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      // Convert pollId to ObjectIds
+      const ObjectPollId = new ObjectId(pollId);
+      const basePipeline = [{
+        $match:
+          {
+            pollId: ObjectPollId
+          }
+      }]
+
+      const completePipeline = [
+        ...basePipeline, 
+        ...aggregationPipeline
+      ]
+
+      const countVotes = await votesCollection.aggregate(
+        completePipeline
+      ).toArray()
+      
+      return {
+        success: true, 
+        data: countVotes
+      }
+
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage }, "Failed to count votes category");
+      return { success: false, error: errorMessage };
+    }
+  }
+
   async updateOnePoll(
     filter: Filter<Poll>,
     update: UpdateFilter<Poll>
@@ -557,6 +597,14 @@ export default class extends WorkerEntrypoint<Env> {
   ) {
     const durableObject = this.getDurableObject();
     return durableObject.findCheckersVote(sortField, offset, limit, baseFilter)
+  }
+
+  async getVotesDetails(
+    pollId: string,
+    aggregationPipeline: any[]
+  ) {
+    const durableObject = this.getDurableObject();
+    return durableObject.getVotesDetails(pollId, aggregationPipeline)
   }
 
   async updateOneChecker(

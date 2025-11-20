@@ -102,8 +102,6 @@ export async function POST(request: NextRequest) {
     const lastName = message.from.last_name || "";
     const telegramUsername = message.from.username || null;
 
-    console.log(`Received message from ${telegramId}: ${text}`);
-
     // Handle commands
     if (text && text?.startsWith("/")) {
       return await handleCommand(

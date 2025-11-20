@@ -13,7 +13,6 @@ export async function GET(req: NextRequest, {params}) {
         if (!session?.user) return Err.unauthorized();
 
         const {externalId} = await params;
-        console.log(externalId);
         if (!externalId) return Err.badParams("Missing externalId parameter")
 
         const result = await env.CHECKERS_DB_SERVICE.findOnePoll({externalId: externalId});
