@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       longformResponse,
       shortformResponse,
       crowdSourcedCategory: null,
+      crowdSourcedTruthScore: null,
       startedTimestamp: new Date(),
       assessedTimestamp: null,
     };

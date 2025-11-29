@@ -7,6 +7,7 @@ import { useGetVotesById } from '@/hooks/votes/useGetVotesById';
 
 import CommunityNoteCard from './CommunityNoteCard';
 import MessageCard from './MessageCard';
+import VoteResultsDisplay from './VoteResultsDisplay';
 import VotingSystem from './VotingSystem';
 
 interface VoteContentProps {
@@ -36,7 +37,7 @@ export const VoteContent = ({
     return (
         <>
             <div
-                className="grid grid-flow-row items-center gap-2 p-2 left-right-padding"
+                className="grid grid-flow-row items-center gap-2 p-3"
             >
                 <MessageCard 
                     text = {poll.text}
@@ -49,8 +50,8 @@ export const VoteContent = ({
                     longformCN = {poll.longformResponse.cn}
                     longformLinks = {poll.longformResponse.links}/>
                 ) : null}
-                {
-                vote && 
+                {vote.category === null || 
+                 poll.crowdSourcedCategory === null ? (
                      <VotingSystem 
                         voteRequestId={vote._id}
                         category={vote.category}
@@ -58,6 +59,15 @@ export const VoteContent = ({
                         responseCategory={vote.responseCategory}
                         commentOnResponse={vote.commentOnResponse}
                     />
+                 ) : (
+                    <VoteResultsDisplay
+                        pollId={poll.externalId}
+                        voteCategory={vote.category}
+                        voteTruthScore={vote.truthScore}
+                        pollCategory={poll.crowdSourcedCategory}
+                        pollTruthScore={poll.crowdSourcedTruthScore}
+                        communityNoteCategory={vote.responseCategory}/>
+                    )
                  }
                
             </div>

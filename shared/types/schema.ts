@@ -66,12 +66,16 @@ export interface Poll extends BaseDocument {
     | "scam"
     | "illicit"
     | "info"
+    | "untrue"
+    | "misleading"
+    | "accurate"
     | "satire"
     | "spam"
     | "legitimate"
     | "irrelevant"
     | "unsure"
     | null; // The category of the poll, as determined by the crowd. Null means not yet determined
+  crowdSourcedTruthScore: number | null; // TruthScore if the poll is info
   startedTimestamp: Date;
   assessedTimestamp: Date | null;
 }

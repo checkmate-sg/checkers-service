@@ -10,7 +10,7 @@ import {
 
 export async function voteAssessment(pollId: string): Promise<{
     success: boolean; 
-    data?: string | null; 
+    data?: any | null; 
     error?: string;
 }> {
     console.log("Vote Assessment");
@@ -148,15 +148,18 @@ export async function voteAssessment(pollId: string): Promise<{
             } else {
                 switch(true) {
                     case (truthScore < 1.5):
-                        primaryCategory = "untrue";
+                        // primaryCategory = "untrue";
+                        primaryCategory = "info";
                         break;
                     
                     case (truthScore <= 3.75):
-                        primaryCategory = "misleading";
+                        // primaryCategory = "misleading";
+                        primaryCategory = "info";
                         break;
                     
                     default:
-                        primaryCategory = "accurate";
+                        // primaryCategory = "accurate";
+                        primaryCategory = "info";
                 }
             }
             break;
@@ -185,7 +188,7 @@ export async function voteAssessment(pollId: string): Promise<{
     // Update Object - crowdSourcedCategory in Polls collection
     // primaryCategory - to be updated in crowdSourcedCategory
     if (isAssessed === true) {
-        return {success: true, data: primaryCategory};
+        return {success: true, data: {primaryCategory: primaryCategory, truthScore: truthScore}};
     } else {
         // if isAssessed is false, return null
         // no crowdSourcedCategory being determined yet

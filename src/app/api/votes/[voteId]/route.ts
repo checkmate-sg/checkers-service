@@ -105,13 +105,15 @@ export async function POST(req: NextRequest, {params}) {
         } else if (crowdSourcedCategoryResults.data === null) {
             console.log("Poll not yet assessed");
         } else {
-            // TODO: Update Poll with the assesed crowdSourcedCategory - use externalId (pollId)
+            // Update Poll with the assesed crowdSourcedCategory - use externalId (pollId)
             const pollUpdateResult = await env.CHECKERS_DB_SERVICE.updateOnePoll(
                 { externalId: pollId },
                 { $set: { 
-                    crowdSourcedCategory: crowdSourcedCategoryResults.data,
+                    crowdSourcedCategory: crowdSourcedCategoryResults.data.primaryCategory,
+                    crowdSourcedTruthScore: crowdSourcedCategoryResults.data.truthScore,
                     assessedTimestamp: new Date()
-                 } }
+                 } 
+                }
             );
 
             if (!pollUpdateResult.success) {

@@ -57,6 +57,9 @@ export enum Category {
   Scam = 'scam',
   Illicit = 'illicit',
   Info = 'info',
+  Untrue = 'untrue',
+  Misleading = 'misleading',
+  Accurate = 'accurate',
   Satire = 'satire',
   Spam = 'spam',
   Legitimate = 'legitimate',
@@ -177,6 +180,8 @@ export type Poll = BaseDocument & {
   shortformResponse?: Response;
   /** crowed source message category */
   crowdSourcedCategory?: Category;
+  /** Truth score if the category is info/untrue/misleading/accurate */
+  crowdSourcedTruthScore?: number | null;
   /** ISO-8601 timestamp string */
   startedTimestamp?: DateTime;
   /** ISO-8601 timestamp string */

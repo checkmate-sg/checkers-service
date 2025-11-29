@@ -54,4 +54,116 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       format: 'json',
       ...params,
     });
+  /**
+   * @description Retrieves category counts and truth score statistics for a specific poll
+   *
+   * @tags Polls
+   * @name ResultsDetail
+   * @summary Get poll statistics by poll ID
+   * @request GET:/polls/{externalId}/results
+   */
+  resultsDetail = (externalId: string, params: RequestParams = {}) =>
+    this.request<
+      {
+        /**
+         * Number of votes categorized as scam
+         * @example 0
+         */
+        scam?: number;
+        /**
+         * Number of votes categorized as illicit
+         * @example 0
+         */
+        illicit?: number;
+        /** Information category with truth score breakdown */
+        info?: {
+          /**
+           * Number of votes with truth score 0
+           * @example 0
+           */
+          '0'?: number;
+          /**
+           * Number of votes with truth score 1
+           * @example 0
+           */
+          '1'?: number;
+          /**
+           * Number of votes with truth score 2
+           * @example 0
+           */
+          '2'?: number;
+          /**
+           * Number of votes with truth score 3
+           * @example 0
+           */
+          '3'?: number;
+          /**
+           * Number of votes with truth score 4
+           * @example 1
+           */
+          '4'?: number;
+          /**
+           * Number of votes with truth score 5
+           * @example 0
+           */
+          '5'?: number;
+          /**
+           * Total number of info votes
+           * @example 1
+           */
+          total?: number;
+        };
+        /**
+         * Number of votes categorized as satire
+         * @example 0
+         */
+        satire?: number;
+        /**
+         * Number of votes categorized as spam
+         * @example 0
+         */
+        spam?: number;
+        /**
+         * Number of votes categorized as legitimate
+         * @example 0
+         */
+        legitimate?: number;
+        /**
+         * Number of votes categorized as irrelevant
+         * @example 0
+         */
+        irrelevant?: number;
+        /**
+         * Number of votes categorized as unsure
+         * @example 0
+         */
+        unsure?: number;
+        /**
+         * Number of votes that passed
+         * @example 0
+         */
+        pass?: number;
+        /**
+         * Number of votes that voted great
+         * @example 0
+         */
+        great?: number;
+        /**
+         * Number of votes that voted acceptable
+         * @example 0
+         */
+        acceptable?: number;
+        /**
+         * Number of votes that voted unacceptable
+         * @example 0
+         */
+        unacceptable?: number;
+      },
+      APIError
+    >({
+      path: `/polls/${externalId}/results`,
+      method: 'GET',
+      format: 'json',
+      ...params,
+    });
 }
