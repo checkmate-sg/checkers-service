@@ -44,11 +44,11 @@ export const VoteContent = ({
                     caption = {poll.caption}
                     imageUrl = {poll.imageURL}/>
                 
-                {poll.longformResponse ? (
-                    <CommunityNoteCard 
-                    longformEN = {poll.longformResponse.en}
-                    longformCN = {poll.longformResponse.cn}
-                    longformLinks = {poll.longformResponse.links}/>
+                {poll.shortformResponse ? (
+                    <CommunityNoteCard
+                    responseEN = {poll.shortformResponse.en}
+                    responseCN = {poll.shortformResponse.cn}
+                    responseLinks = {poll.shortformResponse.links}/>
                 ) : null}
                 {vote.category === null || 
                  poll.crowdSourcedCategory === null ? (

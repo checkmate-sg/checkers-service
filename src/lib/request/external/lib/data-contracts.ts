@@ -52,7 +52,7 @@ export interface BaseDocument {
   _id?: MongoObjectId;
 }
 
-/** crowed source message category */
+/** crowd source message category */
 export enum Category {
   Scam = 'scam',
   Illicit = 'illicit',

@@ -6,9 +6,9 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 
 interface CommunityNoteCardProps {
-    longformEN: string;
-    longformCN: string;
-    longformLinks: string[];
+    responseEN: string | null;
+    responseCN: string | null;
+    responseLinks: string[] | null;
 }
 
 // Helper function to detect URLs and split the text
@@ -47,8 +47,8 @@ const splitTextByUrls = (text: string) => {
 export default function CommunityNoteCard(props: CommunityNoteCardProps) {
     const [isExpanded, setIsExpanded] = useState<Boolean>(false);
     const lengthBeforeTruncation = 300; 
-    const { longformEN, longformCN, longformLinks} = props;
-    let displayText = longformEN ?? "";
+    const { responseEN, responseCN, responseLinks} = props;
+    let displayText = responseEN ?? "";
 
     const toggleExpansion = () => {
         setIsExpanded(!isExpanded);
@@ -109,13 +109,13 @@ export default function CommunityNoteCard(props: CommunityNoteCardProps) {
                     </Button>
                 )}
             </CardContent>
-            {longformLinks.length > 0 ? (
+            {responseLinks && responseLinks.length > 0 ? (
                 <>
                     <div className="px-4 py-2">
                         <p className="font-semibold leading-none">Reference Links: </p>
                     </div>
                     <ul className="px-4 list-disc pt-1">
-                        {longformLinks.map((link) => {
+                        {responseLinks.map((link) => {
                             return (
                                 <li className="flex gap-x-2"
                                     key={link}>
