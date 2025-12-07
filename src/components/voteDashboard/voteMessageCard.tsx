@@ -1,9 +1,9 @@
 "use client";
 
-import { PencilIcon } from "lucide-react";
-import Link from "next/link";
+import { PencilIcon } from 'lucide-react';
+import Link from 'next/link';
 
-import { IconQuestionMark } from "@tabler/icons-react";
+import { IconQuestionMark } from '@tabler/icons-react';
 
 interface VoteMessageCardProps {
   voteId: string; // Vote ID
@@ -57,7 +57,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
       if (props.crowdSourcedCategory === "unsure") {
         return (
           // Is unsure
-          <div className="w-1/12 flex items-center justify-center">
+          <div className="flex-shrink-0 w-12 flex items-center justify-center">
             <IconQuestionMark className="border rounded-full border-black h-5 w-5" />
           </div>
         );
@@ -66,7 +66,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
         if (props.category === props.crowdSourcedCategory && props.crowdSourcedCategory !== null) {
           // Checker is correct
           return (
-            <div className="w-1/12 flex items-center justify-center">
+            <div className="flex-shrink-0 w-12 flex items-center justify-center">
               <div className={`w-5 h-5 rounded-full ${colours.CORRECT}`}></div>
             </div>
           );
@@ -76,7 +76,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
         ) {
           // Checker is wrong
           return (
-            <div className="w-1/12 flex items-center justify-center">
+            <div className="flex-shrink-0 w-12 flex items-center justify-center">
               <div className={`w-5 h-5 rounded-full ${colours.INCORRECT}`}></div>
             </div>
           );
@@ -85,7 +85,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
     } else {
       // Not assessed yet
       return (
-        <div className="w-1/12 flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 flex items-center justify-center">
           <PencilIcon className="h-5 w-5" />
         </div>
       );
@@ -101,12 +101,12 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
         pathname: `votes/${props.voteId}`,
       }}
     >
-      <div className="flex border-b border-gray-500 h-16 hover-shadow">
+      <div className="flex border-b border-gray-500 h-16 hover-shadow overflow-hidden max-w-full">
         {renderStatusDot()}
 
-        <div className="w-11/12 p-2">
-          <p className="font-bold">23 sep 2025</p>
-          <div className={`truncate inline-block overflow-hidden`}>
+        <div className="flex-1 min-w-0 p-2 overflow-hidden flex flex-col justify-center">
+          <p className="font-bold truncate">23 sep 2025</p>
+          <div className="truncate text-sm">
             {props.text ? props.text : "Image 🖼️"}
           </div>
         </div>
