@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { ObjectId } from 'mongodb';
+import { ObjectId } from "mongodb";
 
 //NOSQL DATA TYPES
 
@@ -10,13 +10,13 @@ interface BaseDocument {
 
 // Utility type to convert ObjectId fields to strings for API usage
 type ObjectIdToString<T> = {
-  [K in keyof T]: T[K] extends ObjectId 
-    ? string 
-    : T[K] extends ObjectId | null 
-    ? string | null 
-    : T[K] extends ObjectId | undefined 
-    ? string | undefined 
-    : T[K];
+  [K in keyof T]: T[K] extends ObjectId
+    ? string
+    : T[K] extends ObjectId | null
+      ? string | null
+      : T[K] extends ObjectId | undefined
+        ? string | undefined
+        : T[K];
 };
 
 // API-compatible types - automatically derived from database types
@@ -36,7 +36,7 @@ export interface Checker extends BaseDocument {
   isQuizComplete: boolean; // Whether the Checker has completed the onboarding quiz
   quizScore: number | null; // The score the Checker got in the quiz
   onboardingStatus: // The onboarding status of the Checker, either "name", "number", "verify", "quiz", "onboardWhatsapp", "joinGroupChat", "nlb", "completed", or "offboarded"
-  | "name"
+    | "name"
     | "number"
     | "verify"
     | "quiz"
@@ -88,7 +88,7 @@ export interface Vote extends BaseDocument {
   createdTimestamp: Date;
   votedTimestamp: Date | null;
   category: // The category of the message, either "scam", "illicit", "info", "satire", "spam", "legitimate", "irrelevant", "unsure", "pass". Null means not yet voted
-  | "scam"
+    | "scam"
     | "illicit"
     | "info"
     | "satire"
@@ -140,14 +140,14 @@ export enum Collections {
   VOTES = "votes",
 }
 
-// VoteChecker - join both Vote and Poll 
+// VoteChecker - join both Vote and Poll
 export interface VoteChecker extends BaseDocument {
   pollId: ObjectId;
   checkerId: ObjectId;
   createdTimestamp: Date;
   votedTimestamp: Date | null;
   category: // The category of the message, either "scam", "illicit", "info", "satire", "spam", "legitimate", "irrelevant", "unsure", "pass". Null means not yet voted
-  | "scam"
+    | "scam"
     | "illicit"
     | "info"
     | "satire"
@@ -160,5 +160,5 @@ export interface VoteChecker extends BaseDocument {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
-  poll: Poll
+  poll: Poll;
 }

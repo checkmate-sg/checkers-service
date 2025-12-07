@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 export interface VoteOptionProps {
   label: string;
@@ -7,12 +7,7 @@ export interface VoteOptionProps {
   selected?: boolean; // Choice of the user
 }
 
-export const VoteOption: React.FC<VoteOptionProps> = ({
-  label,
-  percentage,
-  votes,
-  selected,
-}) => {
+export const VoteOption: React.FC<VoteOptionProps> = ({ label, percentage, votes, selected }) => {
   const color = selected ? "orange" : "gray"; // Default color for the bar
   // local state to trigger the bar animation on mount
   const [fill, setFill] = useState<number>(0);
@@ -34,12 +29,8 @@ export const VoteOption: React.FC<VoteOptionProps> = ({
     >
       <div className="flex-1">
         <div className="flex justify-between items-center">
-          <p className="font-medium">
-            {label}
-          </p>
-          <p className="font-medium">
-            {percentage.toFixed(2)}%
-          </p>
+          <p className="font-medium">{label}</p>
+          <p className="font-medium">{percentage.toFixed(2)}%</p>
         </div>
         {/* Animated bar */}
         <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
@@ -51,9 +42,7 @@ export const VoteOption: React.FC<VoteOptionProps> = ({
           />
         </div>
         <div className="text-right mt-1">
-          <p className="text-gray-500">
-            {votes} votes
-          </p>
+          <p className="text-gray-500">{votes} votes</p>
         </div>
       </div>
     </div>

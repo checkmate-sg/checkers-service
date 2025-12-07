@@ -4,7 +4,7 @@
  */
 
 interface SendMessageOptions {
-  parse_mode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  parse_mode?: "HTML" | "Markdown" | "MarkdownV2";
   reply_markup?: any;
   link_preview_options?: {
     is_disabled?: boolean;
@@ -13,7 +13,7 @@ interface SendMessageOptions {
 
 interface SendPhotoOptions {
   caption?: string;
-  parse_mode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  parse_mode?: "HTML" | "Markdown" | "MarkdownV2";
   reply_markup?: any;
 }
 
@@ -28,9 +28,9 @@ export async function sendMessage(
   const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         chat_id: chatId,
@@ -42,13 +42,13 @@ export async function sendMessage(
     const data = await response.json();
 
     if (!data.ok) {
-      console.error('Telegram sendMessage error:', data);
-      throw new Error(data.description || 'Failed to send message');
+      console.error("Telegram sendMessage error:", data);
+      throw new Error(data.description || "Failed to send message");
     }
 
     return data.result;
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
+    console.error("Error sending Telegram message:", error);
     throw error;
   }
 }
@@ -64,9 +64,9 @@ export async function sendPhoto(
   const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     const response = await fetch(`${TELEGRAM_API_URL}/sendPhoto`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         chat_id: chatId,
@@ -78,13 +78,13 @@ export async function sendPhoto(
     const data = await response.json();
 
     if (!data.ok) {
-      console.error('Telegram sendPhoto error:', data);
-      throw new Error(data.description || 'Failed to send photo');
+      console.error("Telegram sendPhoto error:", data);
+      throw new Error(data.description || "Failed to send photo");
     }
 
     return data.result;
   } catch (error) {
-    console.error('Error sending Telegram photo:', error);
+    console.error("Error sending Telegram photo:", error);
     throw error;
   }
 }
@@ -104,9 +104,9 @@ export async function answerCallbackQuery(
   const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
   try {
     const response = await fetch(`${TELEGRAM_API_URL}/answerCallbackQuery`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         callback_query_id: callbackQueryId,
@@ -117,13 +117,13 @@ export async function answerCallbackQuery(
     const data = await response.json();
 
     if (!data.ok) {
-      console.error('Telegram answerCallbackQuery error:', data);
-      throw new Error(data.description || 'Failed to answer callback query');
+      console.error("Telegram answerCallbackQuery error:", data);
+      throw new Error(data.description || "Failed to answer callback query");
     }
 
     return data.result;
   } catch (error) {
-    console.error('Error answering callback query:', error);
+    console.error("Error answering callback query:", error);
     throw error;
   }
 }

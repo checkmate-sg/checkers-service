@@ -50,15 +50,9 @@ export async function GET(request: NextRequest) {
           secret: process.env.NEXTAUTH_SECRET,
           cookieName: "next-auth.session-token",
         });
-        console.log(
-          "[Dashboard API] Non-secure cookie getToken result:",
-          !!token
-        );
+        console.log("[Dashboard API] Non-secure cookie getToken result:", !!token);
       } catch (error) {
-        console.log(
-          "[Dashboard API] Non-secure cookie getToken failed:",
-          error
-        );
+        console.log("[Dashboard API] Non-secure cookie getToken failed:", error);
       }
     }
 
@@ -74,9 +68,7 @@ export async function GET(request: NextRequest) {
           /(?:__Secure-)?next-auth\.session-token=([^;]+)/
         );
         if (sessionTokenMatch) {
-          console.log(
-            "[Dashboard API] Found session token in cookies, but getToken still failed"
-          );
+          console.log("[Dashboard API] Found session token in cookies, but getToken still failed");
         }
       }
     }
@@ -88,8 +80,7 @@ export async function GET(request: NextRequest) {
           error: "Unauthorized",
           debug: {
             hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-            cookieHeader:
-              request.headers.get("cookie")?.substring(0, 100) + "...",
+            cookieHeader: request.headers.get("cookie")?.substring(0, 100) + "...",
           },
         },
         { status: 401 }
@@ -136,17 +127,12 @@ export async function GET(request: NextRequest) {
       .limit(5)
       .toArray();
 
-    console.log(
-      "[Dashboard API] Found",
-      recentVotesWithThisChecker.length,
-      "recent votes"
-    );
+    console.log("[Dashboard API] Found", recentVotesWithThisChecker.length, "recent votes");
 
     // Calculate stats from checker document (now updated by processVotingLogic)
     const totalVotes = checker.totalVotes || 0;
     const correctVotes = checker.correctVotes || 0;
-    const accuracy =
-      totalVotes > 0 ? Math.round((correctVotes / totalVotes) * 100) : 0;
+    const accuracy = totalVotes > 0 ? Math.round((correctVotes / totalVotes) * 100) : 0;
 
     // Determine certification status
     const isNewChecker = totalVotes < 50 || accuracy < 60; // Assuming messagesSent requirement is met
@@ -159,18 +145,13 @@ export async function GET(request: NextRequest) {
     }[];
 
     // Add recent votes from completed votes
-    recentVotesWithThisChecker.forEach((voteDoc) => {
+    recentVotesWithThisChecker.forEach(voteDoc => {
       // Find this checker's vote in the votes array
-      const myVote = voteDoc.votes.find(
-        (v) => v.checkerId.toString() === checkerId
-      );
+      const myVote = voteDoc.votes.find(v => v.checkerId.toString() === checkerId);
       if (myVote) {
-        const wasCorrect =
-          voteDoc.finalResult && voteDoc.finalResult.includes(myVote.vote);
+        const wasCorrect = voteDoc.finalResult && voteDoc.finalResult.includes(myVote.vote);
         recentActivity.push({
-          message: `${
-            wasCorrect ? "✅" : "❌"
-          } Verified "${voteDoc.content.substring(0, 30)}..."`,
+          message: `${wasCorrect ? "✅" : "❌"} Verified "${voteDoc.content.substring(0, 30)}..."`,
           date: formatRelativeTime(voteDoc.processedAt || voteDoc.timestamp),
           type: "vote",
         });
@@ -228,10 +209,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(dashboardData);
   } catch (error) {
     console.error("[Dashboard API] Error fetching dashboard data:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dashboard data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch dashboard data" }, { status: 500 });
   }
 }
 

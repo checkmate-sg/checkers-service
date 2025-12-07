@@ -1,5 +1,5 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, VoteAPI } from '@/shared/types/schema';
+import { CheckerAPI, PollAPI, VoteAPI } from "@/shared/types/schema";
 
 declare global {
   interface CloudflareEnv {
@@ -27,31 +27,25 @@ declare global {
       ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
       findCheckersVote(
         sortField?: any,
-        offset?: any, 
-        limit?: any, 
+        offset?: any,
+        limit?: any,
         baseFilter?: any
-      ): Promise<{success: boolean; data?: any; total?: any; error?: string}>
+      ): Promise<{ success: boolean; data?: any; total?: any; error?: string }>;
       getVotesDetails(
         pollId: any,
         aggregationPipeline: any[]
-      ): Promise<{success: boolean; data?: any; error?: any}>
+      ): Promise<{ success: boolean; data?: any; error?: any }>;
       updateOneVote(
         filter: any,
         update: any
       ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
-      findOneChecker(
-        filter: any
-      ): Promise<{ success: boolean; data?: CheckerAPI; error?: string }>;
+      findOneChecker(filter: any): Promise<{ success: boolean; data?: CheckerAPI; error?: string }>;
       findCheckers(
         filter: any,
         options?: any
-      ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number;}>;
-      findOnePoll(
-        filter: any
-      ): Promise<{ success: boolean; data?: PollAPI; error?: string }>;
-      findOneVote(
-        filter: any
-      ): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
+      ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number }>;
+      findOnePoll(filter: any): Promise<{ success: boolean; data?: PollAPI; error?: string }>;
+      findOneVote(filter: any): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
     };
     CHECKMATE_WHATSAPP_SERVICE?: any;
 

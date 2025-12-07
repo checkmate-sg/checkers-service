@@ -1,5 +1,5 @@
-import { Update } from 'grammy/types';
-import { NextRequest, NextResponse } from 'next/server';
+import { Update } from "grammy/types";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   answerCallbackQuery,
@@ -7,9 +7,9 @@ import {
   createInlineKeyboard,
   createReplyKeyboard,
   sendMessage,
-  sendPhoto
-} from '@/lib/telegramHelpers/telegram';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+  sendPhoto,
+} from "@/lib/telegramHelpers/telegram";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // User session storage (in production, use Redis or database)
 const userSessions: { [key: string]: { step: string; data: any } } = {};
@@ -17,12 +17,9 @@ const userSessions: { [key: string]: { step: string; data: any } } = {};
 // Constants from old code
 const NLB_SURE_IMAGE =
   "https://storage.googleapis.com/checkmate-static-assets/SURE%20Learning%20Community%20Logo%202024.png";
-const TYPEFORM_URL =
-  process.env.TYPEFORM_URL || "https://bit.ly/checkmates-quiz";
-const WHATSAPP_BOT_LINK =
-  process.env.WHATSAPP_BOT_LINK || "https://wa.me/your-whatsapp-bot";
-const CHECKERS_GROUP_LINK =
-  process.env.CHECKERS_GROUP_LINK || "https://t.me/c/2217060639/1";
+const TYPEFORM_URL = process.env.TYPEFORM_URL || "https://bit.ly/checkmates-quiz";
+const WHATSAPP_BOT_LINK = process.env.WHATSAPP_BOT_LINK || "https://wa.me/your-whatsapp-bot";
+const CHECKERS_GROUP_LINK = process.env.CHECKERS_GROUP_LINK || "https://t.me/c/2217060639/1";
 const CHECKERS_CHAT_ID = process.env.CHECKERS_CHAT_ID || "";
 
 const resources = `Here are some resources 📚 you might find useful:
@@ -76,9 +73,7 @@ export async function POST(request: NextRequest) {
     // Verify webhook secret for security
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
     if (webhookSecret) {
-      const secretHeader = request.headers.get(
-        "x-telegram-bot-api-secret-token"
-      );
+      const secretHeader = request.headers.get("x-telegram-bot-api-secret-token");
       if (secretHeader !== webhookSecret) {
         console.error("[Webhook] Invalid webhook secret");
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -104,13 +99,7 @@ export async function POST(request: NextRequest) {
 
     // Handle commands
     if (text && text?.startsWith("/")) {
-      return await handleCommand(
-        text,
-        chatId,
-        telegramId,
-        firstName,
-        telegramUsername
-      );
+      return await handleCommand(text, chatId, telegramId, firstName, telegramUsername);
     }
 
     // Handle onboarding flow
@@ -123,19 +112,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    return await handleOnboardingFlow(
-      session,
-      text || "",
-      message,
-      chatId,
-      telegramId
-    );
+    return await handleOnboardingFlow(session, text || "", message, chatId, telegramId);
   } catch (error) {
     console.error("Webhook error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -180,11 +160,7 @@ async function handleCommand(
   return NextResponse.json({ ok: true });
 }
 
-async function handleStartCommand(
-  chatId: number,
-  telegramId: string,
-  firstName: string
-) {
+async function handleStartCommand(chatId: number, telegramId: string, firstName: string) {
   const { env } = getCloudflareContext();
   const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
 
@@ -331,10 +307,7 @@ async function handleOnboardingFlow(
   switch (session.step) {
     case "collecting_name":
       if (!text || text.trim().length < 2) {
-        await sendMessage(
-          chatId,
-          "Name cannot be just spaces. Please enter a valid name."
-        );
+        await sendMessage(chatId, "Name cannot be just spaces. Please enter a valid name.");
         await sendNamePrompt(chatId, telegramId);
         return NextResponse.json({ ok: true });
       }
@@ -361,10 +334,7 @@ async function handleOnboardingFlow(
       } else if (text) {
         let phone = text.replace("+", "").replace(" ", "");
 
-        if (
-          phone.length === 8 &&
-          (phone.startsWith("9") || phone.startsWith("8"))
-        ) {
+        if (phone.length === 8 && (phone.startsWith("9") || phone.startsWith("8"))) {
           phone = `65${phone}`;
         }
 
@@ -397,13 +367,7 @@ async function handleOnboardingFlow(
         telegramId,
       });
       const user = userResult.success ? userResult.data : null;
-      await sendQuizPrompt(
-        chatId,
-        telegramId,
-        user?.name || "",
-        user?.whatsappId || "",
-        true
-      );
+      await sendQuizPrompt(chatId, telegramId, user?.name || "", user?.whatsappId || "", true);
       break;
 
     // COMMENTED OUT: Phone collection and OTP verification - not needed for current implementation
@@ -444,10 +408,7 @@ async function handleOnboardingFlow(
     //   break;
 
     default:
-      await sendMessage(
-        chatId,
-        "Sorry, this bot is unable to respond to free-form messages."
-      );
+      await sendMessage(chatId, "Sorry, this bot is unable to respond to free-form messages.");
   }
 
   return NextResponse.json({ ok: true });
@@ -477,9 +438,7 @@ async function handleCallbackQuery(callbackQuery: any) {
   const fullUser = userResult.success ? userResult.data : null;
 
   if (!fullUser) {
-    console.error(
-      `Checker with TelegramID ${telegramId} triggered callback but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} triggered callback but not found`);
     return NextResponse.json({ ok: true });
   }
 
@@ -487,9 +446,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     case "QUIZ_COMPLETED":
       await sendMessage(
         chatId,
-        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(
-          3
-        )}`
+        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(3)}`
       );
 
       // Proceed to WhatsApp service introduction
@@ -499,9 +456,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     case "WA_SERVICE_COMPLETED":
       await sendMessage(
         chatId,
-        `Great! Now you know about our WhatsApp service! 🙌\n\n${progressBars(
-          4
-        )}`
+        `Great! Now you know about our WhatsApp service! 🙌\n\n${progressBars(4)}`
       );
       await sendTGGroupPrompt(chatId, telegramId, true);
       break;
@@ -671,11 +626,7 @@ async function sendQuizPrompt(
 }
 
 // NEW: WhatsApp service introduction (without OTP)
-async function sendWAServicePrompt(
-  chatId: number,
-  telegramId: string,
-  isFirstPrompt: boolean
-) {
+async function sendWAServicePrompt(chatId: number, telegramId: string, isFirstPrompt: boolean) {
   if (isFirstPrompt) {
     const { env } = getCloudflareContext();
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
@@ -705,11 +656,7 @@ async function sendWAServicePrompt(
   );
 }
 
-async function sendTGGroupPrompt(
-  chatId: number,
-  telegramId: string,
-  isFirstPrompt: boolean
-) {
+async function sendTGGroupPrompt(chatId: number, telegramId: string, isFirstPrompt: boolean) {
   if (isFirstPrompt) {
     const { env } = getCloudflareContext();
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
@@ -721,9 +668,7 @@ async function sendTGGroupPrompt(
   await sendMessage(
     chatId,
     `${
-      isFirstPrompt
-        ? "Next, p"
-        : "We noticed you have not joined the groupchat yet. P"
+      isFirstPrompt ? "Next, p" : "We noticed you have not joined the groupchat yet. P"
     }lease join the <a href="${CHECKERS_GROUP_LINK}">CheckMate Checker's groupchat</a>. This group chat is important as it will be used to:\n\n1) Inform checkers of any downtime in the system, updates/improvements being deployed to the bots\n\n2) Share relevant links from reputable news sources to aid fact-checking. Do note that beyond this, checkers should not discuss what to vote, as this may make the collective outcome biased.\n\n${progressBars(
       5
     )}`,
@@ -824,9 +769,7 @@ async function handleActivateCommand(chatId: number, telegramId: string) {
   });
   const user = userResult.success ? userResult.data : null;
   if (!user) {
-    console.error(
-      `Checker with TelegramID ${telegramId} trying to /activate but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} trying to /activate but not found`);
     return NextResponse.json({ ok: true });
   }
 
@@ -856,9 +799,7 @@ async function handleDeactivateCommand(chatId: number, telegramId: string) {
   });
   const user = userResult.success ? userResult.data : null;
   if (!user) {
-    console.error(
-      `Checker with TelegramID ${telegramId} trying to /deactivate but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} trying to /deactivate but not found`);
     return NextResponse.json({ ok: true });
   }
 

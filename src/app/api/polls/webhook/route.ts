@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { createInlineKeyboard, sendMessage } from '@/lib/telegramHelpers/telegram';
-import { PollAPI, PollRequest, VoteAPI } from '@/shared/types/schema';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { createInlineKeyboard, sendMessage } from "@/lib/telegramHelpers/telegram";
+import { PollAPI, PollRequest, VoteAPI } from "@/shared/types/schema";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as PollRequest;
-    const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } = body;
+    const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } =
+      body;
 
-    console.log('Received poll webhook:', body);
+    console.log("Received poll webhook:", body);
     // Validate required fields
     if (!checkId) {
       return NextResponse.json({ error: "Missing 'checkId'" }, { status: 400 });
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     if (existingPollResult.success && existingPollResult.data) {
       return NextResponse.json(
         {
-          error: 'Poll with this checkId already exists',
+          error: "Poll with this checkId already exists",
           id: existingPollResult.data._id?.toString() || existingPollResult.data._id,
         },
         { status: 409 }
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     // Create new poll (without _id, let the DB service handle it)
-    const newPoll: Omit<PollAPI, '_id'> = {
+    const newPoll: Omit<PollAPI, "_id"> = {
       externalId: checkId,
       text: text || null,
       imageURL: imageUrl || null,
@@ -79,21 +80,21 @@ export async function POST(req: Request) {
     const insertResult = await env.CHECKERS_DB_SERVICE.insertPoll(newPoll);
 
     if (!insertResult.success) {
-      console.error('[WEBHOOK ERROR]', insertResult.error);
+      console.error("[WEBHOOK ERROR]", insertResult.error);
       return NextResponse.json(
-        { error: insertResult.error || 'Failed to create poll' },
+        { error: insertResult.error || "Failed to create poll" },
         { status: 500 }
       );
     }
 
     // Builds a previewText for notification
-    let previewText = '';
+    let previewText = "";
     if (text) {
-      previewText = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      previewText = text.length > 50 ? text.substring(0, 50) + "..." : text;
     }
 
     if (imageUrl) {
-      previewText = previewText ? `${previewText}\n <Image 🖼️>` : '<Image 🖼️>';
+      previewText = previewText ? `${previewText}\n <Image 🖼️>` : "<Image 🖼️>";
     }
 
     // Despatch Poll
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
 
     for (const checker of activeCheckersResult.data) {
       // Create a vote request in the database for each checker
-      const voteRequest: Omit<VoteAPI, '_id'> = {
+      const voteRequest: Omit<VoteAPI, "_id"> = {
         pollId: checkId,
         checkerId: checker._id?.toString() || checker._id,
         createdTimestamp: new Date(),
@@ -121,9 +122,9 @@ export async function POST(req: Request) {
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
 
       if (!insertVoteResult.success) {
-        console.error('[WEBHOOK ERROR]', insertVoteResult.error);
+        console.error("[WEBHOOK ERROR]", insertVoteResult.error);
         return NextResponse.json(
-          { error: insertVoteResult.error || 'Failed to create poll' },
+          { error: insertVoteResult.error || "Failed to create poll" },
           { status: 500 }
         );
       }
@@ -133,18 +134,18 @@ export async function POST(req: Request) {
       // Send each checker the vote request message
       await sendMessage(checker.telegramId, previewText, {
         reply_markup: createInlineKeyboard([
-          [{ text: 'Vote 🗳️!', web_app: { url: voteRequestPath } }],
+          [{ text: "Vote 🗳️!", web_app: { url: voteRequestPath } }],
         ]),
       });
     }
 
     // Return the string ID from the database service
     return NextResponse.json({
-      message: 'Poll created successfully',
+      message: "Poll created successfully",
       id: insertResult.id,
     });
   } catch (err) {
-    console.error('[WEBHOOK ERROR]', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error("[WEBHOOK ERROR]", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

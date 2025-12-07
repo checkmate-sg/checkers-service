@@ -1,7 +1,7 @@
 "use client";
-import { BarChart3, Home, Trophy } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { BarChart3, Home, Trophy } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const BottomNavigation = () => {
   const pathname = usePathname();
@@ -27,10 +27,9 @@ const BottomNavigation = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
       <div className="flex justify-around items-center max-w-md mx-auto">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const isActive =
-            pathname === item.path ||
-            (item.path === "/dashboard" && pathname === "/");
+            pathname === item.path || (item.path === "/dashboard" && pathname === "/");
           const Icon = item.icon;
 
           return (

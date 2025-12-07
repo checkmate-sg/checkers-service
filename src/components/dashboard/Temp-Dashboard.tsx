@@ -5,13 +5,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  CheckCircle,
-  Target,
-  MessageSquare,
-  Award,
-  Loader2,
-} from "lucide-react";
+import { CheckCircle, Target, MessageSquare, Award, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface DashboardData {
@@ -33,9 +27,7 @@ interface DashboardData {
 }
 
 export default function TempDashboard() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session, status } = useSession();
@@ -62,9 +54,7 @@ export default function TempDashboard() {
         setDashboardData(data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load dashboard data"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
@@ -101,9 +91,7 @@ export default function TempDashboard() {
       ) : error || !dashboardData ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-red-500">
-              {error || "Failed to load dashboard"}
-            </p>
+            <p className="text-red-500">{error || "Failed to load dashboard"}</p>
           </CardContent>
         </Card>
       ) : (
@@ -134,9 +122,7 @@ export default function TempDashboard() {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium">
-                          Votes Completed
-                        </span>
+                        <span className="text-sm font-medium">Votes Completed</span>
                         <div className="group relative">
                           <svg
                             className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-help"
@@ -150,9 +136,8 @@ export default function TempDashboard() {
                             />
                           </svg>
                           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            This number tracks votes on completed submissions.
-                            Results are finalized 24 hours after vote
-                            submission.
+                            This number tracks votes on completed submissions. Results are finalized
+                            24 hours after vote submission.
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
@@ -161,10 +146,7 @@ export default function TempDashboard() {
                         {dashboardData.userData.votes}/50
                       </span>
                     </div>
-                    <Progress
-                      value={(dashboardData.userData.votes / 50) * 100}
-                      className="h-2"
-                    />
+                    <Progress value={(dashboardData.userData.votes / 50) * 100} className="h-2" />
                   </div>
 
                   {/* Accuracy Progress */}
@@ -176,10 +158,7 @@ export default function TempDashboard() {
                       </span>
                     </div>
                     <div className="relative">
-                      <Progress
-                        value={dashboardData.userData.accuracy}
-                        className="h-2"
-                      />
+                      <Progress value={dashboardData.userData.accuracy} className="h-2" />
                       <div
                         className="absolute top-0 h-2 w-0.5 bg-white border border-checkmate-primary"
                         style={{ left: "60%" }}
@@ -194,9 +173,7 @@ export default function TempDashboard() {
                       </div>
                     </div>
                     {dashboardData.userData.accuracy >= 60 && (
-                      <Badge className="mt-4 bg-green-100 text-green-800">
-                        Target Reached!
-                      </Badge>
+                      <Badge className="mt-4 bg-green-100 text-green-800">Target Reached!</Badge>
                     )}
                   </div>
 
@@ -220,9 +197,7 @@ export default function TempDashboard() {
                   <div className="bg-checkmate-info p-3 rounded-lg mt-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="text-blue-600" size={16} />
-                      <span className="font-medium text-sm">
-                        Certification Status
-                      </span>
+                      <span className="font-medium text-sm">Certification Status</span>
                     </div>
                     <p className="text-xs text-gray-600">
                       {dashboardData.userData.votes >= 50 &&
@@ -246,33 +221,24 @@ export default function TempDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {dashboardData.userData.recentActivity.map(
-                        (activity, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-start"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">
-                                {activity.message}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {activity.date}
-                              </p>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${
-                                activity.type === "achievement"
-                                  ? "border-checkmate-primary text-checkmate-primary"
-                                  : ""
-                              }`}
-                            >
-                              {activity.type}
-                            </Badge>
+                      {dashboardData.userData.recentActivity.map((activity, index) => (
+                        <div key={index} className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{activity.message}</p>
+                            <p className="text-xs text-gray-500">{activity.date}</p>
                           </div>
-                        )
-                      )}
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              activity.type === "achievement"
+                                ? "border-checkmate-primary text-checkmate-primary"
+                                : ""
+                            }`}
+                          >
+                            {activity.type}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -320,33 +286,24 @@ export default function TempDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {dashboardData.userData.recentActivity.map(
-                      (activity, index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-start"
-                        >
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">
-                              {activity.message}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {activity.date}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${
-                              activity.type === "achievement"
-                                ? "border-checkmate-primary text-checkmate-primary"
-                                : ""
-                            }`}
-                          >
-                            {activity.type}
-                          </Badge>
+                    {dashboardData.userData.recentActivity.map((activity, index) => (
+                      <div key={index} className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.message}</p>
+                          <p className="text-xs text-gray-500">{activity.date}</p>
                         </div>
-                      )
-                    )}
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            activity.type === "achievement"
+                              ? "border-checkmate-primary text-checkmate-primary"
+                              : ""
+                          }`}
+                        >
+                          {activity.type}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

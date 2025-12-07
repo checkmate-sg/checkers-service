@@ -30,9 +30,7 @@ export async function connectToDB(): Promise<Db> {
     );
 
     throw new Error(
-      `MongoDB connection failed: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      `MongoDB connection failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }

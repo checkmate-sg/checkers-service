@@ -98,20 +98,25 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  *, ::before, ::after { @apply border-border; }
+  *,
+  ::before,
+  ::after {
+    @apply border-border;
+  }
 
-  body { 
+  body {
     @apply bg-background text-foreground;
     min-height: inherit;
     overflow-x: hidden;
   }
-
 }
 
 /* Ensure bottom navigation doesn't interfere with content */
 @layer components {
   .page-content {
-    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); /* Add padding bottom to prevent content being hidden */
+    padding-bottom: calc(
+      var(--bottom-nav-height) + var(--safe-bottom)
+    ); /* Add padding bottom to prevent content being hidden */
   }
 
   .dashboard-content {
@@ -119,7 +124,9 @@
   }
 
   .main-content {
-    height: calc(100dvh - (var(--bottom-nav-height) + var(--safe-bottom))); /* Subtract bottom nav height */
+    height: calc(
+      100dvh - (var(--bottom-nav-height) + var(--safe-bottom))
+    ); /* Subtract bottom nav height */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     overscroll-behavior-y: contain;
@@ -127,6 +134,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  html { scroll-behavior: auto; }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }

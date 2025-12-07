@@ -1,14 +1,14 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 interface HydrateQueriesOnServerProps {
-    children: React.ReactNode;
-    prepareQueries: (queryClient: QueryClient) => Promise<void>;
+  children: React.ReactNode;
+  prepareQueries: (queryClient: QueryClient) => Promise<void>;
 }
 
-export default async function HydrateQueriesOnServerProps(props:
-    Readonly<HydrateQueriesOnServerProps>
+export default async function HydrateQueriesOnServerProps(
+  props: Readonly<HydrateQueriesOnServerProps>
 ) {
-    // return <>{props.children}</>
+  // return <>{props.children}</>
 
   const queryClient = new QueryClient();
   await props.prepareQueries(queryClient);

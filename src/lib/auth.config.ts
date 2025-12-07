@@ -17,13 +17,10 @@ export const authConfig: NextAuthConfig = {
 
         // LOCAL DEVELOPMENT BYPASS
         if (process.env.ENVIRONMENT === "local") {
-          console.log(
-            "[Auth Config] LOCAL ENVIRONMENT - Using development bypass"
-          );
+          console.log("[Auth Config] LOCAL ENVIRONMENT - Using development bypass");
 
           // You can customize this mock user or fetch a real test user from DB
-          const mockTelegramId =
-            process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
+          const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
 
           try {
             // Try to find a real user for testing
@@ -75,14 +72,8 @@ export const authConfig: NextAuthConfig = {
           hasMongoUri: !!process.env.MONGODB_URI,
         });
 
-        console.log(
-          "[Auth Config] Received initData:",
-          initData ? "present" : "missing"
-        );
-        console.log(
-          "[Auth Config] Bot token:",
-          botToken ? "present" : "missing"
-        );
+        console.log("[Auth Config] Received initData:", initData ? "present" : "missing");
+        console.log("[Auth Config] Bot token:", botToken ? "present" : "missing");
 
         if (!initData || typeof initData !== "string") {
           console.error("[Auth Config] No initData received or invalid format");
@@ -105,10 +96,7 @@ export const authConfig: NextAuthConfig = {
             username: telegramUser.username,
           });
         } catch (err) {
-          console.error(
-            "[Auth Config] Telegram initData verification failed:",
-            err
-          );
+          console.error("[Auth Config] Telegram initData verification failed:", err);
           console.error(
             "[Auth Config] Error details:",
             err instanceof Error ? err.message : "Unknown error"
@@ -117,10 +105,7 @@ export const authConfig: NextAuthConfig = {
         }
 
         const telegramId = telegramUser.id.toString();
-        console.log(
-          "[Auth Config] Looking up user with telegramId:",
-          telegramId
-        );
+        console.log("[Auth Config] Looking up user with telegramId:", telegramId);
 
         try {
           const { env } = getCloudflareContext();
@@ -144,26 +129,18 @@ export const authConfig: NextAuthConfig = {
           }
 
           if (!user) {
-            console.warn(
-              "[Auth Config] No user found with telegramId:",
-              telegramId
-            );
+            console.warn("[Auth Config] No user found with telegramId:", telegramId);
             return null;
           }
 
-          console.log(
-            "[Auth Config] Authorization successful, returning user data"
-          );
+          console.log("[Auth Config] Authorization successful, returning user data");
           return {
             id: user._id?.toString() || "",
             telegramId,
             name: user.name || telegramUser.first_name || "Unknown",
           };
         } catch (dbError) {
-          console.error(
-            "[Auth Config] Database error during user lookup:",
-            dbError
-          );
+          console.error("[Auth Config] Database error during user lookup:", dbError);
           return null;
         }
       },

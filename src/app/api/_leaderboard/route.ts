@@ -53,10 +53,7 @@ export async function GET(request: NextRequest) {
           cookieName: "next-auth.session-token",
         });
       } catch (error) {
-        console.log(
-          "[Leaderboard API] Non-secure cookie getToken failed:",
-          error
-        );
+        console.log("[Leaderboard API] Non-secure cookie getToken failed:", error);
       }
     }
 
@@ -77,32 +74,29 @@ export async function GET(request: NextRequest) {
     console.log("[Leaderboard API] Found", allCheckers.length, "checkers");
 
     // Calculate points and create leaderboard entries
-    const leaderboardEntries: LeaderboardEntry[] = allCheckers.map(
-      (checker) => {
-        const totalVotes = checker.totalVotes || 0;
-        const correctVotes = checker.correctVotes || 0;
-        const accuracy =
-          totalVotes > 0 ? Math.round((correctVotes / totalVotes) * 100) : 0;
+    const leaderboardEntries: LeaderboardEntry[] = allCheckers.map(checker => {
+      const totalVotes = checker.totalVotes || 0;
+      const correctVotes = checker.correctVotes || 0;
+      const accuracy = totalVotes > 0 ? Math.round((correctVotes / totalVotes) * 100) : 0;
 
-        // Calculate points (you can adjust this formula)
-        const basePoints = totalVotes * 10; // 10 points per vote
-        const accuracyBonus = accuracy >= 80 ? totalVotes * 5 : 0; // Bonus for high accuracy
-        const points = basePoints + accuracyBonus;
+      // Calculate points (you can adjust this formula)
+      const basePoints = totalVotes * 10; // 10 points per vote
+      const accuracyBonus = accuracy >= 80 ? totalVotes * 5 : 0; // Bonus for high accuracy
+      const points = basePoints + accuracyBonus;
 
-        // Determine badges based on performance
-        const badges = getBadges(totalVotes, accuracy, correctVotes);
+      // Determine badges based on performance
+      const badges = getBadges(totalVotes, accuracy, correctVotes);
 
-        return {
-          _id: checker._id,
-          name: checker.name || "Unknown User",
-          votes: totalVotes,
-          accuracy: accuracy,
-          points: points,
-          badges: badges,
-          rank: 0, // Will be set after sorting
-        };
-      }
-    );
+      return {
+        _id: checker._id,
+        name: checker.name || "Unknown User",
+        votes: totalVotes,
+        accuracy: accuracy,
+        points: points,
+        badges: badges,
+        rank: 0, // Will be set after sorting
+      };
+    });
 
     // Sort by points (descending)
     leaderboardEntries.sort((a, b) => b.points - a.points);
@@ -119,9 +113,7 @@ export async function GET(request: NextRequest) {
     if (token && token.id) {
       currentUserId = token.id;
       currentUserEntry =
-        leaderboardEntries.find(
-          (entry) => entry._id?.toString() === currentUserId
-        ) || null;
+        leaderboardEntries.find(entry => entry._id?.toString() === currentUserId) || null;
 
       if (currentUserEntry) {
         currentUserEntry.isCurrentUser = true;
@@ -155,19 +147,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Leaderboard API] Error fetching leaderboard data:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch leaderboard data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch leaderboard data" }, { status: 500 });
   }
 }
 
 // Helper function to determine badges based on performance
-function getBadges(
-  totalVotes: number,
-  accuracy: number,
-  correctVotes: number
-): string[] {
+function getBadges(totalVotes: number, accuracy: number, correctVotes: number): string[] {
   const badges: string[] = [];
 
   // Vote-based badges

@@ -10,8 +10,8 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, APIPagination, Checker, Vote, VotesMessageBrief } from './data-contracts';
-import { HttpClient, RequestParams } from './http-client';
+import { APIError, APIPagination, Checker, Vote, VotesMessageBrief } from "./data-contracts";
+import { HttpClient, RequestParams } from "./http-client";
 
 export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -25,8 +25,8 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
   checkersDetail = (checkerId: string, params: RequestParams = {}) =>
     this.request<Checker, APIError>({
       path: `/checkers/${checkerId}`,
-      method: 'GET',
-      format: 'json',
+      method: "GET",
+      format: "json",
       ...params,
     });
   /**
@@ -59,7 +59,7 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       /** Check if checker have voted */
       VoteCheckerStatus: boolean;
     },
-    params: RequestParams = {},
+    params: RequestParams = {}
   ) =>
     this.request<
       APIPagination & {
@@ -72,9 +72,9 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       APIError
     >({
       path: `/checkers/${checkerId}/votes`,
-      method: 'GET',
+      method: "GET",
       query: query,
-      format: 'json',
+      format: "json",
       ...params,
     });
   /**
@@ -90,8 +90,8 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
   votesDetail2 = (checkerId: string, voteId: string, params: RequestParams = {}) =>
     this.request<Vote, APIError>({
       path: `/checkers/${checkerId}/votes/${voteId}`,
-      method: 'GET',
-      format: 'json',
+      method: "GET",
+      format: "json",
       ...params,
     });
 }

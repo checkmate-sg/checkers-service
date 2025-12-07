@@ -10,8 +10,8 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, Poll, PollRequest } from './data-contracts';
-import { ContentType, HttpClient, RequestParams } from './http-client';
+import { APIError, Poll, PollRequest } from "./data-contracts";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -33,10 +33,10 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       APIError
     >({
       path: `/polls/webhook`,
-      method: 'POST',
+      method: "POST",
       body: data,
       type: ContentType.Json,
-      format: 'json',
+      format: "json",
       ...params,
     });
   /**
@@ -50,8 +50,8 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
   pollsDetail = (externalId: string, params: RequestParams = {}) =>
     this.request<Poll, APIError>({
       path: `/polls/${externalId}`,
-      method: 'GET',
-      format: 'json',
+      method: "GET",
+      format: "json",
       ...params,
     });
   /**
@@ -81,32 +81,32 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
            * Number of votes with truth score 0
            * @example 0
            */
-          '0'?: number;
+          "0"?: number;
           /**
            * Number of votes with truth score 1
            * @example 0
            */
-          '1'?: number;
+          "1"?: number;
           /**
            * Number of votes with truth score 2
            * @example 0
            */
-          '2'?: number;
+          "2"?: number;
           /**
            * Number of votes with truth score 3
            * @example 0
            */
-          '3'?: number;
+          "3"?: number;
           /**
            * Number of votes with truth score 4
            * @example 1
            */
-          '4'?: number;
+          "4"?: number;
           /**
            * Number of votes with truth score 5
            * @example 0
            */
-          '5'?: number;
+          "5"?: number;
           /**
            * Total number of info votes
            * @example 1
@@ -162,8 +162,8 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       APIError
     >({
       path: `/polls/${externalId}/results`,
-      method: 'GET',
-      format: 'json',
+      method: "GET",
+      format: "json",
       ...params,
     });
 }

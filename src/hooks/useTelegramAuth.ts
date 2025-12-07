@@ -39,10 +39,10 @@ export function useTelegramAuth() {
 
           // LOCAL DEVELOPMENT BYPASS
           const isLocalEnv = process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
-          
+
           if (isLocalEnv) {
             console.log("[Auth] LOCAL ENVIRONMENT - Bypassing Telegram WebApp check");
-            
+
             setAuthStep("authenticating");
 
             // Sign in with mock data for local development
@@ -60,8 +60,7 @@ export function useTelegramAuth() {
           }
 
           // PRODUCTION: Check Telegram WebApp context
-          const isTelegramWebApp =
-            typeof window !== "undefined" && window.Telegram?.WebApp;
+          const isTelegramWebApp = typeof window !== "undefined" && window.Telegram?.WebApp;
 
           if (!isTelegramWebApp) {
             throw new Error("This app must be opened from Telegram");
@@ -104,7 +103,7 @@ export function useTelegramAuth() {
         if (authStep === "complete" && session) {
           console.log("[Auth] Setting user details from fresh session");
 
-          setCheckerDetails((current) => ({
+          setCheckerDetails(current => ({
             ...current,
             checkerId: session.user.id,
             checkerName: session.user.name || "Unknown",
@@ -125,26 +124,11 @@ export function useTelegramAuth() {
     };
 
     handleAuth();
-  }, [
-    session,
-    status,
-    authStep,
-    setCheckerDetails,
-    clearCheckerDetails,
-    router,
-    update,
-  ]);
+  }, [session, status, authStep, setCheckerDetails, clearCheckerDetails, router, update]);
 
   // Debug logging
   useEffect(() => {
-    console.log(
-      "[Auth Debug] Step:",
-      authStep,
-      "Session:",
-      !!session,
-      "Status:",
-      status
-    );
+    console.log("[Auth Debug] Step:", authStep, "Session:", !!session, "Status:", status);
     if (session) {
       console.log("[Auth Debug] Session details:", {
         id: session.user?.id,

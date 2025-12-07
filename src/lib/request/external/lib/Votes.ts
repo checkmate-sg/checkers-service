@@ -10,8 +10,8 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, Vote, VotePOST } from './data-contracts';
-import { ContentType, HttpClient, RequestParams } from './http-client';
+import { APIError, Vote, VotePOST } from "./data-contracts";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Votes<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -25,8 +25,8 @@ export class Votes<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
   votesDetail = (voteId: string, params: RequestParams = {}) =>
     this.request<Vote, APIError>({
       path: `/votes/${voteId}`,
-      method: 'GET',
-      format: 'json',
+      method: "GET",
+      format: "json",
       ...params,
     });
   /**
@@ -48,10 +48,10 @@ export class Votes<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       APIError
     >({
       path: `/votes/${voteId}`,
-      method: 'POST',
+      method: "POST",
       body: data,
       type: ContentType.Json,
-      format: 'json',
+      format: "json",
       ...params,
     });
 }

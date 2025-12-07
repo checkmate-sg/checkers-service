@@ -1,3 +1,2 @@
-
-      import Leaderboard from '@/components/Leaderboard';
-      export default Leaderboard;
+import Leaderboard from "@/components/Leaderboard";
+export default Leaderboard;

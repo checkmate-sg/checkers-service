@@ -24,8 +24,7 @@ export async function seedDatabase() {
   const voteDocs = [
     {
       _id: new ObjectId("64f1a1b1c1d1e1f1a1b1c1d1"),
-      content:
-        "🚨 URGENT: New COVID variant spreads through 5G towers! Share this...",
+      content: "🚨 URGENT: New COVID variant spreads through 5G towers! Share this...",
       timestamp: twoDaysAgo.toISOString(),
       sender: "Unknown WhatsApp User",
       screenshot:
@@ -41,26 +40,22 @@ export async function seedDatabase() {
         },
       ],
       aiNote: {
-        summary:
-          "This message contains multiple false claims linking COVID-19 to 5G...",
+        summary: "This message contains multiple false claims linking COVID-19 to 5G...",
         references: ["WHO COVID-19 fact sheet", "FDA 5G safety guidelines"],
       },
     },
     {
       _id: new ObjectId("64f1a1b1c1d1e1f1a1b1c1d2"),
-      content:
-        "Government announces new tax relief for families earning under $50k...",
+      content: "Government announces new tax relief for families earning under $50k...",
       timestamp: twelveHoursAgo.toISOString(), // 12 hours ago - still pending
       sender: "News Channel",
-      screenshot:
-        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300",
+      screenshot: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300",
       category: "Pending",
       status: "pending",
       finalResult: null,
       votes: [], // No votes yet
       aiNote: {
-        summary:
-          "This appears to be legitimate news but requires verification...",
+        summary: "This appears to be legitimate news but requires verification...",
         references: ["Government press releases", "Tax authority website"],
       },
     },
@@ -69,8 +64,7 @@ export async function seedDatabase() {
       content: "BREAKING: Celebrity caught in scandal, photos leaked...",
       timestamp: oneDayAgo.toISOString(), // Exactly 24 hours ago
       sender: "Gossip Group",
-      screenshot:
-        "https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&h=300",
+      screenshot: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&h=300",
       category: "Misleading",
       status: "pending", // Will be processed by processVotingLogic
       finalResult: null,
@@ -87,8 +81,7 @@ export async function seedDatabase() {
         },
       ],
       aiNote: {
-        summary:
-          "This contains unverified claims and potentially manipulated content...",
+        summary: "This contains unverified claims and potentially manipulated content...",
         references: ["Entertainment fact-checkers", "Image verification tools"],
       },
     },
@@ -97,15 +90,13 @@ export async function seedDatabase() {
       content: "💰 Get rich quick with crypto! Guaranteed 500% return!",
       timestamp: threeDaysAgo.toISOString(), // 72 hours ago
       sender: "InvestmentGroup",
-      screenshot:
-        "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300",
+      screenshot: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300",
       category: "Pending",
       status: "pending", // Will be processed by processVotingLogic
       finalResult: null,
       votes: [], // No votes - should become "Pass"
       aiNote: {
-        summary:
-          "This message exhibits common scam indicators such as high return guarantees...",
+        summary: "This message exhibits common scam indicators such as high return guarantees...",
         references: ["SEC Crypto Scam Advisory", "Cointelegraph analysis"],
       },
     },
@@ -132,8 +123,7 @@ export async function seedDatabase() {
         },
       ],
       aiNote: {
-        summary:
-          "This message contains multiple false claims linking COVID-19 to 5G...",
+        summary: "This message contains multiple false claims linking COVID-19 to 5G...",
         references: ["WHO COVID-19 fact sheet", "FDA 5G safety guidelines"],
       },
     },
@@ -200,7 +190,7 @@ async function processVotingLogic(votesCollection, checkersCollection) {
     if (vote.votes && vote.votes.length > 0) {
       // Calculate majority vote
       const voteCounts = {};
-      vote.votes.forEach((v) => {
+      vote.votes.forEach(v => {
         voteCounts[v.vote] = (voteCounts[v.vote] || 0) + 1;
       });
 
@@ -235,9 +225,7 @@ async function processVotingLogic(votesCollection, checkersCollection) {
         await checkersCollection.updateOne({ _id: checkerId }, updateQuery);
 
         console.log(
-          `Updated checker ${checkerId}: +1 total vote${
-            isCorrect ? ", +1 correct vote" : ""
-          }`
+          `Updated checker ${checkerId}: +1 total vote${isCorrect ? ", +1 correct vote" : ""}`
         );
       }
     } else {
@@ -261,9 +249,7 @@ async function processVotingLogic(votesCollection, checkersCollection) {
   }
 
   if (pendingVotes.length === 0) {
-    console.log(
-      "No votes to process - all votes are either recent or already completed."
-    );
+    console.log("No votes to process - all votes are either recent or already completed.");
   }
 }
 

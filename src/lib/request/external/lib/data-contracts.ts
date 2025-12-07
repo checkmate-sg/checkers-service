@@ -54,50 +54,50 @@ export interface BaseDocument {
 
 /** crowd source message category */
 export enum Category {
-  Scam = 'scam',
-  Illicit = 'illicit',
-  Info = 'info',
-  Untrue = 'untrue',
-  Misleading = 'misleading',
-  Accurate = 'accurate',
-  Satire = 'satire',
-  Spam = 'spam',
-  Legitimate = 'legitimate',
-  Irrelevant = 'irrelevant',
-  Unsure = 'unsure',
+  Scam = "scam",
+  Illicit = "illicit",
+  Info = "info",
+  Untrue = "untrue",
+  Misleading = "misleading",
+  Accurate = "accurate",
+  Satire = "satire",
+  Spam = "spam",
+  Legitimate = "legitimate",
+  Irrelevant = "irrelevant",
+  Unsure = "unsure",
 }
 
 /** Category including 'pass' and allowing null */
 export enum CategoryWithPassNullable {
-  Scam = 'scam',
-  Illicit = 'illicit',
-  Info = 'info',
-  Satire = 'satire',
-  Spam = 'spam',
-  Legitimate = 'legitimate',
-  Irrelevant = 'irrelevant',
-  Unsure = 'unsure',
-  Pass = 'pass',
+  Scam = "scam",
+  Illicit = "illicit",
+  Info = "info",
+  Satire = "satire",
+  Spam = "spam",
+  Legitimate = "legitimate",
+  Irrelevant = "irrelevant",
+  Unsure = "unsure",
+  Pass = "pass",
 }
 
 /** Onboarding status of the Checker */
 export enum OnboardingStatus {
-  Name = 'name',
-  Number = 'number',
-  Verify = 'verify',
-  Quiz = 'quiz',
-  OnboardWhatsapp = 'onboardWhatsapp',
-  JoinGroupChat = 'joinGroupChat',
-  Nlb = 'nlb',
-  Completed = 'completed',
-  Offboarded = 'offboarded',
+  Name = "name",
+  Number = "number",
+  Verify = "verify",
+  Quiz = "quiz",
+  OnboardWhatsapp = "onboardWhatsapp",
+  JoinGroupChat = "joinGroupChat",
+  Nlb = "nlb",
+  Completed = "completed",
+  Offboarded = "offboarded",
 }
 
 /** Evaluation for an AI response quality (nullable) */
 export enum ResponseCategory {
-  Great = 'great',
-  Acceptable = 'acceptable',
-  Unacceptable = 'unacceptable',
+  Great = "great",
+  Acceptable = "acceptable",
+  Unacceptable = "unacceptable",
 }
 
 /**
@@ -109,9 +109,9 @@ export type TruthScore = number;
 
 /** Database collections enum for type safety */
 export enum Collections {
-  Checkers = 'checkers',
-  Polls = 'polls',
-  Votes = 'votes',
+  Checkers = "checkers",
+  Polls = "polls",
+  Votes = "votes",
 }
 
 /** Format of the AI generated responses passed from CheckMate AI platform */
