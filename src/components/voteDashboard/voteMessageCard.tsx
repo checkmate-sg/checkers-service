@@ -49,7 +49,43 @@ const colours: ColourMap = {
   WAITING: "bg-blue-400",
 };
 
+function dateToDateString(date: Date | null): string {
+  // Parse the ISO string into a Date object
+  if (date === null) {
+    return "No date";
+  }
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  // Extract the day, month, and year from the Date object
+  const day = date.getDate();
+  const month = months[date.getUTCMonth()]; // Get month name from array
+  const year = date.getFullYear();
+
+  // Format the day and month to ensure they are in two digits, and get the last two digits of the year
+  const formattedDay = day.toString().padStart(2, "0");
+  const formattedYear = year.toString().substring(2);
+
+  // Combine parts into the final DD-MM-YY format
+  const formattedDate = `${formattedDay}-${month}-${formattedYear}`;
+
+  // Return the formatted date
+  return formattedDate;
+}
+
 export const VoteMessageCard = (props: VoteMessageCardProps) => {
+  const dateString = dateToDateString(new Date(props.startedTimestamp));
   function renderStatusDot() {
     // Checking if the status is 'voted'
     if (props.category !== null && props.crowdSourcedCategory !== null) {
@@ -105,7 +141,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
         {renderStatusDot()}
 
         <div className="flex-1 min-w-0 p-2 overflow-hidden flex flex-col justify-center">
-          <p className="font-bold truncate">23 sep 2025</p>
+          <p className="font-bold truncate">{dateString}</p>
           <div className="truncate text-sm">
             {props.text ? props.text : "Image 🖼️"}
           </div>
