@@ -20,11 +20,10 @@ export async function voteAssessment(pollId: string): Promise<{
     // Get totalVoteReqeustsCount
     const totalVoteRequestsCount = await getTotalVoteRequestsCount(pollId);
 
-    // Calculate factCheckerCount - totalVoteRequestsCount - passCount
-    const factCheckerCount =
-      totalVoteRequestsCount - categoryCounts["pass"] - categoryCounts["null"];
+    // factCheckerCount = all checkers who could vote (excludes only those who passed)
+    const factCheckerCount = totalVoteRequestsCount - categoryCounts["pass"];
 
-    // Calculate validResponseCount
+    // validResponseCount = checkers who actually voted (excludes pass AND null/not-voted-yet)
     const validResponseCount =
       totalVoteRequestsCount - categoryCounts["pass"] - categoryCounts["null"];
 
@@ -111,18 +110,15 @@ export async function voteAssessment(pollId: string): Promise<{
         } else {
           switch (true) {
             case truthScore < 1.5:
-              // primaryCategory = "untrue";
-              primaryCategory = "info";
+              primaryCategory = "untrue";
               break;
 
             case truthScore <= 3.75:
-              // primaryCategory = "misleading";
-              primaryCategory = "info";
+              primaryCategory = "misleading";
               break;
 
             default:
-              // primaryCategory = "accurate";
-              primaryCategory = "info";
+              primaryCategory = "accurate";
           }
         }
         break;

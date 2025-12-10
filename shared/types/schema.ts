@@ -66,7 +66,6 @@ export interface Poll extends BaseDocument {
   crowdSourcedCategory:
     | "scam"
     | "illicit"
-    | "info"
     | "untrue"
     | "misleading"
     | "accurate"
