@@ -1,20 +1,20 @@
 "use client";
 
-import { MegaphoneIcon, NewspaperIcon, XCircleIcon } from "lucide-react";
-import { useState } from "react";
+import { MegaphoneIcon, NewspaperIcon, XCircleIcon } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   EllipsisHorizontalCircleIcon,
   FaceSmileIcon,
   PaperAirplaneIcon,
   QuestionMarkCircleIcon,
-  ShieldExclamationIcon,
-} from "@heroicons/react/20/solid";
+  ShieldExclamationIcon
+} from '@heroicons/react/20/solid';
 
-import TooltipWithHelperIcon from "../common/TooltipwithHelperIcon";
-import { Button } from "../ui/button";
-import InfoOptions from "./InfoOptions";
-import NvcOptions from "./NvcOptions";
+import TooltipWithHelperIcon from '../common/TooltipwithHelperIcon';
+import { Button } from '../ui/button';
+import InfoOptions from './InfoOptions';
+import NvcOptions from './NvcOptions';
 
 interface VotingCategoriesProps {
   category: string | null;
@@ -22,6 +22,7 @@ interface VotingCategoriesProps {
   onNextStep: (value: number) => void;
   onVoteCategorySelection: (value: string) => void;
   onTruthScoreChange: (value: number | null) => void;
+  disabled: boolean;
 }
 
 const CATEGORIES = [
@@ -98,6 +99,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
   const [NVCCategory, setNVCCategory] = useState<string | null>(null);
 
   const handleSelection = (value: string) => {
+
     setSelectedCategory(value);
     switch (value) {
       case "nvc":
@@ -111,6 +113,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
   };
 
   const handleNVCSelection = (value: string) => {
+
     setNVCCategory(value);
     props.onVoteCategorySelection(value);
     props.onNextStep(2);

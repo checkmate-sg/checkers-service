@@ -1,19 +1,21 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 
-import { useGetPollDetailsById } from "@/hooks/polls/useGetPollDetails";
-import { useGetVotesById } from "@/hooks/votes/useGetVotesById";
+import { useGetPollDetailsById } from '@/hooks/polls/useGetPollDetails';
+import { useGetVotesById } from '@/hooks/votes/useGetVotesById';
 
-import CommunityNoteCard from "./CommunityNoteCard";
-import MessageCard from "./MessageCard";
-import VoteResultsDisplay from "./VoteResultsDisplay";
-import VotingSystem from "./VotingSystem";
+import CommunityNoteCard from './CommunityNoteCard';
+import MessageCard from './MessageCard';
+import VoteResultsDisplay from './VoteResultsDisplay';
+import VotingSystem from './VotingSystem';
 
 interface VoteContentProps {
   voteId: string;
+  showNoteAfterVote: boolean;
 }
-export const VoteContent = ({ voteId }: VoteContentProps) => {
+export const VoteContent = ({ voteId, 
+                              showNoteAfterVote } : VoteContentProps) => {
   const { data: vote, isLoading: isLoading_Vote, error: isError_Vote } = useGetVotesById(voteId);
 
   // Fetch the poll using pollId
@@ -36,17 +38,18 @@ export const VoteContent = ({ voteId }: VoteContentProps) => {
   if (isError_Poll) return <div>Failed to load poll</div>;
 
   return (
-    <>
+      <>
       <div className="grid grid-flow-row items-center gap-2 p-3">
         <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
 
-        {poll.shortformResponse ? (
+        {poll.shortformResponse && !showNoteAfterVote? (
           <CommunityNoteCard
             responseEN={poll.shortformResponse.en}
             responseCN={poll.shortformResponse.cn}
             responseLinks={poll.shortformResponse.links}
           />
         ) : null}
+
         {vote.category === null || poll.crowdSourcedCategory === null ? (
           <VotingSystem
             voteRequestId={vote._id}
@@ -54,6 +57,8 @@ export const VoteContent = ({ voteId }: VoteContentProps) => {
             truthScore={vote.truthScore}
             responseCategory={vote.responseCategory}
             commentOnResponse={vote.commentOnResponse}
+            showNoteAfterVote={showNoteAfterVote}
+            shortformResponse={poll.shortformResponse}
           />
         ) : (
           <VoteResultsDisplay

@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Category, ResponseCategory } from "@/lib/request/external/lib/data-contracts";
-import { AccordionContent } from "@radix-ui/react-accordion";
+import { Category, Response, ResponseCategory } from '@/lib/request/external/lib/data-contracts';
+import { AccordionContent } from '@radix-ui/react-accordion';
 
-import { Accordion, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import CommunityNoteCategories from "./CommunityNoteCategories";
-import DoneButton from "./DoneButton";
-import VoteCategories from "./VoteCategories";
+import { Accordion, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import CommunityNoteCard from './CommunityNoteCard';
+import CommunityNoteCategories from './CommunityNoteCategories';
+import DoneButton from './DoneButton';
+import VoteCategories from './VoteCategories';
 
 interface VotingSystemProps {
   voteRequestId: string;
@@ -14,6 +15,8 @@ interface VotingSystemProps {
   truthScore: number | null;
   responseCategory: ResponseCategory | null;
   commentOnResponse: string | null;
+  showNoteAfterVote: boolean;
+  shortformResponse: Response;
 }
 
 interface IconProps {
@@ -23,16 +26,19 @@ interface IconProps {
 
 export default function VotingSystem(props: VotingSystemProps) {
   // local state mirrors the original behaviour
-  const [openItems, setOpenItems] = useState<number[]>([1]);
+  const [openItems, setOpenItems] = useState<string>('1');
   const [voteCategory, setVoteCategory] = useState<Category | null>(props.category);
   const [truthScore, setTruthScore] = useState<number | null>(props.truthScore);
   const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<ResponseCategory | null>(
     props.responseCategory
   );
 
+  // Check if step 1 is completed 
+  const isStep1Completed = voteCategory !== null;
+
   const handleNextStep = (value: number) => {
     // Enable the next accordion and open it automatically
-    setOpenItems(prev => [...prev, value]);
+    setOpenItems(String(value));
   };
 
   const onNextStep = (value: number) => {
@@ -62,16 +68,19 @@ export default function VotingSystem(props: VotingSystemProps) {
   );
 
   return (
-    <div className="mx-3">
+    <div>
       <Accordion
-        type="multiple"
-        value={openItems.map(String)}
-        onValueChange={v => setOpenItems((v as string[]).map(Number))}
+        type="single"
+        collapsible
+        value={openItems}
+        onValueChange={setOpenItems}
       >
         <AccordionItem
           value="1"
-          disabled={false}
-          className={`mb-6 rounded-lg border px-2 relative ${openItems.includes(1) ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
+          className={`mb-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('1') ? 
+                    "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" 
+                    : "border-blue-gray-200"}`}
+          disabled={props.showNoteAfterVote && isStep1Completed}
         >
           <div className="pl-3">
             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
@@ -84,17 +93,25 @@ export default function VotingSystem(props: VotingSystemProps) {
             <VoteCategories
               category={voteCategory}
               truthScore={truthScore}
+              disabled={props.showNoteAfterVote}
               onNextStep={onNextStep}
               onVoteCategorySelection={handleVoteCategorySelection}
               onTruthScoreChange={handleTruthScoreChange}
             />
           </AccordionContent>
         </AccordionItem>
+        
+        {(props.showNoteAfterVote && isStep1Completed) ? (
+            <CommunityNoteCard
+            responseEN={props.shortformResponse.en}
+            responseCN={props.shortformResponse.cn}
+            responseLinks={props.shortformResponse.links}
+          />
+        ): null}
 
         <AccordionItem
           value="2"
-          disabled={false}
-          className={`mb-2 rounded-lg border px-2 relative ${openItems.includes(1) ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
+          className={`mb-2 mt-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('2') ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
         >
           <div className="pl-3">
             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
