@@ -130,6 +130,14 @@ export interface PollRequest {
   humanResponse: HumanResponse | null;
 }
 
+// Message payload for poll update queue (sent to CheckMate platform when assessment changes)
+export interface PollUpdateMessage {
+  id: string; // checkId
+  isHumanAssessed: boolean;
+  crowdsourcedCategory: string | null;
+  isCommunityNoteDownvoted: boolean;
+}
+
 //
 
 // Database collections enum for type safety

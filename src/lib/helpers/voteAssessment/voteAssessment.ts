@@ -147,7 +147,14 @@ export async function voteAssessment(pollId: string): Promise<{
     // Update Object - crowdSourcedCategory in Polls collection
     // primaryCategory - to be updated in crowdSourcedCategory
     if (isAssessed === true) {
-      return { success: true, data: { primaryCategory: primaryCategory, truthScore: truthScore } };
+      return {
+        success: true,
+        data: {
+          primaryCategory: primaryCategory,
+          truthScore: truthScore,
+          isDownvoted: isAssessedUnacceptable,
+        },
+      };
     } else {
       // if isAssessed is false, return null
       // no crowdSourcedCategory being determined yet

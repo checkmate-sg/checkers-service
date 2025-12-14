@@ -16,7 +16,8 @@ import { testScenarios, createVoteDistribution } from "../fixtures/mockData";
 // Helper to set up mocks for a given vote distribution
 function setupMocks(
   distribution: Record<string, number>,
-  infoTruthScore: number = 3
+  infoTruthScore: number = 3,
+  unacceptablePercentage: number = 0.2
 ) {
   // Calculate category counts from distribution
   const categoryCounts: Record<string, number> = {
@@ -52,9 +53,9 @@ function setupMocks(
     infoCount > 0 ? infoTruthScore : null
   );
   vi.mocked(utils.getResponseCategoryCountsByPollId).mockResolvedValue({
-    great: Math.floor(totalVotes * 0.3),
-    acceptable: Math.floor(totalVotes * 0.5),
-    unacceptable: Math.floor(totalVotes * 0.2),
+    great: Math.floor(totalVotes * (1 - unacceptablePercentage) * 0.4),
+    acceptable: Math.floor(totalVotes * (1 - unacceptablePercentage) * 0.6),
+    unacceptable: Math.floor(totalVotes * unacceptablePercentage),
     null: 0,
   });
 }
@@ -270,6 +271,54 @@ describe("voteAssessment", () => {
       expect(result.success).toBe(true);
       expect(result.data).not.toBeNull();
       expect(result.data.primaryCategory).toBe("scam");
+    });
+  });
+
+  describe("isDownvoted (Community Note Downvote)", () => {
+    it("should return isDownvoted: true when >50% vote unacceptable", async () => {
+      const scenario = testScenarios.clearScam;
+      // 60% unacceptable votes
+      setupMocks(scenario.distribution, 3, 0.6);
+
+      const result = await voteAssessment("poll-001");
+
+      expect(result.success).toBe(true);
+      expect(result.data).not.toBeNull();
+      expect(result.data.isDownvoted).toBe(true);
+    });
+
+    it("should return isDownvoted: false when <=50% vote unacceptable", async () => {
+      const scenario = testScenarios.clearScam;
+      // 40% unacceptable votes
+      setupMocks(scenario.distribution, 3, 0.4);
+
+      const result = await voteAssessment("poll-001");
+
+      expect(result.success).toBe(true);
+      expect(result.data).not.toBeNull();
+      expect(result.data.isDownvoted).toBe(false);
+    });
+
+    it("should return isDownvoted: false when exactly at 50%", async () => {
+      const scenario = testScenarios.clearScam;
+      // Exactly 50% unacceptable votes
+      setupMocks(scenario.distribution, 3, 0.5);
+
+      const result = await voteAssessment("poll-001");
+
+      expect(result.success).toBe(true);
+      expect(result.data).not.toBeNull();
+      expect(result.data.isDownvoted).toBe(false);
+    });
+
+    it("should not return isDownvoted when poll is not yet assessed", async () => {
+      const scenario = testScenarios.scamInsufficientVotes;
+      setupMocks(scenario.distribution, 3, 0.6);
+
+      const result = await voteAssessment("poll-001");
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeNull(); // Not assessed yet
     });
   });
 });

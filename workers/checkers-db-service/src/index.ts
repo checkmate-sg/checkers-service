@@ -283,7 +283,12 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   async updateOnePoll(
     filter: Filter<Poll>,
     update: UpdateFilter<Poll>
-  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    modifiedCount?: number;
+    previousDocument?: PollAPI;
+    error?: string;
+  }> {
     try {
       await this.connectPromise;
       const db = this.client.db(DB_NAME);
@@ -293,11 +298,24 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const processedFilter = this.convertStringIdsToObjectIds(filter);
       const processedUpdate = this.convertStringIdsToObjectIds(update);
 
-      const result = await pollsCollection.updateOne(processedFilter, processedUpdate);
+      // Use findOneAndUpdate to get the previous document for change detection
+      const result = await pollsCollection.findOneAndUpdate(processedFilter, processedUpdate, {
+        returnDocument: "before",
+      });
+
+      // Convert ObjectIds to strings if document was found
+      const previousDocument = result
+        ? {
+            ...result,
+            _id: result._id?.toString(),
+            checkId: result.checkId?.toString(),
+          }
+        : undefined;
 
       return {
         success: true,
-        modifiedCount: result.modifiedCount,
+        modifiedCount: result ? 1 : 0,
+        previousDocument: previousDocument as PollAPI | undefined,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
