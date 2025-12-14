@@ -50,26 +50,49 @@ export async function POST(req: Request) {
       text: text || null,
       imageURL: imageUrl || null,
       caption: caption || null,
-      longformResponse: longformResponse ?? {
-        en: null,
-        cn: null,
-        links: null,
-        timestamp: null,
-      },
-      shortformResponse: shortformResponse ?? {
-        en: null,
-        cn: null,
-        downvoted: false,
-        links: null,
-        timestamp: null,
-      },
-      humanResponse: humanResponse ?? {
-        en: null,
-        cn: null,
-        links: null,
-        timestamp: null,
-        updatedBy: null,
-      },
+      longformResponse: longformResponse
+        ? {
+            en: longformResponse.en ?? null,
+            cn: longformResponse.cn ?? null,
+            links: longformResponse.links ?? null,
+            timestamp: longformResponse.timestamp ?? null,
+          }
+        : {
+            en: null,
+            cn: null,
+            links: null,
+            timestamp: null,
+          },
+      shortformResponse: shortformResponse
+        ? {
+            en: shortformResponse.en ?? null,
+            cn: shortformResponse.cn ?? null,
+            links: shortformResponse.links ?? null,
+            timestamp: shortformResponse.timestamp ?? null,
+            downvoted: shortformResponse.downvoted ?? false,
+          }
+        : {
+            en: null,
+            cn: null,
+            downvoted: false,
+            links: null,
+            timestamp: null,
+          },
+      humanResponse: humanResponse
+        ? {
+            en: humanResponse.en ?? null,
+            cn: humanResponse.cn ?? null,
+            links: humanResponse.links ?? null,
+            timestamp: humanResponse.timestamp ?? null,
+            updatedBy: humanResponse.updatedBy ?? null,
+          }
+        : {
+            en: null,
+            cn: null,
+            links: null,
+            timestamp: null,
+            updatedBy: null,
+          },
       crowdSourcedCategory: null,
       crowdSourcedTruthScore: null,
       startedTimestamp: new Date(),
