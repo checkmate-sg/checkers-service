@@ -32,3 +32,4 @@ dist-ssr
 .dev.vars
 .wranglertsconfig.tsbuildinfo
 .wrangler
+tsconfig.tsbuildinfo
