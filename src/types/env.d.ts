@@ -1,5 +1,5 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, VoteAPI } from "@/shared/types/schema";
+import { CheckerAPI, PollAPI, PollUpdateMessage, VoteAPI } from "@/shared/types/schema";
 
 declare global {
   interface CloudflareEnv {
@@ -24,7 +24,12 @@ declare global {
       updateOnePoll(
         filter: any,
         update: any
-      ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+      ): Promise<{
+        success: boolean;
+        modifiedCount?: number;
+        previousDocument?: PollAPI;
+        error?: string;
+      }>;
       findCheckersVote(
         sortField?: any,
         offset?: any,
@@ -48,6 +53,9 @@ declare global {
       findOneVote(filter: any): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
     };
     CHECKMATE_WHATSAPP_SERVICE?: any;
+
+    // Queue bindings
+    POLL_UPDATE_QUEUE: Queue<PollUpdateMessage>;
 
     // Environment variables (these extend the base CloudflareEnv)
     TELEGRAM_WEBHOOK_SECRET?: string;

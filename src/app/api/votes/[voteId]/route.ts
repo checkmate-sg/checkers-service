@@ -97,14 +97,18 @@ export async function POST(req: NextRequest, { params }) {
     } else if (crowdSourcedCategoryResults.data === null) {
       console.log("Poll not yet assessed");
     } else {
+      const { primaryCategory, truthScore, isDownvoted } = crowdSourcedCategoryResults.data;
+
       // Update Poll with the assessed crowdSourcedCategory - use _id (pollId)
+      // Returns previousDocument for change detection
       const pollUpdateResult = await env.CHECKERS_DB_SERVICE.updateOnePoll(
         { _id: pollId },
         {
           $set: {
-            crowdSourcedCategory: crowdSourcedCategoryResults.data.primaryCategory,
-            crowdSourcedTruthScore: crowdSourcedCategoryResults.data.truthScore,
+            crowdSourcedCategory: primaryCategory,
+            crowdSourcedTruthScore: truthScore,
             assessedTimestamp: new Date(),
+            "shortformResponse.downvoted": isDownvoted,
           },
         }
       );
@@ -115,6 +119,27 @@ export async function POST(req: NextRequest, { params }) {
           pollUpdateResult.error
         );
         return Err.internal("Error updating the poll with crowdSourcedCategory");
+      }
+
+      // Queue message if category or downvoted status changed
+      const prev = pollUpdateResult.previousDocument;
+      if (prev) {
+        const categoryChanged = prev.crowdSourcedCategory !== primaryCategory;
+        const downvotedChanged = (prev.shortformResponse?.downvoted ?? false) !== isDownvoted;
+
+        if (categoryChanged || downvotedChanged) {
+          try {
+            await env.POLL_UPDATE_QUEUE.send({
+              id: prev.checkId,
+              isHumanAssessed: true,
+              crowdsourcedCategory: primaryCategory,
+              isCommunityNoteDownvoted: isDownvoted,
+            });
+          } catch (queueError) {
+            console.error("Failed to queue poll update message:", queueError);
+            // Don't fail the request - just log
+          }
+        }
       }
     }
 
