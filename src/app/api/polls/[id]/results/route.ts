@@ -9,7 +9,7 @@ import {
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
-  // Get and calculate the results/statistics for a specific poll by externalId/pollId
+  // Get and calculate the results/statistics for a specific poll by _id
 
   const { env } = getCloudflareContext();
 
@@ -17,10 +17,11 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { externalId } = await params;
-    if (!externalId) return Err.badParams("Missing externalId parameter");
+    const { id } = await params;
+    if (!id) return Err.badParams("Missing id parameter");
 
-    const categoryCount = await getCategoryCountsByPollId(externalId);
+    const categoryCount = await getCategoryCountsByPollId(id);
+    if (categoryCount instanceof NextResponse) return categoryCount;
     console.log(categoryCount);
 
     // Only if 'info' is part of the categories -> then we will compute the truthScore statistics
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }) {
       },
     ];
     const pollTruthScoreStatistics = await env.CHECKERS_DB_SERVICE.getVotesDetails(
-      externalId,
+      id,
       truthScorePipeline
     );
 
@@ -63,19 +64,27 @@ export async function GET(req: NextRequest, { params }) {
       truthScoreStats[item._id] = item.count;
     });
 
-    categoryCount["info"] = truthScoreStats;
-
-    const responseCategoryCounts = await getResponseCategoryCountsByPollId(externalId);
+    const responseCategoryCounts = await getResponseCategoryCountsByPollId(id);
+    if (responseCategoryCounts instanceof NextResponse) return responseCategoryCounts;
     console.log(responseCategoryCounts);
 
-    const combinedStats = {
-      ...categoryCount,
-      great: responseCategoryCounts["great"],
-      acceptable: responseCategoryCounts["acceptable"],
-      unacceptable: responseCategoryCounts["unacceptable"],
-    };
+    // Build final stats, excluding null keys from both category counts
+    const { null: _catNull, ...categoryStatsWithoutNull } = categoryCount as Record<
+      string,
+      number
+    > & { null?: number };
+    const { null: _respNull, ...responseStatsWithoutNull } = responseCategoryCounts as Record<
+      string,
+      number
+    > & { null?: number };
 
-    const { null: _, ...finalStats } = combinedStats;
+    const finalStats = {
+      ...categoryStatsWithoutNull,
+      info: truthScoreStats,
+      great: responseStatsWithoutNull["great"],
+      acceptable: responseStatsWithoutNull["acceptable"],
+      unacceptable: responseStatsWithoutNull["unacceptable"],
+    };
 
     return NextResponse.json(finalStats, { status: 200 });
   } catch (error) {

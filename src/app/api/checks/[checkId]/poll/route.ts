@@ -5,27 +5,24 @@ import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
+  // Get poll details by checkId (checkId from CheckMate platform)
   const { env } = getCloudflareContext();
 
   try {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { checkerId, voteId } = await params;
-    if (!checkerId) return Err.badParams("Missing checkerId parameter");
-    if (!voteId) return Err.badParams("Missing pollId parameter");
+    const { checkId } = await params;
+    if (!checkId) return Err.badParams("Missing checkId parameter");
 
-    const result = await env.CHECKERS_DB_SERVICE.findOneVote({
-      pollId: voteId,
-      checkerId: checkerId,
-    });
+    const result = await env.CHECKERS_DB_SERVICE.findOnePoll({ checkId: checkId });
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return Err.notFound();
     }
 
-    const vote = result.data;
-    return NextResponse.json(vote, { status: 200 });
+    const poll = result.data;
+    return NextResponse.json(poll, { status: 200 });
   } catch (error) {
     return Err.internal();
   }

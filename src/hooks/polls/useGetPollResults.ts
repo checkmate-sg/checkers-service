@@ -1,12 +1,13 @@
 import { pollsAPI } from "@/lib/request/api";
 import { useQuery } from "@tanstack/react-query";
 
-export function useGetPollResultsById(externalId: string) {
+export function useGetPollResultsById(id: string) {
   return useQuery({
-    queryKey: ["useGetPollResultsById", externalId],
+    queryKey: ["useGetPollResultsById", id],
     queryFn: async () => {
-      const resp = await pollsAPI.resultsDetail(externalId);
+      const resp = await pollsAPI.resultsDetail(id);
       return resp?.data;
     },
+    enabled: !!id,
   });
 }

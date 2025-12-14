@@ -52,7 +52,7 @@ export interface BaseDocument {
   _id?: MongoObjectId;
 }
 
-/** crowd source message category */
+/** crowed source message category */
 export enum Category {
   Scam = "scam",
   Illicit = "illicit",
@@ -164,10 +164,10 @@ export type Checker = BaseDocument & {
   dailyAssignmentCount: number;
 };
 
-/** Representation of the Messages to be checked  */
+/** Representation of the Messages to be checked */
 export type Poll = BaseDocument & {
-  /** CheckID from CheckMate AI platform  */
-  externalId?: string;
+  /** Check ID from CheckMate AI platform  */
+  checkId?: string;
   /** Text of the poll, if any */
   text?: string | null;
   /** URL of the image in the poll, if any  */
@@ -188,10 +188,10 @@ export type Poll = BaseDocument & {
   assessedTimestamp?: DateTime;
 };
 
-/** Poll request to kick off the poll process, received via webhook from CheckMate AI Platform  */
+/** Poll request to kick off the poll process, received via webhook from CheckMate AI Platform */
 export type PollRequest = BaseDocument & {
-  /** CheckID from CheckMate AI platform  */
-  externalId?: string;
+  /** Check ID from CheckMate AI platform  */
+  checkId?: string;
   /** Text of the poll, if any */
   text?: string | null;
   /** URL of the image in the poll, if any  */

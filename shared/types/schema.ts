@@ -56,7 +56,7 @@ export interface Checker extends BaseDocument {
 
 // Message to be checked
 export interface Poll extends BaseDocument {
-  externalId: string; // CheckID from CheckMate AI platform
+  checkId: string; // CheckID from CheckMate AI platform
   text: string | null; // The text of the poll, if any
   imageURL: string | null; // The URL of the image in the poll, if any
   caption: string | null; // The caption of the poll, if any

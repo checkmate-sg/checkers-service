@@ -1,13 +1,14 @@
 "use client";
 
-import { PencilIcon } from 'lucide-react';
-import Link from 'next/link';
+import { PencilIcon } from "lucide-react";
+import Link from "next/link";
 
-import { IconQuestionMark } from '@tabler/icons-react';
+import { IconQuestionMark } from "@tabler/icons-react";
 
 interface VoteMessageCardProps {
   voteId: string; // Vote ID
-  externalId: string; // pollId, _id of polls collection (Common ID)
+  pollId: string; // pollId, _id of polls collection (Common ID)
+  checkId: string; // checkId from CheckMate platform
   text: string | null;
   imageUrl: string | null;
   startedTimestamp: string;
@@ -142,9 +143,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
 
         <div className="flex-1 min-w-0 p-2 overflow-hidden flex flex-col justify-center">
           <p className="font-bold truncate">{dateString}</p>
-          <div className="truncate text-sm">
-            {props.text ? props.text : "Image 🖼️"}
-          </div>
+          <div className="truncate text-sm">{props.text ? props.text : "Image 🖼️"}</div>
         </div>
       </div>
     </Link>

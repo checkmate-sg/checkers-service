@@ -43,11 +43,13 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     if (typeof convertedFilter._id === "string") {
       convertedFilter._id = new ObjectId(convertedFilter._id);
     }
-    // pollId is kept as string (stores externalId for joining with polls)
+    if (typeof convertedFilter.pollId === "string") {
+      convertedFilter.pollId = new ObjectId(convertedFilter.pollId);
+    }
     if (typeof convertedFilter.checkerId === "string") {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
     }
-    // externalId is kept as string (external system ID, not MongoDB ObjectId)
+    // checkId is kept as string (external system ID, not MongoDB ObjectId)
 
     // Handle nested objects (like $set, $push, etc.)
     Object.keys(convertedFilter).forEach(key => {
@@ -74,7 +76,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       await pollsCollection.insertOne({
         ...poll,
         _id: objectId,
-        // externalId kept as string (external system ID)
+        // checkId kept as string (external system ID)
       });
 
       return { success: true, id: idString };
@@ -122,11 +124,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const objectId = customId ? new ObjectId(customId) : new ObjectId();
       const idString = objectId.toString();
 
-      // Convert string IDs to ObjectIds (except pollId which stores externalId as string)
+      // Convert string IDs to ObjectIds
       const voteData = {
         ...vote,
         _id: objectId,
-        // pollId kept as string (stores externalId for joining with polls)
+        pollId: typeof vote.pollId === "string" ? new ObjectId(vote.pollId) : vote.pollId,
         checkerId:
           typeof vote.checkerId === "string" ? new ObjectId(vote.checkerId) : vote.checkerId,
       };
@@ -178,7 +180,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           $lookup: {
             from: "polls",
             localField: "pollId",
-            foreignField: "externalId",
+            foreignField: "_id",
             as: "poll",
           },
         },
@@ -202,8 +204,8 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             commentOnResponse: 1,
             poll: {
               _id: { $toString: "$poll._id" },
-              externalId: {
-                $toString: "$poll.externalId",
+              checkId: {
+                $toString: "$poll.checkId",
               },
               text: "$poll.text",
               imageUrl: "$poll.imageURl",
@@ -254,11 +256,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const db = this.client.db(DB_NAME);
       const votesCollection = db.collection<Vote>("votes");
 
-      // pollId is stored as string (externalId), match directly
+      // pollId is stored as ObjectId, convert string to ObjectId for matching
       const basePipeline = [
         {
           $match: {
-            pollId: pollId,
+            pollId: new ObjectId(pollId),
           },
         },
       ];
@@ -451,7 +453,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const pollWithStringId = {
         ...poll,
         _id: poll._id?.toString(),
-        externalId: poll.externalId?.toString(),
+        checkId: poll.checkId?.toString(),
       };
 
       return { success: true, data: pollWithStringId as PollAPI };

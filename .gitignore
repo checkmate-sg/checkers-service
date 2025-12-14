@@ -30,4 +30,4 @@ dist-ssr
 .open-next
 .next
 .dev.vars
-.wrangler
+.wranglertsconfig.tsbuildinfo

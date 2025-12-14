@@ -1,5 +1,5 @@
 import { checkersAPI } from "@/lib/request/api";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 // Custom hook to fetch all the Votes of a specific checkers based on the filter
 export function useGetCheckersVoteDetail({
@@ -54,13 +54,3 @@ export function useGetCheckersVoteDetail({
   });
 }
 
-export function useGetVotesByCheckersIdNPollId(checkerId: string, pollId: string) {
-  return useQuery({
-    queryKey: ["useGetVotesByCheckersIdNPollId", checkerId, pollId],
-    queryFn: async () => {
-      const resp = await checkersAPI.votesDetail2(checkerId, pollId);
-
-      return resp?.data;
-    },
-  });
-}

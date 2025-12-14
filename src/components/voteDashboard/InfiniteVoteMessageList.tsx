@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { SimpleInfinityScroll } from "../common/SimplyInfinityScroll";
-import { VoteMessageCard } from "./VoteMessageCard";
+import { VoteMessageCard } from "./voteMessageCard";
 
 interface InfiniteVoteMessageProps {
   useGetCheckersVoteDetailHook: (params: {
@@ -45,7 +45,8 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
           <VoteMessageCard
             key={result.voteId}
             voteId={result.voteId}
-            externalId={result.poll.externalId}
+            pollId={result.pollId}
+            checkId={result.poll.checkId}
             text={result.poll.text}
             imageUrl={result.poll.imageUrl}
             startedTimestamp={result.poll.startedTimestamp}

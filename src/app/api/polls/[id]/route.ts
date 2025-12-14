@@ -5,19 +5,19 @@ import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
-  // Poll request --> To get the details of the Poll
+  // Poll request --> To get the details of the Poll by _id
   const { env } = getCloudflareContext();
 
   try {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { externalId } = await params;
-    if (!externalId) return Err.badParams("Missing externalId parameter");
+    const { id } = await params;
+    if (!id) return Err.badParams("Missing id parameter");
 
-    const result = await env.CHECKERS_DB_SERVICE.findOnePoll({ externalId: externalId });
+    const result = await env.CHECKERS_DB_SERVICE.findOnePoll({ _id: id });
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return Err.notFound();
     }
 
