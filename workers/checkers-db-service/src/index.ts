@@ -43,7 +43,9 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     if (typeof convertedFilter._id === "string") {
       convertedFilter._id = new ObjectId(convertedFilter._id);
     }
-    // pollId is kept as string (stores externalId for joining with polls)
+    if (typeof convertedFilter.pollId === "string") {
+      convertedFilter.pollId = new ObjectId(convertedFilter.pollId);
+    }
     if (typeof convertedFilter.checkerId === "string") {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
     }
@@ -122,11 +124,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const objectId = customId ? new ObjectId(customId) : new ObjectId();
       const idString = objectId.toString();
 
-      // Convert string IDs to ObjectIds (except pollId which stores externalId as string)
+      // Convert string IDs to ObjectIds
       const voteData = {
         ...vote,
         _id: objectId,
-        // pollId kept as string (stores externalId for joining with polls)
+        pollId: typeof vote.pollId === "string" ? new ObjectId(vote.pollId) : vote.pollId,
         checkerId:
           typeof vote.checkerId === "string" ? new ObjectId(vote.checkerId) : vote.checkerId,
       };
@@ -178,7 +180,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           $lookup: {
             from: "polls",
             localField: "pollId",
-            foreignField: "externalId",
+            foreignField: "_id",
             as: "poll",
           },
         },
@@ -254,11 +256,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const db = this.client.db(DB_NAME);
       const votesCollection = db.collection<Vote>("votes");
 
-      // pollId is stored as string (externalId), match directly
+      // pollId is stored as ObjectId, convert string to ObjectId for matching
       const basePipeline = [
         {
           $match: {
-            pollId: pollId,
+            pollId: new ObjectId(pollId),
           },
         },
       ];

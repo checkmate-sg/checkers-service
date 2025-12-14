@@ -18,7 +18,7 @@ export const VoteContent = ({ voteId,
                               showNoteAfterVote } : VoteContentProps) => {
   const { data: vote, isLoading: isLoading_Vote, error: isError_Vote } = useGetVotesById(voteId);
 
-  // Fetch the poll using pollId
+  // Fetch the poll using pollId (which is the poll's _id)
   const {
     data: poll,
     isLoading: isLoading_Poll,
@@ -62,7 +62,7 @@ export const VoteContent = ({ voteId,
           />
         ) : (
           <VoteResultsDisplay
-            pollId={poll.externalId}
+            pollId={poll._id}
             voteCategory={vote.category}
             voteTruthScore={vote.truthScore}
             pollCategory={poll.crowdSourcedCategory}

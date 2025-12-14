@@ -97,9 +97,9 @@ export async function POST(req: NextRequest, { params }) {
     } else if (crowdSourcedCategoryResults.data === null) {
       console.log("Poll not yet assessed");
     } else {
-      // Update Poll with the assesed crowdSourcedCategory - use externalId (pollId)
+      // Update Poll with the assessed crowdSourcedCategory - use _id (pollId)
       const pollUpdateResult = await env.CHECKERS_DB_SERVICE.updateOnePoll(
-        { externalId: pollId },
+        { _id: pollId },
         {
           $set: {
             crowdSourcedCategory: crowdSourcedCategoryResults.data.primaryCategory,

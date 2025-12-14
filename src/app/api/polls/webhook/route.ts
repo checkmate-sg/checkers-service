@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     // Get Cloudflare context and database service
-    const { env } = await getCloudflareContext();
+    const { env } = getCloudflareContext();
 
     // Check if poll with this checkId already exists
     const existingPollResult = await env.CHECKERS_DB_SERVICE.findOnePoll({
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     for (const checker of activeCheckersResult.data) {
       // Create a vote request in the database for each checker
       const voteRequest: Omit<VoteAPI, "_id"> = {
-        pollId: checkId,
+        pollId: insertResult.id, // Use the poll's _id, not externalId
         checkerId: checker._id?.toString() || checker._id,
         createdTimestamp: new Date(),
         votedTimestamp: null,

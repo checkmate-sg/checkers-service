@@ -116,7 +116,8 @@ export async function getTotalTruthScoreValue(pollId: string) {
       totalTruthScorePipeline
     );
 
-    const truthScoreValue = rawTotalTruthScoreValue?.data[0].totalTruthScore;
+    // Return 0 if no votes with truthScore exist (no one voted "info")
+    const truthScoreValue = rawTotalTruthScoreValue?.data[0]?.totalTruthScore ?? 0;
 
     return truthScoreValue;
   } catch (error) {
