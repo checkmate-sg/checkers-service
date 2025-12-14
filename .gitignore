@@ -31,3 +31,4 @@ dist-ssr
 .next
 .dev.vars
 .wranglertsconfig.tsbuildinfo
+.wrangler
