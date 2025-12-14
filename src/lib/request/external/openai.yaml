@@ -97,40 +97,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
           
-  '/checkers/{checkerId}/votes/{voteId}':
-    get:
-      summary: Retrieve the specific vote details based on checkerId and the pollId
-      description: | 
-        Return a Vote Request object based on the checkerId and the voteID 
-      tags: 
-        - Checkers
-      parameters: 
-        - name: checkerId
-          in: path 
-          description: Checker ID
-          required: true 
-          schema:
-            type: string
-        - name: voteId
-          in: path
-          description: Vote ID 
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful retrieval of votes details
-          content:
-            application/json:
-              schema: 
-                $ref: '#/components/schemas/Vote'
-        '401':
-          $ref: '#/components/responses/AuthenticationError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  
   '/polls/webhook':
     post:
       summary: Create a new poll using the webhook 
@@ -165,18 +131,18 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
   
-  '/polls/{externalId}':
+  '/polls/{id}':
     get:
       summary: Retrieve the specific Poll detail
       description: |
-        Return all the of a poll based on the externalId to get all the details of the poll
-      tags: 
+        Return all the details of a poll based on the poll's MongoDB _id
+      tags:
         - Polls
       parameters:
-        - name: externalId
-          in: path 
-          description: External ID
-          required: true 
+        - name: id
+          in: path
+          description: Poll ID (MongoDB ObjectId)
+          required: true
           schema:
             type: string
       responses:
@@ -193,18 +159,18 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
           
-  '/polls/{externalId}/results':
+  '/polls/{id}/results':
     get:
-      summary: Get poll statistics by poll ID 
+      summary: Get poll statistics by poll ID
       description: Retrieves category counts and truth score statistics for a specific poll
       tags:
         - Polls
       parameters:
-        - name: externalId
+        - name: id
           in: path
-          description: Poll ID 
+          description: Poll ID (MongoDB ObjectId)
           required: true
-          schema: 
+          schema:
             type: string 
       responses:
         '200':
@@ -296,7 +262,35 @@ paths:
           $ref: '#/components/responses/AuthenticationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
+  '/checks/{checkId}/poll':
+    get:
+      summary: Retrieve poll by external check ID
+      description: |
+        Return poll details based on the checkId (external ID from CheckMate platform)
+      tags:
+        - Polls
+      parameters:
+        - name: checkId
+          in: path
+          description: Check ID from CheckMate platform
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval of poll details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   '/votes/{voteId}':
     get:
       summary: Retrieve the specific Vote detail
@@ -603,15 +597,15 @@ components:
             - dailyAssignmentCount
     Poll:
       description: >-
-        Representation of the Messages to be checked 
+        Representation of the Messages to be checked
       allOf:
         - $ref: '#/components/schemas/BaseDocument'
         - type: object
           properties:
-            externalId: 
+            checkId:
               type: string
               description: >-
-                CheckID from CheckMate AI platform 
+                Check ID from CheckMate AI platform 
             text: 
               type: string
               nullable: true
@@ -642,17 +636,17 @@ components:
               $ref: '#/components/schemas/DateTime'
             assessedTimestamp:
               $ref: '#/components/schemas/DateTime'
-    PollRequest: 
+    PollRequest:
       description: >-
-        Poll request to kick off the poll process, received via webhook from CheckMate AI Platform 
+        Poll request to kick off the poll process, received via webhook from CheckMate AI Platform
       allOf:
         - $ref: '#/components/schemas/BaseDocument'
         - type: object
           properties:
-            externalId: 
+            checkId:
               type: string
               description: >-
-                CheckID from CheckMate AI platform 
+                Check ID from CheckMate AI platform 
             text: 
               type: string
               nullable: true

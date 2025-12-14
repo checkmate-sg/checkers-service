@@ -40,16 +40,16 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       ...params,
     });
   /**
-   * @description Return all the of a poll based on the externalId to get all the details of the poll
+   * @description Return all the details of a poll based on the poll's MongoDB _id
    *
    * @tags Polls
    * @name PollsDetail
    * @summary Retrieve the specific Poll detail
-   * @request GET:/polls/{externalId}
+   * @request GET:/polls/{id}
    */
-  pollsDetail = (externalId: string, params: RequestParams = {}) =>
+  pollsDetail = (id: string, params: RequestParams = {}) =>
     this.request<Poll, APIError>({
-      path: `/polls/${externalId}`,
+      path: `/polls/${id}`,
       method: "GET",
       format: "json",
       ...params,
@@ -60,9 +60,9 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @tags Polls
    * @name ResultsDetail
    * @summary Get poll statistics by poll ID
-   * @request GET:/polls/{externalId}/results
+   * @request GET:/polls/{id}/results
    */
-  resultsDetail = (externalId: string, params: RequestParams = {}) =>
+  resultsDetail = (id: string, params: RequestParams = {}) =>
     this.request<
       {
         /**
@@ -161,7 +161,7 @@ export class Polls<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       },
       APIError
     >({
-      path: `/polls/${externalId}/results`,
+      path: `/polls/${id}/results`,
       method: "GET",
       format: "json",
       ...params,

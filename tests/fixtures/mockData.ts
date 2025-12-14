@@ -31,7 +31,7 @@ export const mockCheckers = Array.from({ length: 20 }, (_, i) => ({
 
 export const mockPoll = {
   _id: "poll-001",
-  externalId: "check-001",
+  checkId: "check-001",
   text: "Is this claim true: the government is giving free money?",
   imageURL: null,
   caption: null,

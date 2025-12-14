@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     // Check if poll with this checkId already exists
     const existingPollResult = await env.CHECKERS_DB_SERVICE.findOnePoll({
-      externalId: checkId,
+      checkId: checkId,
     });
 
     console.log(existingPollResult.data);
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     // Create new poll (without _id, let the DB service handle it)
     const newPoll: Omit<PollAPI, "_id"> = {
-      externalId: checkId,
+      checkId: checkId,
       text: text || null,
       imageURL: imageUrl || null,
       caption: caption || null,
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     for (const checker of activeCheckersResult.data) {
       // Create a vote request in the database for each checker
       const voteRequest: Omit<VoteAPI, "_id"> = {
-        pollId: insertResult.id, // Use the poll's _id, not externalId
+        pollId: insertResult.id, // Use the poll's _id, not checkId
         checkerId: checker._id?.toString() || checker._id,
         createdTimestamp: new Date(),
         votedTimestamp: null,

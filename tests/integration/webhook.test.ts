@@ -120,7 +120,7 @@ describe("POST /api/polls/webhook", () => {
     it("should reject duplicate polls", async () => {
       mockDbService.findOnePoll.mockResolvedValue({
         success: true,
-        data: { _id: "existing-poll", externalId: "check-001" },
+        data: { _id: "existing-poll", checkId: "check-001" },
       });
 
       const { POST } = await import("@/app/api/polls/webhook/route");

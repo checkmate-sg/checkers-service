@@ -49,7 +49,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     if (typeof convertedFilter.checkerId === "string") {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
     }
-    // externalId is kept as string (external system ID, not MongoDB ObjectId)
+    // checkId is kept as string (external system ID, not MongoDB ObjectId)
 
     // Handle nested objects (like $set, $push, etc.)
     Object.keys(convertedFilter).forEach(key => {
@@ -76,7 +76,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       await pollsCollection.insertOne({
         ...poll,
         _id: objectId,
-        // externalId kept as string (external system ID)
+        // checkId kept as string (external system ID)
       });
 
       return { success: true, id: idString };
@@ -204,8 +204,8 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             commentOnResponse: 1,
             poll: {
               _id: { $toString: "$poll._id" },
-              externalId: {
-                $toString: "$poll.externalId",
+              checkId: {
+                $toString: "$poll.checkId",
               },
               text: "$poll.text",
               imageUrl: "$poll.imageURl",
@@ -453,7 +453,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const pollWithStringId = {
         ...poll,
         _id: poll._id?.toString(),
-        externalId: poll.externalId?.toString(),
+        checkId: poll.checkId?.toString(),
       };
 
       return { success: true, data: pollWithStringId as PollAPI };
