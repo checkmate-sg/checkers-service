@@ -1,15 +1,15 @@
-import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 /**
  * Database Service Worker with Durable Objects for Connection Pooling
  *
  * This worker handles database operations for the Checkmate application.
  * Uses Durable Objects to maintain persistent MongoDB connections for improved performance.
  */
-import { Filter, MongoClient, ObjectId, UpdateFilter } from "mongodb";
+import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
 
-import { Checker, CheckerAPI, Poll, PollAPI, Vote, VoteAPI } from "@/shared/types/schema";
+import { Checker, CheckerAPI, Poll, PollAPI, Vote, VoteAPI } from '@/shared/types/schema';
 
-import { VoteFilter } from "./types";
+import { VoteFilter } from './types';
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -180,7 +180,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           $lookup: {
             from: "polls",
             localField: "pollId",
-            foreignField: "_id",
+            foreignField: "externalId",
             as: "poll",
           },
         },
