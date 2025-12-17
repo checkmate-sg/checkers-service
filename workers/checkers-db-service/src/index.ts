@@ -236,7 +236,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const voteCheckerResult = await votesCollection.aggregate(pipeline).toArray();
 
-      console.log(voteCheckerResult);
+      // console.log(voteCheckerResult);
 
       if (!voteCheckerResult) {
         return { success: true, data: undefined, total: voteCheckerCount };
