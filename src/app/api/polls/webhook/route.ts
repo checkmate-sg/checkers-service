@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { createInlineKeyboard, sendMessage } from "@/lib/telegramHelpers/telegram";
-import { PollAPI, PollRequest, VoteAPI } from "@/shared/types/schema";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { createInlineKeyboard, sendMessage } from '@/lib/telegramHelpers/telegram';
+import { PollAPI, PollRequest, VoteAPI } from '@/shared/types/schema';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } =
       body;
 
-    console.log("Received poll webhook:", body);
+    // console.log("Received poll webhook:", body);
     // Validate required fields
     if (!checkId) {
       return NextResponse.json({ error: "Missing 'checkId'" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       checkId: checkId,
     });
 
-    console.log(existingPollResult.data);
+    // console.log(existingPollResult.data);
 
     if (existingPollResult.success && existingPollResult.data) {
       return NextResponse.json(
