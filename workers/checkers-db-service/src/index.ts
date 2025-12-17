@@ -180,7 +180,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           $lookup: {
             from: "polls",
             localField: "pollId",
-            foreignField: "checkId",
+            foreignField: "_id",
             as: "poll",
           },
         },
@@ -231,11 +231,12 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const voteChecker = await votesCollection.aggregate(basePipeline).toArray();
       const voteCheckerCount = voteChecker.length;
 
+
       const pipeline = [...basePipeline, ...aggregationPipeline];
 
       const voteCheckerResult = await votesCollection.aggregate(pipeline).toArray();
 
-      // console.log(voteCheckerResult);
+      console.log(voteCheckerResult);
 
       if (!voteCheckerResult) {
         return { success: true, data: undefined, total: voteCheckerCount };
