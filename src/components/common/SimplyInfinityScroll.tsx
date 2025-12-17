@@ -1,7 +1,7 @@
-import { ChevronDown } from "lucide-react";
-import React, { memo, useEffect, useRef } from "react";
+import { ChevronDown } from 'lucide-react';
+import React, { memo, useEffect, useRef } from 'react';
 
-import { Button } from "../ui/button";
+import { Button } from '../ui/button';
 
 interface Props {
   children?: React.ReactNode;
@@ -16,12 +16,12 @@ export const SimpleInfinityScroll = memo<Props>(({ onLoad, ...props }) => {
   useEffect(() => {
     if (!bottomElRef.current) return;
 
-    let options = {
+    const options = {
       rootMargin: "40px",
       threshold: 0.5,
     };
 
-    let observer = new IntersectionObserver(entries => {
+    const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) onLoad?.();
       });

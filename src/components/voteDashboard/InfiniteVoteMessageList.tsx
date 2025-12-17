@@ -1,7 +1,7 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
-import { SimpleInfinityScroll } from "../common/SimplyInfinityScroll";
-import { VoteMessageCard } from "./voteMessageCard";
+import { SimpleInfinityScroll } from '../common/SimplyInfinityScroll';
+import { VoteMessageCard } from './voteMessageCard';
 
 interface InfiniteVoteMessageProps {
   useGetCheckersVoteDetailHook: (params: {
@@ -26,9 +26,9 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
       voteCheckerStatus: props.voteCheckerStatus,
     });
 
-  let results = data?.pages.flatMap((page: any) => page.data.items ?? []) ?? [];
+  const results = data?.pages.flatMap((page: any) => page.data.items ?? []) ?? [];
 
-  console.log(results);
+  // console.log(results);
 
   const handleLoadData = useCallback(() => {
     // Check if there's more data to load
