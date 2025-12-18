@@ -1,8 +1,8 @@
-import { Err } from "@/lib/api/error";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { Err } from '@/lib/api/error';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export interface CategoryCount {
-  category: String;
+  category: string;
   count: number;
 }
 
@@ -47,7 +47,7 @@ export async function getCategoryCountsByPollId(pollId: string) {
     }
 
     // Convert to a lookup map
-    const map = new Map<String, number>();
+    const map = new Map<string, number>();
     for (const row of rawCategoryCount.data) {
       map.set(row._id ?? null, row.count);
     }
@@ -159,7 +159,7 @@ export async function getResponseCategoryCountsByPollId(pollId: string) {
     }
 
     // Convert to a lookup map
-    const map = new Map<String, number>();
+    const map = new Map<string, number>();
     for (const row of rawResponseCategoryCount.data) {
       map.set(row._id ?? null, row.count);
     }

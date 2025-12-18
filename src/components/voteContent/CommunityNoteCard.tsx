@@ -45,10 +45,10 @@ const splitTextByUrls = (text: string) => {
 };
 
 export default function CommunityNoteCard(props: CommunityNoteCardProps) {
-  const [isExpanded, setIsExpanded] = useState<Boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const lengthBeforeTruncation = 300;
   const { responseEN, responseCN, responseLinks } = props;
-  let displayText = responseEN ?? "";
+  const displayText = responseEN ?? "";
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded);

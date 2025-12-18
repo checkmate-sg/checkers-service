@@ -42,7 +42,7 @@ export const VoteContent = ({ voteId,
       <div className="grid grid-flow-row items-center gap-2 p-3">
         <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
 
-        {poll.shortformResponse && !showNoteAfterVote? (
+        {poll.shortformResponse.en && !showNoteAfterVote? (
           <CommunityNoteCard
             responseEN={poll.shortformResponse.en}
             responseCN={poll.shortformResponse.cn}
