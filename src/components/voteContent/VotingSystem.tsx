@@ -34,7 +34,11 @@ export default function VotingSystem(props: VotingSystemProps) {
   );
 
   // Check if step 1 is completed 
-  const isStep1Completed = voteCategory !== null;
+  const isStep1Completed = () => {
+    if (voteCategory === null) return false;
+    if (voteCategory === 'info') return truthScore !== null;
+    return true;
+  };
 
   const handleNextStep = (value: number) => {
     // Enable the next accordion and open it automatically
@@ -80,7 +84,7 @@ export default function VotingSystem(props: VotingSystemProps) {
           className={`mb-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('1') ? 
                     "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" 
                     : "border-blue-gray-200"}`}
-          disabled={props.showNoteAfterVote && isStep1Completed}
+          disabled={props.showNoteAfterVote && isStep1Completed()}
         >
           <div className="pl-3">
             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
@@ -101,7 +105,7 @@ export default function VotingSystem(props: VotingSystemProps) {
           </AccordionContent>
         </AccordionItem>
         
-        {(props.showNoteAfterVote && isStep1Completed) ? (
+        {(props.showNoteAfterVote && isStep1Completed()) ? (
             <CommunityNoteCard
             responseEN={props.shortformResponse.en}
             responseCN={props.shortformResponse.cn}

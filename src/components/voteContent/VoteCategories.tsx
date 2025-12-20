@@ -105,6 +105,10 @@ export default function VoteCategories(props: VotingCategoriesProps) {
       case "nvc":
         props.onVoteCategorySelection("nvc");
         break;
+      case "info":
+        props.onVoteCategorySelection(value);
+        // Don't move to next step yet - wait for truth score selection
+        break;
       default:
         props.onVoteCategorySelection(value);
         props.onNextStep(2);

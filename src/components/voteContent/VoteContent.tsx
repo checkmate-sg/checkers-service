@@ -31,8 +31,8 @@ export const VoteContent = ({ voteId,
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-  console.log("Vote: ", vote);
-  console.log("poll:", poll);
+  // console.log("Vote: ", vote);
+  // console.log("poll:", poll);
 
   // handle error states
   if (isError_Poll) return <div>Failed to load poll</div>;
