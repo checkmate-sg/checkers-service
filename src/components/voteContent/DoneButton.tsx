@@ -1,16 +1,16 @@
-import { CheckCircleIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { CheckCircleIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-import { useUpdateVotesById } from "@/hooks/votes/useUpdateVotesById";
-import { Category, ResponseCategory } from "@/lib/request/external/lib/data-contracts";
+import { useUpdateVotesById } from '@/hooks/votes/useUpdateVotesById';
+import { Category, ResponseCategory } from '@/lib/request/external/lib/data-contracts';
 
-import { Button } from "../ui/button";
+import { Button } from '../ui/button';
 
 interface DoneButtonProps {
   voteRequestId: string | null;
   voteCategory: Category | null;
   truthScore: number | null;
-  crowdSourcedCategory: ResponseCategory | null;
+  crowdSourcedCategory?: ResponseCategory | null;
 }
 export default function DoneButton(props: DoneButtonProps) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function DoneButton(props: DoneButtonProps) {
         data: {
           category: props.voteCategory,
           truthScore: props.truthScore,
-          responseCategory: props.crowdSourcedCategory,
+          ...(props.crowdSourcedCategory && { responseCategory: props.crowdSourcedCategory }),
         },
       });
       console.log("Vote updated", result);

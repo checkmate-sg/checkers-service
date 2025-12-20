@@ -33,7 +33,10 @@ export default function VotingSystem(props: VotingSystemProps) {
     props.responseCategory
   );
 
-  // Check if step 1 is completed 
+  // Check if community note exists
+  const hasCommunityNote = props.shortformResponse.en !== null;
+
+  // Check if step 1 is completed
   const isStep1Completed = () => {
     if (voteCategory === null) return false;
     if (voteCategory === 'info') return truthScore !== null;
@@ -84,7 +87,6 @@ export default function VotingSystem(props: VotingSystemProps) {
           className={`mb-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('1') ? 
                     "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" 
                     : "border-blue-gray-200"}`}
-          disabled={props.showNoteAfterVote && isStep1Completed()}
         >
           <div className="pl-3">
             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
@@ -101,45 +103,55 @@ export default function VotingSystem(props: VotingSystemProps) {
               onNextStep={onNextStep}
               onVoteCategorySelection={handleVoteCategorySelection}
               onTruthScoreChange={handleTruthScoreChange}
+              hasCommunityNote={hasCommunityNote}
             />
+
+            {isStep1Completed() && !hasCommunityNote ? (
+               <DoneButton
+                 voteRequestId={props.voteRequestId}
+                 voteCategory={voteCategory}
+                 truthScore={truthScore}
+               />
+             ) : null}
           </AccordionContent>
         </AccordionItem>
         
-        {(props.showNoteAfterVote && isStep1Completed()) ? (
+        {(props.showNoteAfterVote && isStep1Completed() && hasCommunityNote) ? (
             <CommunityNoteCard
             responseEN={props.shortformResponse.en}
             responseCN={props.shortformResponse.cn}
             responseLinks={props.shortformResponse.links}
           />
         ): null}
-
-        <AccordionItem
-          value="2"
-          className={`mb-2 mt-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('2') ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
-        >
-          <div className="pl-3">
-            <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
-              Rate Community Note:
-            </AccordionTrigger>
-            <StepBadge n={2} />
-          </div>
-
-          <AccordionContent className="px-4 text-base font-normal">
-            <CommunityNoteCategories
-              crowdSourcedCategory={props.responseCategory}
-              onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
-            />
-
-            {voteCategory && crowdSourcedCategory ? (
-              <DoneButton
-                voteRequestId={props.voteRequestId}
-                voteCategory={voteCategory}
-                truthScore={truthScore}
-                crowdSourcedCategory={crowdSourcedCategory}
-              />
-            ) : null}
-          </AccordionContent>
-        </AccordionItem>
+        {hasCommunityNote? (
+           <AccordionItem
+           value="2"
+           className={`mb-2 mt-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('2') ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
+         >
+           <div className="pl-3">
+             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
+               Rate Community Note:
+             </AccordionTrigger>
+             <StepBadge n={2} />
+           </div>
+ 
+           <AccordionContent className="px-4 text-base font-normal">
+             <CommunityNoteCategories
+               crowdSourcedCategory={crowdSourcedCategory}
+               onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
+             />
+ 
+             {isStep1Completed() && crowdSourcedCategory ? (
+               <DoneButton
+                 voteRequestId={props.voteRequestId}
+                 voteCategory={voteCategory}
+                 truthScore={truthScore}
+                 crowdSourcedCategory={crowdSourcedCategory}
+               />
+             ) : null}
+           </AccordionContent>
+         </AccordionItem>
+        ): null}
       </Accordion>
     </div>
   );

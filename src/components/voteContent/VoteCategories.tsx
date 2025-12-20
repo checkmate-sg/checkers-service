@@ -23,6 +23,7 @@ interface VotingCategoriesProps {
   onVoteCategorySelection: (value: string) => void;
   onTruthScoreChange: (value: number | null) => void;
   disabled: boolean;
+  hasCommunityNote: boolean;
 }
 
 const CATEGORIES = [
@@ -111,7 +112,9 @@ export default function VoteCategories(props: VotingCategoriesProps) {
         break;
       default:
         props.onVoteCategorySelection(value);
-        props.onNextStep(2);
+        if (props.hasCommunityNote===true) {
+          props.onNextStep(2);
+        }
         break;
     }
   };
@@ -120,13 +123,17 @@ export default function VoteCategories(props: VotingCategoriesProps) {
 
     setNVCCategory(value);
     props.onVoteCategorySelection(value);
-    props.onNextStep(2);
+    if (props.hasCommunityNote===true) {
+      props.onNextStep(2);
+    }
   };
 
   const handleTruthScoreChange = (value: string) => {
     setTruthScore(parseInt(value));
     props.onTruthScoreChange(parseInt(value));
-    props.onNextStep(2);
+    if (props.hasCommunityNote===true) {
+      props.onNextStep(2);
+    }
   };
 
   return (

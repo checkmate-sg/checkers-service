@@ -9,5 +9,5 @@ export default async function VotePage({ params }: { params: Promise<{ voteId: s
   
   return <VoteContent 
             voteId={voteId} 
-            showNoteAfterVote={false}/>;
+            showNoteAfterVote={true}/>;
 }
