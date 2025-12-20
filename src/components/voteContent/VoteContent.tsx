@@ -68,6 +68,7 @@ export const VoteContent = ({ voteId,
             pollCategory={poll.crowdSourcedCategory}
             pollTruthScore={poll.crowdSourcedTruthScore}
             communityNoteCategory={vote.responseCategory}
+            hasCommunityNote={poll.shortformResponse.en===null ? false : true}
           />
         )}
       </div>

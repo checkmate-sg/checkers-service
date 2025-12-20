@@ -1,8 +1,8 @@
-import { useGetPollResultsById } from "@/hooks/polls/useGetPollResults";
+import { useGetPollResultsById } from '@/hooks/polls/useGetPollResults';
 
-import VoteChart from "./VoteChart";
-import VoteNoteChart from "./VoteNoteChart";
-import VoteResult from "./VoteResult";
+import VoteChart from './VoteChart';
+import VoteNoteChart from './VoteNoteChart';
+import VoteResult from './VoteResult';
 
 interface VoteResultsDisplayProps {
   pollId: string | null;
@@ -10,7 +10,8 @@ interface VoteResultsDisplayProps {
   voteTruthScore: number | null;
   pollCategory: string | null;
   pollTruthScore: number | null;
-  communityNoteCategory: "great" | "acceptable" | "unacceptable" | null;
+  communityNoteCategory?: "great" | "acceptable" | "unacceptable" | null;
+  hasCommunityNote: boolean; 
 }
 
 export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
@@ -34,7 +35,9 @@ export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
         </div>
       </div>
       <VoteChart assessedInfo={pollStats} />
-      <VoteNoteChart assessedInfo={pollStats} communityNoteCategory={Props.communityNoteCategory} />
+      {Props.hasCommunityNote ? (
+        <VoteNoteChart assessedInfo={pollStats} communityNoteCategory={Props.communityNoteCategory} />
+      ): null}
     </>
   );
 }
