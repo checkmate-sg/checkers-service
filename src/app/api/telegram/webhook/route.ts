@@ -1,9 +1,15 @@
+import { Update } from "grammy/types";
 import { NextRequest, NextResponse } from "next/server";
-import { Telegraf } from "telegraf";
-import { findUserByTelegramID } from "@/lib/db";
-import { connectToDB } from "@/lib/mongodb";
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN!);
+import {
+  answerCallbackQuery,
+  createForceReply,
+  createInlineKeyboard,
+  createReplyKeyboard,
+  sendMessage,
+  sendPhoto,
+} from "@/lib/telegramHelpers/telegram";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // User session storage (in production, use Redis or database)
 const userSessions: { [key: string]: { step: string; data: any } } = {};
@@ -11,12 +17,9 @@ const userSessions: { [key: string]: { step: string; data: any } } = {};
 // Constants from old code
 const NLB_SURE_IMAGE =
   "https://storage.googleapis.com/checkmate-static-assets/SURE%20Learning%20Community%20Logo%202024.png";
-const TYPEFORM_URL =
-  process.env.TYPEFORM_URL || "https://bit.ly/checkmates-quiz";
-const WHATSAPP_BOT_LINK =
-  process.env.WHATSAPP_BOT_LINK || "https://wa.me/your-whatsapp-bot";
-const CHECKERS_GROUP_LINK =
-  process.env.CHECKERS_GROUP_LINK || "https://t.me/c/2217060639/1";
+const TYPEFORM_URL = process.env.TYPEFORM_URL || "https://bit.ly/checkmates-quiz";
+const WHATSAPP_BOT_LINK = process.env.WHATSAPP_BOT_LINK || "https://wa.me/your-whatsapp-bot";
+const CHECKERS_GROUP_LINK = process.env.CHECKERS_GROUP_LINK || "https://t.me/c/2217060639/1";
 const CHECKERS_CHAT_ID = process.env.CHECKERS_CHAT_ID || "";
 
 const resources = `Here are some resources 📚 you might find useful:
@@ -70,15 +73,15 @@ export async function POST(request: NextRequest) {
     // Verify webhook secret for security
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
     if (webhookSecret) {
-      const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
+      const secretHeader = request.headers.get("x-telegram-bot-api-secret-token");
       if (secretHeader !== webhookSecret) {
-        console.error('[Webhook] Invalid webhook secret');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        console.error("[Webhook] Invalid webhook secret");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
 
     const body = await request.json();
-    const { message, callback_query } = body;
+    const { message, callback_query } = body as Update;
 
     // Handle callback queries (button clicks)
     if (callback_query) {
@@ -89,47 +92,30 @@ export async function POST(request: NextRequest) {
 
     const chatId = message.chat.id;
     const telegramId = message.from.id.toString();
-    const text = message.text;
+    const text = message.text; // Text from the user on Telegram
     const firstName = message.from.first_name || "";
     const lastName = message.from.last_name || "";
     const telegramUsername = message.from.username || null;
 
-    console.log(`Received message from ${telegramId}: ${text}`);
-
     // Handle commands
-    if (text?.startsWith("/")) {
-      return await handleCommand(
-        text,
-        chatId,
-        telegramId,
-        firstName,
-        telegramUsername
-      );
+    if (text && text?.startsWith("/")) {
+      return await handleCommand(text, chatId, telegramId, firstName, telegramUsername);
     }
 
     // Handle onboarding flow
     const session = userSessions[telegramId];
     if (!session) {
-      await bot.telegram.sendMessage(
+      await sendMessage(
         chatId,
         "You have not onboarded as a CheckMate Checker yet. Type /onboard to begin your journey."
       );
       return NextResponse.json({ ok: true });
     }
 
-    return await handleOnboardingFlow(
-      session,
-      text,
-      message,
-      chatId,
-      telegramId
-    );
+    return await handleOnboardingFlow(session, text || "", message, chatId, telegramId);
   } catch (error) {
     console.error("Webhook error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -151,7 +137,7 @@ async function handleCommand(
 
     case "/stop":
       delete userSessions[telegramId];
-      await bot.telegram.sendMessage(
+      await sendMessage(
         chatId,
         "❌ Onboarding cancelled. You can start again anytime with /onboard"
       );
@@ -164,50 +150,44 @@ async function handleCommand(
       return await handleDeactivateCommand(chatId, telegramId);
 
     case "/resources":
-      await bot.telegram.sendMessage(chatId, resources, { parse_mode: "HTML" });
+      await sendMessage(chatId, resources, { parse_mode: "HTML" });
       break;
 
     default:
-      await bot.telegram.sendMessage(
-        chatId,
-        "Sorry, this command is not supported."
-      );
+      await sendMessage(chatId, "Sorry, this command is not supported.");
   }
 
   return NextResponse.json({ ok: true });
 }
 
-async function handleStartCommand(
-  chatId: number,
-  telegramId: string,
-  firstName: string
-) {
-  const existingUser = await findUserByTelegramID(telegramId);
+async function handleStartCommand(chatId: number, telegramId: string, firstName: string) {
+  const { env } = getCloudflareContext();
+  const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+
+  const existingUser = result.success ? result.data : null;
 
   if (!existingUser) {
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       `Welcome to your personal CheckMate Checker's bot! This is where you'll review messages, view your statistics etc. Type /onboard to begin your journey as a CheckMate Checker.`
     );
   } else if (existingUser.isOnboardingComplete) {
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       `Welcome to your personal CheckMate Checker's bot! Click "Checker's Portal" to access the dashboard. Here, you'll review messages, view your statistics etc.`,
       {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "Checker's Portal",
-                web_app: { url: `${process.env.NEXTAUTH_URL}/` },
-              },
-            ],
+        reply_markup: createInlineKeyboard([
+          [
+            {
+              text: "Checker's Portal",
+              web_app: { url: `${process.env.NEXTAUTH_URL}/` },
+            },
           ],
-        },
+        ]),
       }
     );
   } else {
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       `Welcome back to your personal CheckMate Checker's bot! Type /onboard to continue your journey as a CheckMate Checker.`
     );
@@ -222,31 +202,29 @@ async function handleOnboardCommand(
   telegramUsername: string | null
 ) {
   // Check if user already exists in database
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  const existingUser = await checkers.findOne({ telegramId });
+  const { env } = getCloudflareContext();
+  const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+  const existingUser = result.success ? result.data : null;
 
   if (existingUser) {
     // User already exists, check if onboarding is complete
     if (existingUser.isOnboardingComplete) {
-      await bot.telegram.sendMessage(
+      await sendMessage(
         chatId,
         `Hi there! You have already onboarded as a CheckMate Checker. Do explore the Checker's Portal to check out what you can do. Otherwise if you would like to go through onboarding again, click on the respective button below.`,
         {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "Checker's Portal",
-                  web_app: { url: `${process.env.NEXTAUTH_URL}/` },
-                },
-                {
-                  text: "Go through onboarding again",
-                  callback_data: "ONBOARD_AGAIN",
-                },
-              ],
+          reply_markup: createInlineKeyboard([
+            [
+              {
+                text: "Checker's Portal",
+                web_app: { url: `${process.env.NEXTAUTH_URL}/` },
+              },
+              {
+                text: "Go through onboarding again",
+                callback_data: "ONBOARD_AGAIN",
+              },
             ],
-          },
+          ]),
         }
       );
       return NextResponse.json({ ok: true });
@@ -265,12 +243,12 @@ async function handleOnboardCommand(
           await sendQuizPrompt(
             chatId,
             telegramId,
-            existingUser.name,
-            existingUser.phoneNumber,
+            existingUser.name || "",
+            existingUser.whatsappId,
             true
           );
           break;
-        case "whatsappService": // Added this case
+        case "onboardWhatsapp": // Added this case
           await sendWAServicePrompt(chatId, telegramId, true);
           break;
         case "joinGroupChat":
@@ -288,48 +266,28 @@ async function handleOnboardCommand(
 
   // User doesn't exist, create new user and start onboarding
   const userData = {
+    // Required fields from Checker interface
     name: null,
-    telegramUsername: telegramUsername,
-    type: "human",
+    telegramId: telegramId,
+    whatsappId: null, // Required field, empty string for now
+    singpassId: null,
     isActive: false,
-    lastActivatedDate: null,
     isOnboardingComplete: false,
     onboardingTime: null,
     isQuizComplete: false,
     quizScore: null,
-    onboardingStatus: "name",
-    lastTrackedMessageId: null,
-    isAdmin: false,
-    singpassOpenId: null,
-    telegramId: telegramId,
-    // COMMENTED OUT: WhatsApp related fields - not needed for current implementation
-    // whatsappId: null,
-    phoneNumber: null,
-    voteWeight: 1,
-    level: 0,
-    experience: 0,
-    tier: "beginner",
-    numReferred: 0,
-    numReported: 0,
-    numNonUnsureVotes: 0,
-    numVerifiedLinks: 0,
-    preferredPlatform: "telegram",
+    onboardingStatus: "name" as const, // Type assertion for union type
+    hasReceivedExtension: false,
+    hasCompletedProgramme: false,
+    certificateUrl: null,
+    numVoted: 0,
     lastVotedTimestamp: null,
     getNameMessageId: null,
-    hasReceivedExtension: false,
-    hasCompletedProgram: false,
-    certificateUrl: null,
-    correctVotes: 0,
-    totalVotes: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    offboardingTime: null,
     dailyAssignmentCount: 0,
-    isTester: false,
-    hasBlockedTelegramMessages: false,
+    // Base document field
   };
 
-  await checkers.insertOne(userData);
+  await env.CHECKERS_DB_SERVICE.insertChecker(userData);
 
   // Start onboarding with name prompt
   await sendNamePrompt(chatId, telegramId);
@@ -344,21 +302,17 @@ async function handleOnboardingFlow(
   chatId: number,
   telegramId: string
 ) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
   switch (session.step) {
     case "collecting_name":
       if (!text || text.trim().length < 2) {
-        await bot.telegram.sendMessage(
-          chatId,
-          "Name cannot be just spaces. Please enter a valid name."
-        );
+        await sendMessage(chatId, "Name cannot be just spaces. Please enter a valid name.");
         await sendNamePrompt(chatId, telegramId);
         return NextResponse.json({ ok: true });
       }
 
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
@@ -380,15 +334,12 @@ async function handleOnboardingFlow(
       } else if (text) {
         let phone = text.replace("+", "").replace(" ", "");
 
-        if (
-          phone.length === 8 &&
-          (phone.startsWith("9") || phone.startsWith("8"))
-        ) {
+        if (phone.length === 8 && (phone.startsWith("9") || phone.startsWith("8"))) {
           phone = `65${phone}`;
         }
 
         if (!isNumeric(phone)) {
-          await bot.telegram.sendMessage(
+          await sendMessage(
             chatId,
             `The phone number you entered is invalid. Please enter a valid phone number.`
           );
@@ -397,26 +348,26 @@ async function handleOnboardingFlow(
 
         phoneNumber = phone.startsWith("+") ? phone : `+${phone}`;
       } else {
-        await bot.telegram.sendMessage(
-          chatId,
-          "❌ Please provide your phone number"
-        );
+        await sendMessage(chatId, "❌ Please provide your phone number");
         return NextResponse.json({ ok: true });
       }
 
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
-            phoneNumber: phoneNumber,
+            whatsappId: phoneNumber,
             onboardingStatus: "quiz",
             updatedAt: new Date(),
           },
         }
       );
 
-      const user = await checkers.findOne({ telegramId });
-      await sendQuizPrompt(chatId, telegramId, user?.name, phoneNumber, true);
+      const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+        telegramId,
+      });
+      const user = userResult.success ? userResult.data : null;
+      await sendQuizPrompt(chatId, telegramId, user?.name || "", user?.whatsappId || "", true);
       break;
 
     // COMMENTED OUT: Phone collection and OTP verification - not needed for current implementation
@@ -457,10 +408,7 @@ async function handleOnboardingFlow(
     //   break;
 
     default:
-      await bot.telegram.sendMessage(
-        chatId,
-        "Sorry, this bot is unable to respond to free-form messages."
-      );
+      await sendMessage(chatId, "Sorry, this bot is unable to respond to free-form messages.");
   }
 
   return NextResponse.json({ ok: true });
@@ -478,29 +426,27 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   // Answer the callback query to remove loading state
   try {
-    await bot.telegram.answerCbQuery(callbackQuery.id);
+    await answerCallbackQuery(callbackQuery.id);
   } catch (error) {
     console.error("Error answering callback query:", error);
   }
 
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  const fullUser = await checkers.findOne({ telegramId });
+  const { env } = getCloudflareContext();
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const fullUser = userResult.success ? userResult.data : null;
 
   if (!fullUser) {
-    console.error(
-      `Checker with TelegramID ${telegramId} triggered callback but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} triggered callback but not found`);
     return NextResponse.json({ ok: true });
   }
 
   switch (action) {
     case "QUIZ_COMPLETED":
-      await bot.telegram.sendMessage(
+      await sendMessage(
         chatId,
-        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(
-          3
-        )}`
+        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBars(3)}`
       );
 
       // Proceed to WhatsApp service introduction
@@ -508,11 +454,9 @@ async function handleCallbackQuery(callbackQuery: any) {
       break;
 
     case "WA_SERVICE_COMPLETED":
-      await bot.telegram.sendMessage(
+      await sendMessage(
         chatId,
-        `Great! Now you know about our WhatsApp service! 🙌\n\n${progressBars(
-          4
-        )}`
+        `Great! Now you know about our WhatsApp service! 🙌\n\n${progressBars(4)}`
       );
       await sendTGGroupPrompt(chatId, telegramId, true);
       break;
@@ -542,7 +486,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     //   break;
 
     case "ONBOARD_AGAIN":
-      await checkers.updateOne(
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { telegramId },
         {
           $set: {
@@ -556,7 +500,7 @@ async function handleCallbackQuery(callbackQuery: any) {
       break;
 
     case "RESOURCES":
-      await bot.telegram.sendMessage(chatId, resources, { parse_mode: "HTML" });
+      await sendMessage(chatId, resources, { parse_mode: "HTML" });
       break;
 
     default:
@@ -570,26 +514,22 @@ async function handleCallbackQuery(callbackQuery: any) {
 async function sendNamePrompt(chatId: number, telegramId: string) {
   userSessions[telegramId] = { step: "collecting_name", data: {} };
 
-  await bot.telegram.sendMessage(
-    chatId,
-    `First up, how shall we address you?`,
-    {
-      reply_markup: { force_reply: true },
-    }
-  );
+  await sendMessage(chatId, `First up, how shall we address you?`, {
+    reply_markup: createForceReply(),
+  });
 }
 
 async function sendNumberPrompt(chatId: number, telegramId: string) {
   userSessions[telegramId] = { step: "collecting_phone", data: {} };
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     `What is your phone number? Please include the country code, but omit the "+", e.g 6591234567\n\n${progressBars(
       1
     )}`,
     {
-      reply_markup: {
-        keyboard: [
+      reply_markup: createReplyKeyboard(
+        [
           [
             {
               text: "📱 Share Phone Number",
@@ -597,9 +537,11 @@ async function sendNumberPrompt(chatId: number, telegramId: string) {
             },
           ],
         ],
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
+        {
+          one_time_keyboard: true,
+          resize_keyboard: true,
+        }
+      ),
     }
   );
 }
@@ -652,12 +594,12 @@ async function sendQuizPrompt(
   chatId: number,
   telegramId: string,
   name: string,
-  phoneNumber: string | null,
+  whatsappId: string | null,
   isFirstPrompt: boolean
 ) {
-  const linkURL = `${TYPEFORM_URL}#name=${name}&phone=${phoneNumber || ""}`;
+  const linkURL = `${TYPEFORM_URL}#name=${name}&phone=${whatsappId || ""}`;
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     `${
       isFirstPrompt
@@ -667,16 +609,14 @@ async function sendQuizPrompt(
       2
     )}`,
     {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "Yes, I have finished the onboarding quiz",
-              callback_data: "QUIZ_COMPLETED",
-            },
-          ],
+      reply_markup: createInlineKeyboard([
+        [
+          {
+            text: "Yes, I have finished the onboarding quiz",
+            callback_data: "QUIZ_COMPLETED",
+          },
         ],
-      },
+      ]),
       parse_mode: "HTML",
       link_preview_options: {
         is_disabled: false,
@@ -686,21 +626,16 @@ async function sendQuizPrompt(
 }
 
 // NEW: WhatsApp service introduction (without OTP)
-async function sendWAServicePrompt(
-  chatId: number,
-  telegramId: string,
-  isFirstPrompt: boolean
-) {
+async function sendWAServicePrompt(chatId: number, telegramId: string, isFirstPrompt: boolean) {
   if (isFirstPrompt) {
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-    await checkers.updateOne(
+    const { env } = getCloudflareContext();
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
-      { $set: { onboardingStatus: "whatsappService", updatedAt: new Date() } }
+      { $set: { onboardingStatus: "onboardWhatsapp", updatedAt: new Date() } }
     );
   }
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     `${
       isFirstPrompt
@@ -708,87 +643,72 @@ async function sendWAServicePrompt(
         : "Please take a moment to learn about our WhatsApp service"
     }! 📱\n\nOur WhatsApp service is where the public sends in messages they want fact-checked. You can check it out <a href="${WHATSAPP_BOT_LINK}?utm_source=checkersonboarding&utm_medium=telegram&utm_campaign=${chatId}">here</a>.\n\nThis is important because:\n\n1️⃣ This is where users submit messages for you to check\n2️⃣ You'll also use this service to report suspicious messages you encounter\n3️⃣ It helps you understand the user experience\n\nFeel free to explore it, but you don't need to complete any verification. Just familiarize yourself with how it works!`,
     {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "I've explored the WhatsApp service",
-              callback_data: "WA_SERVICE_COMPLETED",
-            },
-          ],
+      reply_markup: createInlineKeyboard([
+        [
+          {
+            text: "I've explored the WhatsApp service",
+            callback_data: "WA_SERVICE_COMPLETED",
+          },
         ],
-      },
+      ]),
       parse_mode: "HTML",
     }
   );
 }
 
-async function sendTGGroupPrompt(
-  chatId: number,
-  telegramId: string,
-  isFirstPrompt: boolean
-) {
+async function sendTGGroupPrompt(chatId: number, telegramId: string, isFirstPrompt: boolean) {
   if (isFirstPrompt) {
-    const db = await connectToDB();
-    const checkers = db.collection("checkers");
-    await checkers.updateOne(
+    const { env } = getCloudflareContext();
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       { $set: { onboardingStatus: "joinGroupChat", updatedAt: new Date() } }
     );
   }
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     `${
-      isFirstPrompt
-        ? "Next, p"
-        : "We noticed you have not joined the groupchat yet. P"
+      isFirstPrompt ? "Next, p" : "We noticed you have not joined the groupchat yet. P"
     }lease join the <a href="${CHECKERS_GROUP_LINK}">CheckMate Checker's groupchat</a>. This group chat is important as it will be used to:\n\n1) Inform checkers of any downtime in the system, updates/improvements being deployed to the bots\n\n2) Share relevant links from reputable news sources to aid fact-checking. Do note that beyond this, checkers should not discuss what to vote, as this may make the collective outcome biased.\n\n${progressBars(
       5
     )}`,
     {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "Yes, I have joined the Telegram Chat Group",
-              callback_data: "TG_COMPLETED",
-            },
-          ],
+      reply_markup: createInlineKeyboard([
+        [
+          {
+            text: "Yes, I have joined the Telegram Chat Group",
+            callback_data: "TG_COMPLETED",
+          },
         ],
-      },
+      ]),
       parse_mode: "HTML",
     }
   );
 }
 
 async function sendNLBPrompt(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
-  await checkers.updateOne(
+  const { env } = getCloudflareContext();
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     { $set: { onboardingStatus: "nlb", updatedAt: new Date() } }
   );
 
-  await bot.telegram.sendPhoto(chatId, NLB_SURE_IMAGE, {
+  await sendPhoto(chatId, NLB_SURE_IMAGE, {
     caption: `One last thing - CheckMate is partnering with the National Library Board to grow a vibrant learning community aimed at safeguarding the community from scams and misinformation.\n\nIf you'd like to get better at fact-checking, or if you're keen to meet fellow checkers in person, do check out and join the <a href="https://www.nlb.gov.sg/main/site/learnx/explore-communities/explore-communities-content/sure-learning-community">SURE Learning Community</a>. It'll be fun!\n\n${progressBars(
       6
     )}`,
     parse_mode: "HTML",
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "Complete Onboarding", callback_data: "COMPLETED" }],
-      ],
-    },
+    reply_markup: createInlineKeyboard([
+      [{ text: "Complete Onboarding", callback_data: "COMPLETED" }],
+    ]),
   });
 }
 
 async function sendCompletionPrompt(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
   try {
-    const updateResult = await checkers.updateOne(
+    const updateResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       {
         $set: {
@@ -796,7 +716,6 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
           isOnboardingComplete: true,
           onboardingTime: new Date(),
           isActive: true,
-          lastActivatedDate: new Date(),
           updatedAt: new Date(),
         },
       }
@@ -804,31 +723,29 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
 
     console.log(`Update result for ${telegramId}:`, updateResult); // Debug log
 
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       `🎉 Congratulations on becoming a CheckMate Checker! 🎉\n\nDo check out the Checker's Portal below, which is where you will vote on messages and view your statistics. There's even a leaderboard!\n\n${resources}\n\nYou may view these resources anytime with the command /resources.`,
       {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🚀 Open Checker's Portal",
-                web_app: { url: `${process.env.NEXTAUTH_URL}/` },
-              },
-            ],
-            [
-              {
-                text: "📚 View Resources",
-                callback_data: "RESOURCES",
-              },
-            ],
+        reply_markup: createInlineKeyboard([
+          [
+            {
+              text: "🚀 Open Checker's Portal",
+              web_app: { url: `${process.env.NEXTAUTH_URL}/` },
+            },
           ],
-        },
+          [
+            {
+              text: "📚 View Resources",
+              callback_data: "RESOURCES",
+            },
+          ],
+        ]),
         parse_mode: "HTML",
       }
     );
 
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       `You can relax for now while we wait for new messages to be sent to CheckMate for fact-checking. You'll receive notifications in this chat when users submit messages for checking, and you'll do the fact-checks on the Checker's Portal.\n\n✅ Use /activate to start receiving messages\n❌ Use /deactivate to stop receiving messages`
     );
@@ -837,7 +754,7 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
     delete userSessions[telegramId];
   } catch (error) {
     console.error("Error in sendCompletionPrompt:", error);
-    await bot.telegram.sendMessage(
+    await sendMessage(
       chatId,
       "There was an error completing your onboarding. Please try again or contact support."
     );
@@ -845,29 +762,28 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
 }
 
 async function handleActivateCommand(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
-  const user = await findUserByTelegramID(telegramId);
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const user = userResult.success ? userResult.data : null;
   if (!user) {
-    console.error(
-      `Checker with TelegramID ${telegramId} trying to /activate but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} trying to /activate but not found`);
     return NextResponse.json({ ok: true });
   }
 
-  await checkers.updateOne(
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     {
       $set: {
         isActive: true,
-        lastActivatedDate: new Date(),
         updatedAt: new Date(),
       },
     }
   );
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     "✅ You're now active! CheckMate will start sending you messages to review."
   );
@@ -876,23 +792,23 @@ async function handleActivateCommand(chatId: number, telegramId: string) {
 }
 
 async function handleDeactivateCommand(chatId: number, telegramId: string) {
-  const db = await connectToDB();
-  const checkers = db.collection("checkers");
+  const { env } = getCloudflareContext();
 
-  const user = await findUserByTelegramID(telegramId);
+  const userResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+    telegramId,
+  });
+  const user = userResult.success ? userResult.data : null;
   if (!user) {
-    console.error(
-      `Checker with TelegramID ${telegramId} trying to /deactivate but not found`
-    );
+    console.error(`Checker with TelegramID ${telegramId} trying to /deactivate but not found`);
     return NextResponse.json({ ok: true });
   }
 
-  await checkers.updateOne(
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
     { telegramId },
     { $set: { isActive: false, updatedAt: new Date() } }
   );
 
-  await bot.telegram.sendMessage(
+  await sendMessage(
     chatId,
     `Sorry to see you go! CheckMate will no longer send you messages to review. When you're ready to return, type /activate to start voting on messages again.`
   );

@@ -80,10 +80,8 @@ const MyVotes = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredMessages = messagesData.filter((message) => {
-    const matchesSearch = message.content
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  const filteredMessages = messagesData.filter(message => {
+    const matchesSearch = message.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "pending" && message.status === "pending") ||
@@ -96,10 +94,7 @@ const MyVotes = () => {
     switch (status) {
       case "pending":
         return (
-          <Badge
-            variant="outline"
-            className="text-yellow-600 border-yellow-300"
-          >
+          <Badge variant="outline" className="text-yellow-600 border-yellow-300">
             <Clock size={12} className="mr-1" />
             Pending
           </Badge>
@@ -167,9 +162,7 @@ const MyVotes = () => {
           </Button>
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-gray-600 text-sm">
-            Track your verification history
-          </p>
+          <p className="text-gray-600 text-sm">Track your verification history</p>
           <p className="text-xs text-gray-400">Updated {formatLastUpdate()}</p>
         </div>
       </div>
@@ -183,7 +176,7 @@ const MyVotes = () => {
         <Input
           placeholder="Search messages..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className="pl-10"
         />
       </div>
@@ -211,28 +204,22 @@ const MyVotes = () => {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-gray-500">No messages found</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Try adjusting your search or filters
-              </p>
+              <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
             </CardContent>
           </Card>
         ) : (
-          filteredMessages.map((vote) => (
+          filteredMessages.map(vote => (
             <Card key={vote.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="space-y-3">
                   {/* Status and Category */}
                   <div className="flex justify-between items-start">
                     {getStatusBadge(vote.status, vote.finalResult)}
-                    <Badge className={getCategoryColor(vote.myVote)}>
-                      {vote.myVote}
-                    </Badge>
+                    <Badge className={getCategoryColor(vote.myVote)}>{vote.myVote}</Badge>
                   </div>
 
                   {/* Message Content */}
-                  <p className="text-sm text-gray-800 line-clamp-2">
-                    {vote.content}
-                  </p>
+                  <p className="text-sm text-gray-800 line-clamp-2">{vote.content}</p>
 
                   {/* Timestamp */}
                   <p className="text-xs text-gray-500">{vote.timestamp}</p>
@@ -246,15 +233,9 @@ const MyVotes = () => {
 
                   {/* AI Rating */}
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-500">
-                      AI Note: {vote.aiNote}
-                    </span>
+                    <span className="text-gray-500">AI Note: {vote.aiNote}</span>
                     <Link href={`/vote/${vote.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                      >
+                      <Button variant="outline" size="sm" className="h-7 text-xs">
                         View Details
                       </Button>
                     </Link>
@@ -273,13 +254,13 @@ const MyVotes = () => {
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
               <div className="text-xl font-bold text-checkmate-primary">
-                {messagesData.filter((m) => m.status === "voted").length}
+                {messagesData.filter(m => m.status === "voted").length}
               </div>
               <div className="text-xs text-gray-600">Voted</div>
             </div>
             <div>
               <div className="text-xl font-bold text-yellow-600">
-                {messagesData.filter((m) => m.status === "pending").length}
+                {messagesData.filter(m => m.status === "pending").length}
               </div>
               <div className="text-xs text-gray-600">Pending</div>
             </div>

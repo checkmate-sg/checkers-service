@@ -1,40 +1,157 @@
-import { NextResponse } from "next/server";
-import { connectToDB } from "../../../../lib/mongodb";
-import { ObjectId } from "mongodb";
+import { Filter, UpdateFilter } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { voteId: string } }
-) {
+import { auth } from "@/auth";
+import { Err } from "@/lib/api/error";
+import { voteAssessment } from "@/lib/helpers/voteAssessment/voteAssessment";
+import { Vote } from "@/lib/request/external/lib/data-contracts";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
+export async function GET(req: NextRequest, { params }) {
+  const { env } = getCloudflareContext();
+
   try {
-    const voteId = params.voteId;
+    const session = await auth();
+    if (!session?.user) return Err.unauthorized();
 
-    console.log("voteId:", voteId);
+    const { voteId } = await params;
+    if (!voteId) return Err.badParams("Missing voteId parameter");
 
-    if (!voteId || !ObjectId.isValid(voteId)) {
-      return NextResponse.json(
-        { error: "Invalid or missing Vote ID" },
-        { status: 400 }
-      );
+    const result = await env.CHECKERS_DB_SERVICE.findOneVote({
+      _id: voteId,
+    });
+
+    if (!result.success) {
+      return Err.notFound();
     }
 
-    const db = await connectToDB();
-    const vote = await db
-      .collection("votes")
-      .findOne({ _id: new ObjectId(voteId) });
-
-    if (!vote) {
-      return NextResponse.json({ error: "Vote not found" }, { status: 404 });
-    }
-
-    // Optional: format _id to id
-    const { _id, ...rest } = vote;
-    return NextResponse.json({ id: _id.toString(), ...rest });
+    const vote = result.data;
+    return NextResponse.json(vote, { status: 200 });
   } catch (error) {
-    console.error("Error fetching vote:", error);
+    return Err.internal();
+  }
+}
+
+export async function POST(req: NextRequest, { params }) {
+  const { env } = getCloudflareContext();
+
+  try {
+    const session = await auth();
+    if (!session?.user) return Err.unauthorized();
+
+    const { voteId } = await params;
+    if (!voteId) return Err.badParams("Missing voteId parameter");
+
+    // Parse request body to get update fields
+    const body = await req.json();
+
+    // Validate that we have fields to update
+    if (!body || Object.keys(body).length === 0) {
+      return Err.badParams();
+    }
+
+    // Extract update fields (Based on Vote Schema)
+    const { category, truthScore, responseCategory, commentOnResponse, ...otherFields } = body;
+
+    // Create Filter to find the vote by ID
+    const filter: Filter<Vote> = {
+      _id: voteId,
+    };
+
+    // Get the Vote
+    const voteResult = await env.CHECKERS_DB_SERVICE.findOneVote(filter);
+
+    if (!voteResult.success) {
+      return Err.notFound();
+    }
+
+    // Create update object with $set operator
+    const update: UpdateFilter<Vote> = {
+      $set: {
+        ...(category !== undefined && { category }),
+        ...(truthScore !== undefined && { truthScore }),
+        ...(responseCategory !== undefined && { responseCategory }),
+        ...(commentOnResponse !== undefined && { commentOnResponse }),
+        ...otherFields,
+        votedTimestamp: new Date(),
+      },
+    };
+
+    // Update the Vote
+    const result = await env.CHECKERS_DB_SERVICE.updateOneVote(filter, update);
+
+    if (!result.success) {
+      return Err.internal("Failed to update vote");
+    }
+
+    if (result.modifiedCount === 0) {
+      return Err.notFound("Vote not found or no changes made");
+    }
+
+    // Vote Service to calculate whether the votes are correct/wrong
+    const pollId = voteResult.data.pollId;
+    const crowdSourcedCategoryResults = await voteAssessment(pollId);
+    if (!crowdSourcedCategoryResults.success) {
+      console.error("Error in vote assessment: ", crowdSourcedCategoryResults.error);
+      return Err.internal("Error in Vote assessment");
+    } else if (crowdSourcedCategoryResults.data === null) {
+      console.log("Poll not yet assessed");
+    } else {
+      const { primaryCategory, truthScore, isDownvoted } = crowdSourcedCategoryResults.data;
+
+      // Update Poll with the assessed crowdSourcedCategory - use _id (pollId)
+      // Returns previousDocument for change detection
+      const pollUpdateResult = await env.CHECKERS_DB_SERVICE.updateOnePoll(
+        { _id: pollId },
+        {
+          $set: {
+            crowdSourcedCategory: primaryCategory,
+            crowdSourcedTruthScore: truthScore,
+            assessedTimestamp: new Date(),
+            "shortformResponse.downvoted": isDownvoted,
+          },
+        }
+      );
+
+      if (!pollUpdateResult.success) {
+        console.error(
+          "Error updating the poll with crowdSourcedCategory: ",
+          pollUpdateResult.error
+        );
+        return Err.internal("Error updating the poll with crowdSourcedCategory");
+      }
+
+      // Queue message if category or downvoted status changed
+      const prev = pollUpdateResult.previousDocument;
+      if (prev) {
+        const categoryChanged = prev.crowdSourcedCategory !== primaryCategory;
+        const downvotedChanged = (prev.shortformResponse?.downvoted ?? false) !== isDownvoted;
+
+        if (categoryChanged || downvotedChanged) {
+          try {
+            await env.POLL_UPDATE_QUEUE.send({
+              id: prev.checkId,
+              isHumanAssessed: true,
+              crowdsourcedCategory: primaryCategory,
+              isCommunityNoteDownvoted: isDownvoted,
+            });
+          } catch (queueError) {
+            console.error("Failed to queue poll update message:", queueError);
+            // Don't fail the request - just log
+          }
+        }
+      }
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        message: "Vote successfully updated",
+        id: voteId,
+      },
+      { status: 201 }
     );
+  } catch (error) {
+    console.error("Error updating the vote: ", error);
+    return Err.internal("Internal Server Error");
   }
 }

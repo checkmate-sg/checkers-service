@@ -1,96 +1,75 @@
-# Welcome to your Lovable project
+# CheckMate Checkers Service
 
-## Project info
+A Telegram miniapp for crowd-sourcing fact-checking of messages.
 
-**URL**: https://lovable.dev/projects/4e552da1-c019-47f6-92c6-6ee86119fc9c
+## Local Development
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4e552da1-c019-47f6-92c6-6ee86119fc9c) and start prompting.
+- Node.js (v18 or higher)
+- MongoDB Atlas account
+- Telegram Bot Token
+- Git
 
-Changes made via Lovable will be committed automatically to this repo.
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/checkmate-sg/checkers-service
+cd checkers-service
+
+# Install dependencies
+npm install
+
+# Copy environment variables template
+cp .env.example .env.development.local
+
+# Configure your .env.local with:
+# - MongoDB connection string
+# - Telegram bot token
+# - NextAuth configuration
+
+# Start the development server for the webapp
+npm run dev
+
+# The app will be available at http://localhost:3002
+```
+
+### Running Database Worker Locally (if needed)
+
+```bash
+cd workers/checkers-db-service
+npm install
+npm run dev
+```
+
+## Running the setup locally each time doing development
+
+```bash
+# start the development server for the database service
+# Open new terminal and run the following command:
+npm run dev:db
+
+# start the development server for the webapp
+npm run dev
+```
+
+## Deployment Setup
 
 Follow these steps:
 
-```sh
-#Step 0: Pre-requisites
-Following steps assume that the following are installed: Node.js, Git and MongoDB
-This application runs on telegram context
-
-# Step 1: Clone the repository using the project's Git URL and install dependencies.
-Open a new terminal and run the following commands:
-git clone https://github.com/checkmate-sg/checkers-service
-cd checkers-webapp
-npm install
-
-# Step 2: Set Up MongoDB Atlas
-Visit MongoDB Atlas and create an account.
-Create a free shared cluster.
-Create a database named checkmate.
-Go to Database Access, create a user with read/write permissions.
-In Network Access, allow IP access from 0.0.0.0/0.
-Copy the connection string from the Connect tab (cluster -> connect -> drivers -> copy the uri)
-It should look like: mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-Modify it to include the DB name: mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/checkmate?retryWrites=true&w=majority
-Last step is to ensure your application points to the correct collection within the cluster
-
-# Step 3: Create .env.local in the Root Directory
-Before proceeding, take note we have yet to deploy the project to vercel and telegram bot has yet to be created, hence the values which require the vercel link telegram bot token, leave it as shown first.
-Paste in the following with your actual values:
-MONGODB_URI=<The URI link from the step above>
-NEXTAUTH_SECRET=<your_generated_secret> (refer to link at bottom of this step to geenrate a secret)
-NEXTAUTH_URL=<your vercel link>
-TELEGRAM_BOT_TOKEN=<your_telegram_bot_token from botfather above>
-TELEGRAM_WEBHOOK_URL=<your vercel link>/api/telegram/webhook
-Url to generate NextAuth secret: https://generate-secret.vercel.app/32
-
-# Step 4: Deploy on Vercel
-Go to vercel.com and sign up/login
-Create new project (Add new -> project -> git repo)
-During setup, add the same 5 environment variables from .env.local under Project Settings > Environment Variables.
-For NEXTAUTH_URL and TELEGRAM_WEBHOOK_URL, remember to replace it with the actual vercel url. You can leave TELEGRAM_BOT_TOKEN out first until next step.
-
-# Step 5: Create Telegram Bot via BotFather
-Search bot father on telegram
-Send /newapp and follow the instructions to create a bot.
-Set bot menu button (/mybots -> click the created bot -> Bot Settings -> Menu Button -> Edit menu Button URL -> paste vercel link)
-Save the bot token (in bot father type /mybots -> click the bot you created -> API token)
-Edit TELEGRAM_BOT_TOKEN on .env.local and add/edit it on vercel environment settings
-Redeploy vercel application
-Alternative deployment of bot is using the command /newbot instead.
-
-# Step 6: Seed and test database connection
-Open a new terminal (ensure in correct folder checkers-webapp) and run the following command: npm run dev
-Check your atlas mongodb collection to ensure database is seeded with dummy data
-Stop local deployment (ctrl c in terminal)
-Test MongoDB connection, in terminal run: node test-db.cjs
-Check output of test file in terminal. Ensure database name is checkmate and not test. In the event database name is wrong look at step 3 and ensure MONGODB_URI in environment variables includes the DB name
-
-Expexted response:
-🚀 Starting MongoDB test...
-
-🔗 Connecting to MongoDB...
-✅ Connected successfully!
-
-📊 Database name: checkmate
-
-📁 Available collections:
-  - checkers
-  - votes
-
-🔍 "checkers" collection exists: ✅ Yes
-🔍 "votes" collection exists: ✅ Yes
-📈 Total documents in "checkers": 3
-📈 Total documents in "votes": 5
-
-✅ Test completed.
-
-# Step 7:  Set Up Telegram Webhook
-Run the following command in terminal to setup telegram web hook: npm run setup-webhook
-
-#Step 8: Using the miniapp
-/start will kick start onboarding process. To upload new queries for voting, refer to postman section below
-```
+1. Execute quickstart above
+2. Get tunnel and mongoDB connection string from BW
+   - BW will map a https url to http://localhost:3002
+   - mongoDB connection string from BW
+3. Create Telegram Bot via BotFather - create a new bot - Set bot menu button (/mybots -> click the created bot -> Bot Settings -> Menu Button -> Edit menu Button URL -> paste https url from step 2) - Save the bot token (in bot father type /mybots -> click the bot you created -> API token)
+   4 Set up telegram webhook - create your own webhook secret string by using the following command: openssl rand -base64 32 - go to postman and set webhook like so:
+   `bash
+ curl --location --globoff 'https://api.telegram.org/bot{{TELEGRAM_CHECKERS_BOT_TOKEN}}/setWebhook' \
+ --form 'url="{{TELEGRAM_WEBHOOK_URL}}"' \
+ --form 'secret_token="{{TELEGRAM_WEBHOOK_SECRET}}"'
+ `
+4. Start by doing /start in the telegram bot
 
 ## What technologies are used for this project?
 
@@ -112,21 +91,39 @@ This project is built with:
 - In the dropdown to the right of Text, select JSON.
 - Follow the submissions below
 
-POST <replace this vercel url>/api/votes/webhook
+POST <replace this vercel url>/api/polls/webhook
 
-Example body for submission:
+Example body for submission (following PollRequest interface):
+
+```json
 {
-"content" : "Postman test 3.0",
-"sender" : "John Smith",
-"screenshot":
-"https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300"
+  "checkId": "check_123456",
+  "imageUrl": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300",
+  "caption": "Example image caption",
+  "text": "This is the main text content to be fact-checked",
+  "longformResponse": {
+    "en": "Detailed analysis in English...",
+    "cn": "中文详细分析...",
+    "links": ["https://source1.com", "https://source2.com"],
+    "timestamp": "2024-01-15T10:30:00Z"
+  },
+  "shortformResponse": {
+    "en": "Brief summary in English",
+    "cn": "中文简短摘要",
+    "links": ["https://source1.com"],
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
 }
+```
 
 Expected response:
+
+```json
 {
-"message": "Vote submitted successfully",
-"id": "66abcdef123..."
+  "message": "Vote submitted successfully",
+  "id": "66abcdef123..."
 }
+```
 
 ## Moving Forward
 

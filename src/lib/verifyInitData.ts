@@ -10,17 +10,11 @@ type VerifiedTelegramData = {
   [key: string]: any;
 };
 
-export function verifyTelegramInitData(
-  initData: string,
-  botToken: string
-): VerifiedTelegramData {
+export function verifyTelegramInitData(initData: string, botToken: string): VerifiedTelegramData {
   console.log("[VerifyTelegram] Starting verification process");
 
   // For Telegram Web Apps, use "WebAppData" as the constant string
-  const secret = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(botToken)
-    .digest();
+  const secret = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
 
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get("hash");
@@ -37,10 +31,7 @@ export function verifyTelegramInitData(
     .map(([k, v]) => `${k}=${v}`)
     .join("\n");
 
-  console.log(
-    "[VerifyTelegram] Data to verify:",
-    sorted.substring(0, 100) + "..."
-  );
+  console.log("[VerifyTelegram] Data to verify:", sorted.substring(0, 100) + "...");
 
   const hmac = crypto.createHmac("sha256", secret).update(sorted).digest("hex");
 
@@ -48,12 +39,7 @@ export function verifyTelegramInitData(
   console.log("[VerifyTelegram] Calculated hash:", hmac);
 
   if (hmac !== hash) {
-    console.error(
-      "[VerifyTelegram] Hash mismatch - expected:",
-      hash,
-      "got:",
-      hmac
-    );
+    console.error("[VerifyTelegram] Hash mismatch - expected:", hash, "got:", hmac);
     console.error("[VerifyTelegram] Sorted data string:", sorted);
     throw new Error("Invalid initData signature");
   }
@@ -96,10 +82,7 @@ export function verifyTelegramInitData(
     throw new Error("Missing user ID in Telegram data");
   }
 
-  console.log(
-    "[VerifyTelegram] Verification complete for user ID:",
-    userData.id
-  );
+  console.log("[VerifyTelegram] Verification complete for user ID:", userData.id);
 
   return {
     ...userData,

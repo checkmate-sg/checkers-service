@@ -2,7 +2,7 @@
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyTelegramInitData } from "@/lib/verifyInitData";
-import { findUserByTelegramID } from "@/lib/db";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -18,25 +18,30 @@ export const authConfig: NextAuthConfig = {
         // LOCAL DEVELOPMENT BYPASS
         if (process.env.ENVIRONMENT === "local") {
           console.log("[Auth Config] LOCAL ENVIRONMENT - Using development bypass");
-          
+
           // You can customize this mock user or fetch a real test user from DB
           const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
-          
+
           try {
             // Try to find a real user for testing
-            const user = await findUserByTelegramID(mockTelegramId);
-            
-            if (user) {
-              console.log("[Auth Config] LOCAL: Found test user:", {
-                id: user.id,
-                name: user.name,
-                telegramId: user.telegramId || mockTelegramId,
-              });
-              
-              return {
-                id: user.id,
+            const { env } = getCloudflareContext();
+            const checker = (
+              await env.CHECKERS_DB_SERVICE.findOneChecker({
                 telegramId: mockTelegramId,
-                name: user.name || "Local Dev User",
+              })
+            ).data;
+
+            if (checker) {
+              console.log("[Auth Config] LOCAL: Found test user:", {
+                id: checker._id?.toString() || "",
+                name: checker.name || "Local Dev User",
+                telegramId: checker.telegramId || mockTelegramId,
+              });
+
+              return {
+                id: checker._id?.toString() || "",
+                telegramId: mockTelegramId,
+                name: checker.name || "Local Dev User",
               };
             } else {
               // Return a mock user if no real user exists
@@ -67,14 +72,8 @@ export const authConfig: NextAuthConfig = {
           hasMongoUri: !!process.env.MONGODB_URI,
         });
 
-        console.log(
-          "[Auth Config] Received initData:",
-          initData ? "present" : "missing"
-        );
-        console.log(
-          "[Auth Config] Bot token:",
-          botToken ? "present" : "missing"
-        );
+        console.log("[Auth Config] Received initData:", initData ? "present" : "missing");
+        console.log("[Auth Config] Bot token:", botToken ? "present" : "missing");
 
         if (!initData || typeof initData !== "string") {
           console.error("[Auth Config] No initData received or invalid format");
@@ -97,10 +96,7 @@ export const authConfig: NextAuthConfig = {
             username: telegramUser.username,
           });
         } catch (err) {
-          console.error(
-            "[Auth Config] Telegram initData verification failed:",
-            err
-          );
+          console.error("[Auth Config] Telegram initData verification failed:", err);
           console.error(
             "[Auth Config] Error details:",
             err instanceof Error ? err.message : "Unknown error"
@@ -109,13 +105,16 @@ export const authConfig: NextAuthConfig = {
         }
 
         const telegramId = telegramUser.id.toString();
-        console.log(
-          "[Auth Config] Looking up user with telegramId:",
-          telegramId
-        );
+        console.log("[Auth Config] Looking up user with telegramId:", telegramId);
 
         try {
-          const user = await findUserByTelegramID(telegramId);
+          const { env } = getCloudflareContext();
+          const user = (
+            await env.CHECKERS_DB_SERVICE.findOneChecker({
+              telegramId: telegramId,
+            })
+          ).data;
+
           console.log(
             "[Auth Config] Database lookup result:",
             user ? "user found" : "user not found"
@@ -123,33 +122,25 @@ export const authConfig: NextAuthConfig = {
 
           if (user) {
             console.log("[Auth Config] Found user:", {
-              id: user.id,
+              id: user._id?.toString() || "",
               name: user.name,
               telegramId: user.telegramId || telegramId,
             });
           }
 
           if (!user) {
-            console.warn(
-              "[Auth Config] No user found with telegramId:",
-              telegramId
-            );
+            console.warn("[Auth Config] No user found with telegramId:", telegramId);
             return null;
           }
 
-          console.log(
-            "[Auth Config] Authorization successful, returning user data"
-          );
+          console.log("[Auth Config] Authorization successful, returning user data");
           return {
-            id: user.id,
+            id: user._id?.toString() || "",
             telegramId,
             name: user.name || telegramUser.first_name || "Unknown",
           };
         } catch (dbError) {
-          console.error(
-            "[Auth Config] Database error during user lookup:",
-            dbError
-          );
+          console.error("[Auth Config] Database error during user lookup:", dbError);
           return null;
         }
       },

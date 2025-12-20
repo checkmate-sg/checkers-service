@@ -1,0 +1,3 @@
+.orangeGlow {
+  box-shadow: 0 0 10px hsl(var(--primary)); /* Change the color and radius as needed */
+}

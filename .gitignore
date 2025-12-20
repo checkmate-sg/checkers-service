@@ -25,6 +25,11 @@ dist-ssr
 
 # Environment variables
 .env.*
+!.env.example
 
 .open-next
 .next
+.dev.vars
+.wranglertsconfig.tsbuildinfo
+.wrangler
+tsconfig.tsbuildinfo

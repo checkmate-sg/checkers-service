@@ -1,3 +1,10 @@
+import { auth } from "@/auth";
+import { CheckersDashboard } from "@/components/dashboard/CheckersDashboard";
 
-      import Dashboard from '@/components/Dashboard';
-      export default Dashboard;
+export default async function Dashboard() {
+  const session = await auth();
+
+  if (!session?.user) return null;
+
+  return <CheckersDashboard checkerId={session.user.id} />;
+}

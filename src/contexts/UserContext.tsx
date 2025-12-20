@@ -10,9 +10,7 @@ interface CheckerDetails {
 }
 
 interface UserContextType extends CheckerDetails {
-  setCheckerDetails: (
-    updater: (prev: CheckerDetails) => CheckerDetails
-  ) => void;
+  setCheckerDetails: (updater: (prev: CheckerDetails) => CheckerDetails) => void;
   clearCheckerDetails: () => void;
 }
 
@@ -26,9 +24,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     isOnboardingComplete: null,
   });
 
-  const setCheckerDetails = (
-    updater: (prev: CheckerDetails) => CheckerDetails
-  ) => {
+  const setCheckerDetails = (updater: (prev: CheckerDetails) => CheckerDetails) => {
     setCheckerDetailsState(updater);
   };
 

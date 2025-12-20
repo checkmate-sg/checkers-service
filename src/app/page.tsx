@@ -77,9 +77,7 @@ export default function HomePage() {
         <div className="text-center">
           <Loader2 className="animate-spin mx-auto mb-4" size={32} />
           <p>Redirecting to dashboard...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Session: {session.user?.name || "Unknown"}
-          </p>
+          <p className="text-sm text-gray-500 mt-2">Session: {session.user?.name || "Unknown"}</p>
           <button
             onClick={() => {
               console.log("[HomePage] Manual redirect clicked");

@@ -22,9 +22,7 @@ interface LeaderboardData {
 }
 
 const Leaderboard = () => {
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
-    []
-  );
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [totalParticipants, setTotalParticipants] = useState<number>(0);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,9 +58,7 @@ const Leaderboard = () => {
       setLastUpdated(new Date(data.lastUpdated).toLocaleTimeString());
     } catch (err) {
       console.error("Error fetching leaderboard:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to load leaderboard"
-      );
+      setError(err instanceof Error ? err.message : "Failed to load leaderboard");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,8 +95,7 @@ const Leaderboard = () => {
       "Dedicated Checker": "bg-cyan-500 text-white",
       "New Talent": "bg-lime-500 text-black",
       "Getting Started": "bg-gray-500 text-white",
-      "Elite Checker":
-        "bg-gradient-to-r from-purple-600 to-pink-600 text-white",
+      "Elite Checker": "bg-gradient-to-r from-purple-600 to-pink-600 text-white",
       "Reliable Validator": "bg-teal-500 text-white",
     };
     return colors[badge] || "bg-gray-500 text-white";
@@ -109,7 +104,7 @@ const Leaderboard = () => {
   const getInitials = (name: string) => {
     return name
       .split(" ")
-      .map((n) => n[0])
+      .map(n => n[0])
       .join("")
       .toUpperCase();
   };
@@ -147,7 +142,7 @@ const Leaderboard = () => {
   }
 
   const top3 = leaderboardData.slice(0, 3);
-  const currentUser = leaderboardData.find((user) => user.isCurrentUser);
+  const currentUser = leaderboardData.find(user => user.isCurrentUser);
   const isCurrentUserInTop3 = currentUser && currentUser.rank <= 3;
 
   // For the full rankings display, show top 3 + current user if not in top 3
@@ -168,9 +163,7 @@ const Leaderboard = () => {
       {/* Header */}
       <div className="mb-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <h1 className="text-2xl font-bold text-checkmate-text">
-            Leaderboard
-          </h1>
+          <h1 className="text-2xl font-bold text-checkmate-text">Leaderboard</h1>
           <button
             onClick={() => fetchLeaderboard(true)}
             disabled={refreshing}
@@ -183,9 +176,7 @@ const Leaderboard = () => {
         <p className="text-gray-600 text-sm">
           Top CheckMate contributors ({totalParticipants} total)
         </p>
-        {lastUpdated && (
-          <p className="text-xs text-gray-500 mt-1">Updated at {lastUpdated}</p>
-        )}
+        {lastUpdated && <p className="text-xs text-gray-500 mt-1">Updated at {lastUpdated}</p>}
         {/* Show current user's position if they exist */}
         {currentUser && !isCurrentUserInTop3 && (
           <p className="text-xs text-checkmate-primary mt-1 font-medium">
@@ -214,9 +205,7 @@ const Leaderboard = () => {
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[1].name}</p>
                   {top3[1].isCurrentUser && (
-                    <p className="text-xs text-checkmate-primary font-bold">
-                      (You)
-                    </p>
+                    <p className="text-xs text-checkmate-primary font-bold">(You)</p>
                   )}
                 </div>
               )}
@@ -237,9 +226,7 @@ const Leaderboard = () => {
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[0].name}</p>
                   {top3[0].isCurrentUser && (
-                    <p className="text-xs text-checkmate-primary font-bold">
-                      (You)
-                    </p>
+                    <p className="text-xs text-checkmate-primary font-bold">(You)</p>
                   )}
                 </div>
               )}
@@ -259,9 +246,7 @@ const Leaderboard = () => {
                   </div>
                   <p className="text-xs mt-1 font-medium">{top3[2].name}</p>
                   {top3[2].isCurrentUser && (
-                    <p className="text-xs text-checkmate-primary font-bold">
-                      (You)
-                    </p>
+                    <p className="text-xs text-checkmate-primary font-bold">(You)</p>
                   )}
                 </div>
               )}
@@ -275,9 +260,7 @@ const Leaderboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              {isCurrentUserInTop3 || !currentUser
-                ? "Top 3"
-                : "Top 3 + Your Position"}
+              {isCurrentUserInTop3 || !currentUser ? "Top 3" : "Top 3 + Your Position"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -285,16 +268,11 @@ const Leaderboard = () => {
               {displayEntries.map((user, index) => (
                 <div key={user.rank}>
                   {/* Show separator before current user if they're not in top 3 */}
-                  {!isCurrentUserInTop3 &&
-                    currentUser &&
-                    user.isCurrentUser &&
-                    index === 3 && (
-                      <div className="p-3 text-center bg-gray-50 border-b">
-                        <span className="text-gray-400 text-sm font-medium">
-                          ...
-                        </span>
-                      </div>
-                    )}
+                  {!isCurrentUserInTop3 && currentUser && user.isCurrentUser && index === 3 && (
+                    <div className="p-3 text-center bg-gray-50 border-b">
+                      <span className="text-gray-400 text-sm font-medium">...</span>
+                    </div>
+                  )}
 
                   <div
                     className={`p-4 border-b last:border-b-0 ${
@@ -305,18 +283,12 @@ const Leaderboard = () => {
                   >
                     <div className="flex items-center gap-3">
                       {/* Rank */}
-                      <div className="w-8 flex justify-center">
-                        {getRankIcon(user.rank)}
-                      </div>
+                      <div className="w-8 flex justify-center">{getRankIcon(user.rank)}</div>
 
                       {/* Avatar */}
                       <Avatar className="w-10 h-10">
                         <AvatarFallback
-                          className={
-                            user.isCurrentUser
-                              ? "bg-checkmate-primary text-white"
-                              : ""
-                          }
+                          className={user.isCurrentUser ? "bg-checkmate-primary text-white" : ""}
                         >
                           {getInitials(user.name)}
                         </AvatarFallback>
@@ -332,9 +304,7 @@ const Leaderboard = () => {
                           >
                             {user.name} {user.isCurrentUser ? "(You)" : ""}
                           </span>
-                          <span className="text-xs text-gray-500">
-                            {user.points} pts
-                          </span>
+                          <span className="text-xs text-gray-500">{user.points} pts</span>
                         </div>
 
                         <div className="flex justify-between items-center text-xs text-gray-600 mb-2">
@@ -347,9 +317,7 @@ const Leaderboard = () => {
                           {user.badges.map((badge, badgeIndex) => (
                             <Badge
                               key={badgeIndex}
-                              className={`text-xs px-2 py-0 ${getBadgeColor(
-                                badge
-                              )}`}
+                              className={`text-xs px-2 py-0 ${getBadgeColor(badge)}`}
                             >
                               {badge}
                             </Badge>
@@ -367,9 +335,7 @@ const Leaderboard = () => {
         <Card>
           <CardContent className="p-8 text-center">
             <p className="text-gray-500">No leaderboard data available yet.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Start voting to see rankings!
-            </p>
+            <p className="text-sm text-gray-400 mt-2">Start voting to see rankings!</p>
           </CardContent>
         </Card>
       )}
@@ -379,9 +345,7 @@ const Leaderboard = () => {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Star className="text-checkmate-primary" size={16} />
-            <span className="font-medium text-sm">
-              How to Climb the Leaderboard
-            </span>
+            <span className="font-medium text-sm">How to Climb the Leaderboard</span>
           </div>
           <ul className="text-xs text-gray-600 space-y-1">
             <li>• Vote on more messages (+10 pts each)</li>

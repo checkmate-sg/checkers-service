@@ -23,8 +23,9 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/shared/*": ["./shared/*"]
     }
   },
-  "include": ["src", "../pages", "scripts", "test-db.cjs"]
+  "include": ["src", "shared", "../pages", "scripts", "test-db.cjs"]
 }

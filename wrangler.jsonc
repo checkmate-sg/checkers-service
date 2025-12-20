@@ -1,116 +1,152 @@
 {
   "main": ".open-next/worker.js",
   "name": "checkmate-checkers-app",
-  "compatibility_date": "2025-03-25",
   "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-08-09",
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "checkmate-checkers-app"
+      "service": "checkmate-checkers-app",
     },
     {
       "binding": "CHECKMATE_WHATSAPP_SERVICE",
-      "service": "whatsapp-webhook-handler"
-    }
+      "service": "whatsapp-webhook-handler",
+    },
+    {
+      "binding": "CHECKERS_DB_SERVICE",
+      "service": "checkers-db-service",
+    },
   ],
   // R2 incremental cache
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "checkers-app-cache"
-    }
+      "bucket_name": "checkers-app-cache",
+    },
   ],
   // DO Queue
   "durable_objects": {
     "bindings": [
       {
         "name": "NEXT_CACHE_DO_QUEUE",
-        "class_name": "DOQueueHandler"
-      }
-    ]
+        "class_name": "DOQueueHandler",
+      },
+    ],
+  },
+  "queues": {
+    "producers": [
+      {
+        "queue": "checkers-poll-update-queue",
+        "binding": "POLL_UPDATE_QUEUE",
+      },
+    ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["DOQueueHandler"]
-    }
+      "new_sqlite_classes": ["DOQueueHandler"],
+    },
   ],
   "env": {
     "staging": {
-      "name": "checkmate-webapp-staging",
+      "name": "checkmate-checkers-app-staging",
       "vars": {
         "ENVIRONMENT": "staging",
-        "NEXTAUTH_URL": "https://checkers.staging.checkmate.sg"
+        "NEXTAUTH_URL": "https://checkers.staging.checkmate.sg",
       },
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
-          "service": "checkmate-checkers-app-staging"
+          "service": "checkmate-checkers-app-staging",
         },
         {
           "binding": "CHECKMATE_WHATSAPP_SERVICE",
-          "service": "whatsapp-webhook-handler-staging"
-        }
+          "service": "whatsapp-webhook-handler-staging",
+        },
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service-staging",
+        },
       ],
       "r2_buckets": [
         {
           "binding": "NEXT_INC_CACHE_R2_BUCKET",
-          "bucket_name": "checkers-app-cache-staging"
-        }
+          "bucket_name": "checkers-app-cache-staging",
+        },
       ],
       "durable_objects": {
         "bindings": [
           {
             "name": "NEXT_CACHE_DO_QUEUE",
-            "class_name": "DOQueueHandler"
-          }
-        ]
+            "class_name": "DOQueueHandler",
+          },
+        ],
+      },
+      "queues": {
+        "producers": [
+          {
+            "queue": "checkers-poll-update-queue-staging",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
       },
       "observability": {
         "logs": {
-          "enabled": true
-        }
-      }
+          "enabled": true,
+        },
+      },
     },
     "production": {
-      "name": "checkmate-webapp",
+      "name": "checkmate-checkers-app",
       "vars": {
         "ENVIRONMENT": "production",
-        "NEXTAUTH_URL": "https://checkers.checkmate.sg"
+        "NEXTAUTH_URL": "https://checkers.checkmate.sg",
       },
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
-          "service": "checkmate-checkers-app"
+          "service": "checkmate-checkers-app",
         },
         {
           "binding": "CHECKMATE_WHATSAPP_SERVICE",
-          "service": "whatsapp-webhook-handler"
-        }
+          "service": "whatsapp-webhook-handler",
+        },
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service",
+        },
       ],
       "r2_buckets": [
         {
           "binding": "NEXT_INC_CACHE_R2_BUCKET",
-          "bucket_name": "checkers-app-cache"
-        }
+          "bucket_name": "checkers-app-cache",
+        },
       ],
       "durable_objects": {
         "bindings": [
           {
             "name": "NEXT_CACHE_DO_QUEUE",
-            "class_name": "DOQueueHandler"
-          }
-        ]
+            "class_name": "DOQueueHandler",
+          },
+        ],
+      },
+      "queues": {
+        "producers": [
+          {
+            "queue": "checkers-poll-update-queue",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
       },
       "observability": {
         "logs": {
-          "enabled": true
-        }
-      }
-    }
-  }
+          "enabled": true,
+        },
+      },
+    },
+  },
 }
