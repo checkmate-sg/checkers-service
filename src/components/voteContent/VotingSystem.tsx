@@ -32,6 +32,7 @@ export default function VotingSystem(props: VotingSystemProps) {
   const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<ResponseCategory | null>(
     props.responseCategory
   );
+  const [commentOnResponse, setCommentOnResponse] = useState<string | null>(props.commentOnResponse);
 
   // Check if community note exists
   const hasCommunityNote = props.shortformResponse.en !== null;
@@ -64,6 +65,10 @@ export default function VotingSystem(props: VotingSystemProps) {
     console.log(value);
     setCrowdSourcedCategory(value);
   };
+
+  const handleCommentOnResponse = (value: string) => {
+    setCommentOnResponse(value);
+  }
 
   const StepBadge = ({ n }: { n: number }) => (
     <span
@@ -139,6 +144,8 @@ export default function VotingSystem(props: VotingSystemProps) {
              <CommunityNoteCategories
                crowdSourcedCategory={crowdSourcedCategory}
                onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
+               commentOnResponse={commentOnResponse}
+               onCommentOnResponseChanged={handleCommentOnResponse}
              />
  
              {isStep1Completed() && crowdSourcedCategory ? (
@@ -147,6 +154,7 @@ export default function VotingSystem(props: VotingSystemProps) {
                  voteCategory={voteCategory}
                  truthScore={truthScore}
                  crowdSourcedCategory={crowdSourcedCategory}
+                 commentOnResponse={commentOnResponse}
                />
              ) : null}
            </AccordionContent>

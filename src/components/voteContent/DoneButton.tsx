@@ -11,6 +11,7 @@ interface DoneButtonProps {
   voteCategory: Category | null;
   truthScore: number | null;
   crowdSourcedCategory?: ResponseCategory | null;
+  commentOnResponse?: string | null;
 }
 export default function DoneButton(props: DoneButtonProps) {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function DoneButton(props: DoneButtonProps) {
           category: props.voteCategory,
           truthScore: props.truthScore,
           ...(props.crowdSourcedCategory && { responseCategory: props.crowdSourcedCategory }),
+          ...(props.commentOnResponse && { commentOnResponse: props.commentOnResponse }),
         },
       });
       console.log("Vote updated", result);
