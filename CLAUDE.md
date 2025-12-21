@@ -20,7 +20,7 @@ src/
 │   │   ├── polls/webhook       # Receives checks from CheckMate
 │   │   ├── votes/[voteId]      # Vote submission
 │   │   ├── checkers/           # Checker profiles
-│   │   └── telegram/webhook    # Bot commands
+│   │   └── telegram/webhook    # Bot commands + reactivation callback
 │   ├── dashboard/              # Progress tracking page
 │   ├── leaderboard/            # Rankings page
 │   └── votes/                  # Voting interface
@@ -31,7 +31,10 @@ src/
 │   └── helpers/voteAssessment/ # Consensus calculation
 └── contexts/                   # UserContext
 shared/types/schema.ts          # DB schemas (Checker, Poll, Vote)
-workers/checkers-db-service/    # Cloudflare Worker for MongoDB
+workers/
+├── checkers-db-service/        # Cloudflare Worker for MongoDB
+├── checkers-batch-service/     # Daily cron jobs for lifecycle management
+└── checker-reminder-alarm-service/  # Durable Object alarms for reminders
 ```
 
 ## Core Features
@@ -53,6 +56,19 @@ workers/checkers-db-service/    # Cloudflare Worker for MongoDB
 ### Onboarding Flow (6 steps)
 Name → Phone → Quiz → WhatsApp → Group Chat → NLB Partnership
 
+### Checker Lifecycle Management
+Automated via `checkers-batch-service` (daily crons) and `checker-reminder-alarm-service` (Durable Object alarms):
+
+**Inactivity Flow:**
+- Day 3: Warning message ("you'll be deactivated in 7 days")
+- Day 10: Deactivation (`isActive=false`) + schedule reminder alarms
+- Day 24: Reminder #1 ("We miss you" + Reactivate button)
+- Day 52: Reminder #2 (final reminder)
+
+**Programme Flow:**
+- Day 60: Extension notice (if `hasCompletedProgramme=false`)
+- Day 90: Offboarding (remove from group, `onboardingStatus="offboarded"`)
+
 ## Key API Routes
 
 | Route | Purpose |
@@ -64,7 +80,7 @@ Name → Phone → Quiz → WhatsApp → Group Chat → NLB Partnership
 
 ## Database Models
 
-- **Checker**: User profile, onboarding status, vote stats
+- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`)
 - **Poll**: Message content, AI responses, crowd-sourced category
 - **Vote**: Individual vote with category, truth score, response rating
 
@@ -79,12 +95,25 @@ Located in `src/lib/helpers/voteAssessment/`. Determines consensus based on:
 - Different vote thresholds for different category types (e.g., 4 votes for clear scams, 10+ for borderline cases)
 - Truth scores mapped: <1.5 = untrue, 1.5-3.75 = misleading, >3.75 = accurate
 
+### Batch Service
+`workers/checkers-batch-service/` runs daily cron jobs:
+- 8:11 PM SGT: Inactivity checks (3-day warning, 10-day deactivation)
+- 8:41 PM SGT: Programme checks (60-day extension, 90-day offboarding)
+
+### Alarm Service
+`workers/checker-reminder-alarm-service/` uses Durable Objects to schedule per-checker reminders after deactivation. Alarms are cancelled when checker reactivates via the "Reactivate Now" button.
+
 ## Development
 
 ```bash
 npm run dev        # NextJS dev server (port 3002)
 npm run dev:db     # Database worker (separate terminal)
 npm run deploy     # Deploy to Cloudflare
+
+# Workers (run in separate terminals)
+cd workers/checkers-db-service && npm run dev
+cd workers/checkers-batch-service && npm run dev      # use --test-scheduled for manual triggers
+cd workers/checker-reminder-alarm-service && npm run dev
 ```
 
 ## External Integrations

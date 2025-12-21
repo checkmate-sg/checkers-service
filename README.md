@@ -35,10 +35,21 @@ npm run dev
 # The app will be available at http://localhost:3002
 ```
 
-### Running Database Worker Locally (if needed)
+### Running Workers Locally
 
 ```bash
+# Database service (required)
 cd workers/checkers-db-service
+npm install
+npm run dev
+
+# Batch service (for lifecycle management)
+cd workers/checkers-batch-service
+npm install
+npm run dev  # add --test-scheduled for manual triggers
+
+# Alarm service (for reactivation reminders)
+cd workers/checker-reminder-alarm-service
 npm install
 npm run dev
 ```
@@ -46,13 +57,32 @@ npm run dev
 ## Running the setup locally each time doing development
 
 ```bash
-# start the development server for the database service
-# Open new terminal and run the following command:
+# Terminal 1: Database service
 npm run dev:db
 
-# start the development server for the webapp
+# Terminal 2: Batch service (optional, for lifecycle testing)
+cd workers/checkers-batch-service && npm run dev --test-scheduled
+
+# Terminal 3: Alarm service (optional, for reminder testing)
+cd workers/checker-reminder-alarm-service && npm run dev
+
+# Terminal 4: Webapp
 npm run dev
 ```
+
+## Checker Lifecycle Management
+
+The system automatically manages checker engagement through scheduled batch jobs:
+
+**Inactivity Management** (runs daily at 8:11 PM SGT):
+- 3-day warning: Reminder that deactivation will occur in 7 more days
+- 10-day deactivation: Sets `isActive=false`, schedules reminder alarms
+- 14 days after deactivation: Reminder #1 with "Reactivate Now" button
+- 28 days after Reminder #1: Reminder #2 (final)
+
+**Programme Management** (runs daily at 8:41 PM SGT):
+- 60-day extension: Notice for checkers who haven't completed the programme
+- 90-day offboarding: Removes from group, marks as offboarded (only if extension was received)
 
 ## Deployment Setup
 
@@ -130,10 +160,10 @@ Expected response:
 - Dashboard messages sent is using checkers num referred, may not be the actual number of whatsapp messages sent (check with big boss BW to know which variable to look at)
 - Voting logic. As of now, there is no conclusive time or way that voting ends. The seed file checks evry 24hrs and concludes voting based on majority vote but seed only works when you manually deploy it on VS terminal. Hence there is no conclusive voting period. Any new postings will not conclude.
 - Voting page also shows all pass and present votes, it does not remove votes that have been concluded or completed. Pagination.
-- Telegram bot does not alert user that there is new query
+- ~~Telegram bot does not alert user that there is new query~~ (Addressed: Polls webhook now sends notifications)
 - Onboarding whatsapp bot link is not an actual link.
 - Onboarding does not check if user has completed quiz, does not verify otp, if user has joined telegram or whatsapp. In the code file, everything the current bot does for onboarding that this new bot cannot do, is being commented out.
-- Most of the variables stored for a checker is not being used in current logic except those present in the seeded checkers.
+- ~~Most of the variables stored for a checker is not being used in current logic~~ (Addressed: Lifecycle fields now used for inactivity/programme management)
 - Leaderboard score calculation does not follow current checkers webapp rules. It also does not show current placement of checker.
 - Integration with AI responses, whatsapp messages. Api to receive this messages is exposed via the postman link
 - Another improvement would be to relook at the API calls. Currently the API calls use JWT token to pull relevent user data. A higher level, improvement would be to do a simple fetch to retrieve session data, similar to what the middleware is doing. The current direct JWT approach can fail in Telegram Webapp hence the 4 ways of retrieving the token was used.
