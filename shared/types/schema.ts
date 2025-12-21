@@ -48,6 +48,9 @@ export interface Checker extends BaseDocument {
   hasReceivedExtension: boolean; // Whether the Checker has received the extension for the program
   hasCompletedProgramme: boolean; // Whether the Checker has completed the programme
   certificateUrl: string | null; // The static URL of the Checker's certificate
+  lastActivatedDate: Date | null; // The time the Checker last became active (for inactivity calculation)
+  offboardingTime: Date | null; // The time the Checker was offboarded from the programme
+  lastInactivityWarningSent: Date | null; // The time the 3-day inactivity warning was last sent
   numVoted: number; // The number of polls the Checker has voted on
   lastVotedTimestamp: Date | null; // The time the Checker last voted
   getNameMessageId: string | null; // The message ID of the message the Checker used to set their name

@@ -65,6 +65,7 @@ declare global {
     CHECKERS_GROUP_LINK?: string;
     CHECKERS_CHAT_ID?: string;
     ENVIRONMENT?: string;
+    CHECKER_REMINDER_ALARM_SERVICE?: any;
   }
 }
 

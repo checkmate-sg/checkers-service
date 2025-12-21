@@ -280,6 +280,9 @@ async function handleOnboardCommand(
     hasReceivedExtension: false,
     hasCompletedProgramme: false,
     certificateUrl: null,
+    lastActivatedDate: null,
+    offboardingTime: null,
+    lastInactivityWarningSent: null,
     numVoted: 0,
     lastVotedTimestamp: null,
     getNameMessageId: null,
@@ -503,6 +506,33 @@ async function handleCallbackQuery(callbackQuery: any) {
       await sendMessage(chatId, resources, { parse_mode: "HTML" });
       break;
 
+    case "reactivate":
+      // Reactivate the checker (from deactivation notice or reminder)
+      await env.CHECKERS_DB_SERVICE.updateOneChecker(
+        { telegramId },
+        {
+          $set: {
+            isActive: true,
+            lastActivatedDate: new Date(),
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      // Cancel any pending reminder alarms
+      try {
+        await env.CHECKER_REMINDER_ALARM_SERVICE.cancelReminders(fullUser._id);
+      } catch (err) {
+        console.error(`Failed to cancel reminders for checker ${fullUser._id}: ${err}`);
+        // Continue anyway - the checker is now active
+      }
+
+      await sendMessage(
+        chatId,
+        "✅ Welcome back! You're now active again. CheckMate will start sending you messages to review."
+      );
+      break;
+
     default:
       console.log(`Unknown callback action: ${action}`); // Debug log
   }
@@ -716,6 +746,7 @@ async function sendCompletionPrompt(chatId: number, telegramId: string) {
           isOnboardingComplete: true,
           onboardingTime: new Date(),
           isActive: true,
+          lastActivatedDate: new Date(),
           updatedAt: new Date(),
         },
       }
@@ -778,10 +809,19 @@ async function handleActivateCommand(chatId: number, telegramId: string) {
     {
       $set: {
         isActive: true,
+        lastActivatedDate: new Date(),
         updatedAt: new Date(),
       },
     }
   );
+
+  // Cancel any pending reminder alarms
+  try {
+    await env.CHECKER_REMINDER_ALARM_SERVICE.cancelReminders(user._id);
+  } catch (err) {
+    console.error(`Failed to cancel reminders for checker ${user._id}: ${err}`);
+    // Continue anyway - the checker is now active
+  }
 
   await sendMessage(
     chatId,

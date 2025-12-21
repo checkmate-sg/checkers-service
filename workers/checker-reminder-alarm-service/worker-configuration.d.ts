@@ -2,6 +2,7 @@
 
 interface Env {
   ENVIRONMENT: "production" | "staging";
+  TELEGRAM_BOT_TOKEN: string;
   CHKECERS_REMINDER_DURABLE_OBJECT: DurableObjectNamespace<
     import("./src/index").CheckersReminderDurableObject
   >;

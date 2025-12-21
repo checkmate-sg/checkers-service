@@ -33,3 +33,6 @@ dist-ssr
 .wranglertsconfig.tsbuildinfo
 .wrangler
 tsconfig.tsbuildinfo
+
+# Local scripts (test data, utilities)
+scripts/

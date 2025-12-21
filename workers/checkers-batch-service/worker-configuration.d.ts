@@ -5,4 +5,14 @@ interface Env {
   CHKECERS_PROGRAMME_DURABLE_OBJECT: DurableObjectNamespace<
     import("./src/index").CheckersProgrammeDurableObject
   >;
+  TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_ADMIN_BOT_TOKEN: string;
+  CHECKERS_GROUP_LINK: string;
+  HOST_URL: string;
+  QUIZ_LINK: string;
+  OFFBOARDED_SURVEY_LINK: string;
+  COMPLETED_SURVEY_LINK: string;
+  CHECKERS_CHAT_ID: string;
+  CHECKERS_DB_SERVICE: CheckersDBService;
+  CHECKER_REMINDER_ALARM_SERVICE: CheckerReminderAlarmService;
 }

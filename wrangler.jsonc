@@ -20,6 +20,10 @@
       "binding": "CHECKERS_DB_SERVICE",
       "service": "checkers-db-service",
     },
+    {
+      "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+      "service": "checkers-reminder-alarm-service",
+    },
   ],
   // R2 incremental cache
   "r2_buckets": [
@@ -71,6 +75,10 @@
           "binding": "CHECKERS_DB_SERVICE",
           "service": "checkers-db-service-staging",
         },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service-staging",
+        },
       ],
       "r2_buckets": [
         {
@@ -118,6 +126,10 @@
         {
           "binding": "CHECKERS_DB_SERVICE",
           "service": "checkers-db-service",
+        },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service",
         },
       ],
       "r2_buckets": [
