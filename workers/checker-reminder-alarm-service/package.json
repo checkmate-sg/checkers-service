@@ -1,0 +1,23 @@
+{
+  "name": "checkers-programme-alarm-service",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "dev": "wrangler dev  --inspector-port 9237",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "@cloudflare/workers-types": "^4.20250321.0",
+    "typescript": "^5.5.2",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "grammy": "^1.38.4"
+  }
+}
