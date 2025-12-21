@@ -1,11 +1,11 @@
-import { Filter, UpdateFilter } from "mongodb";
-import { NextRequest, NextResponse } from "next/server";
+import { Filter, UpdateFilter } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from "@/auth";
-import { Err } from "@/lib/api/error";
-import { voteAssessment } from "@/lib/helpers/voteAssessment/voteAssessment";
-import { Vote } from "@/lib/request/external/lib/data-contracts";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { auth } from '@/auth';
+import { Err } from '@/lib/api/error';
+import { voteAssessment } from '@/lib/helpers/voteAssessment/voteAssessment';
+import { Vote } from '@/lib/request/external/lib/data-contracts';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest, { params }) {
       console.error("Error in vote assessment: ", crowdSourcedCategoryResults.error);
       return Err.internal("Error in Vote assessment");
     } else if (crowdSourcedCategoryResults.data === null) {
-      console.log("Poll not yet assessed");
+      // console.log("Poll not yet assessed");
     } else {
       const { primaryCategory, truthScore, isDownvoted } = crowdSourcedCategoryResults.data;
 

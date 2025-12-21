@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import { TrophyIcon } from "@heroicons/react/20/solid";
-import { XCircleIcon } from "@heroicons/react/24/outline";
-import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { TrophyIcon } from '@heroicons/react/20/solid';
+import { XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckBadgeIcon } from '@heroicons/react/24/solid';
 
-import TooltipWithHelperIcon from "../common/TooltipwithHelperIcon";
-import { Button } from "../ui/button";
+import TooltipWithHelperIcon from '../common/TooltipwithHelperIcon';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
 
 interface CommunityNoteCategoriesProps {
   crowdSourcedCategory: string | null;
   onCrowdSourcedCategorySelection: (value: string) => void;
+  commentOnResponse: string | null;
+  onCommentOnResponseChanged: (value: string) => void;
 }
 
 const CATEGORIES = [
@@ -40,10 +43,19 @@ export default function CommunityNoteCategories(props: CommunityNoteCategoriesPr
     props.crowdSourcedCategory
   );
 
+  const [commentOnResponse, setCommentOnResponse] = useState<string | null>(
+    props.commentOnResponse
+  );
+
   const handleSelection = (value: string) => {
     setSelectedCategory(value);
     props.onCrowdSourcedCategorySelection(value);
   };
+
+  const handleCommentOnResponse = (value: string) => {
+    setCommentOnResponse(value);
+    props.onCommentOnResponseChanged(value);
+  }
 
   return (
     <div className="grid grid-flow-row gap-y-4 items-center mb-4">
@@ -61,6 +73,11 @@ export default function CommunityNoteCategories(props: CommunityNoteCategoriesPr
           </Button>
         </div>
       ))}
+
+      <Textarea
+        placeholder="[Optional] Comments, if any"
+        value={commentOnResponse ?? ""}
+        onChange={(e) => handleCommentOnResponse(e.target.value)}/>
     </div>
   );
 }
