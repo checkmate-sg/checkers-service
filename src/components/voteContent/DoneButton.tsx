@@ -28,7 +28,6 @@ export default function DoneButton(props: DoneButtonProps) {
           ...(props.commentOnResponse && { commentOnResponse: props.commentOnResponse }),
         },
       });
-      console.log("Vote updated", result);
       // TODO: Show success message
 
       // Navigate back to the Vote Pending Page

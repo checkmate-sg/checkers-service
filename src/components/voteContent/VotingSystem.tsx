@@ -62,7 +62,6 @@ export default function VotingSystem(props: VotingSystemProps) {
   };
 
   const handleCrowdSourcedCategory = (value: ResponseCategory) => {
-    console.log(value);
     setCrowdSourcedCategory(value);
   };
 

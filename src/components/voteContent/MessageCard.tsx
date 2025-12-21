@@ -74,11 +74,8 @@ export default function MessageCard(props: MessageCardProps) {
     isExpanded || !shouldTruncate
       ? displayText
       : displayText.slice(0, lengthBeforeTruncation) + "...";
-  console.log(textToShow);
   // Split text by URLs
   const textParts = splitTextByUrls(textToShow);
-  console.log(textParts);
-  console.log("Image: ", imageUrl);
 
   return (
     <Card className="bg-orange-200 p-3 mx-3 my-2 border-orange-200">
