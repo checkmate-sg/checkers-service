@@ -35,9 +35,10 @@ export interface Checker extends BaseDocument {
   onboardingTime: Date | null; // The time the Checker completed the onboarding process
   isQuizComplete: boolean; // Whether the Checker has completed the onboarding quiz
   quizScore: number | null; // The score the Checker got in the quiz
-  onboardingStatus: // The onboarding status of the Checker, either "name", "number", "verify", "quiz", "onboardWhatsapp", "joinGroupChat", "nlb", "completed", or "offboarded"
+  onboardingStatus: // The onboarding status of the Checker, either "name", "number", "otpSent", "verify", "quiz", "onboardWhatsapp", "joinGroupChat", "nlb", "completed", or "offboarded"
     | "name"
     | "number"
+    | "otpSent"
     | "verify"
     | "quiz"
     | "onboardWhatsapp"
