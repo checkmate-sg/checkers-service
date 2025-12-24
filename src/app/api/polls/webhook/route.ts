@@ -141,6 +141,9 @@ export async function POST(req: Request) {
         truthScore: null,
         responseCategory: null,
         commentOnResponse: null,
+        responseTime: null, 
+        score: null, 
+        isCorrect: null
       };
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
 

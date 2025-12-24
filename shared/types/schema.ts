@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
 
 //NOSQL DATA TYPES
 
@@ -104,6 +104,9 @@ export interface Vote extends BaseDocument {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  responseTime: number | null; // Time taken to submit the vote in hours
+  score: number | null; // Score awarded for this vote
+  isCorrect: boolean | null; // Whether the vote matched the consensus
 }
 
 // OTHER TYPES
@@ -171,5 +174,8 @@ export interface VoteChecker extends BaseDocument {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  responseTime: number | null; // Time taken to submit the vote in hours
+  score: number | null; // Score awarded for this vote
+  isCorrect: boolean | null; // Whether the vote matched the consensus
   poll: Poll;
 }

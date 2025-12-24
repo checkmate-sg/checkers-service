@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
 import { Err } from '@/lib/api/error';
+import {
+  checkAccuracy,
+  computeGamificationScore
+} from '@/lib/helpers/leaderboardStats/statsHelpers';
 import { voteAssessment } from '@/lib/helpers/voteAssessment/voteAssessment';
 import { Vote } from '@/lib/request/external/lib/data-contracts';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
@@ -67,6 +71,11 @@ export async function POST(req: NextRequest, { params }) {
       return Err.notFound();
     }
 
+    const currentTimestamp = new Date();
+    const createdTimestamp = new Date(voteResult.data.createdTimestamp);
+    // Convert to hours
+    const responseTimeInHours = (currentTimestamp.getTime() - createdTimestamp.getTime()) / (1000 * 60 * 60);
+
     // Create update object with $set operator
     const update: UpdateFilter<Vote> = {
       $set: {
@@ -75,7 +84,8 @@ export async function POST(req: NextRequest, { params }) {
         ...(responseCategory !== undefined && { responseCategory }),
         ...(commentOnResponse !== undefined && { commentOnResponse }),
         ...otherFields,
-        votedTimestamp: new Date(),
+        votedTimestamp: currentTimestamp,
+        responseTime: responseTimeInHours,
       },
     };
 
@@ -104,10 +114,6 @@ export async function POST(req: NextRequest, { params }) {
       }
     }
 
-
-
-
-
     // Vote Service to calculate whether the votes are correct/wrong
     const pollId = voteResult.data.pollId;
     const crowdSourcedCategoryResults = await voteAssessment(pollId);
@@ -117,7 +123,7 @@ export async function POST(req: NextRequest, { params }) {
     } else if (crowdSourcedCategoryResults.data === null) {
       // console.log("Poll not yet assessed");
     } else {
-      const { primaryCategory, truthScore, isDownvoted } = crowdSourcedCategoryResults.data;
+      const { primaryCategory: crowdSourcedCategory, truthScore: crowdSourcedTruthScore, isDownvoted } = crowdSourcedCategoryResults.data;
 
       // Update Poll with the assessed crowdSourcedCategory - use _id (pollId)
       // Returns previousDocument for change detection
@@ -125,13 +131,15 @@ export async function POST(req: NextRequest, { params }) {
         { _id: pollId },
         {
           $set: {
-            crowdSourcedCategory: primaryCategory,
-            crowdSourcedTruthScore: truthScore,
+            crowdSourcedCategory: crowdSourcedCategory,
+            crowdSourcedTruthScore: crowdSourcedTruthScore,
             assessedTimestamp: new Date(),
             "shortformResponse.downvoted": isDownvoted,
           },
         }
       );
+
+      console.log("POLL UPDATED: ", pollUpdateResult.modifiedCount)
 
       if (!pollUpdateResult.success) {
         console.error(
@@ -141,10 +149,30 @@ export async function POST(req: NextRequest, { params }) {
         return Err.internal("Error updating the poll with crowdSourcedCategory");
       }
 
+      // Check if the Votes are correct 
+      const isCorrect = checkAccuracy(category, truthScore, crowdSourcedCategory, crowdSourcedTruthScore);
+      const voteScores = computeGamificationScore(createdTimestamp, currentTimestamp, isCorrect);
+
+      // Update the Vote with voteScores
+      const voteScoresResults = await env.CHECKERS_DB_SERVICE.updateOneVote(filter, {
+        $set: {
+          isCorrect: isCorrect,
+          score: voteScores
+        },
+      });
+
+      if (!voteScoresResults.success) {
+        console.error(
+          "Error updating the votes with voteScores: ",
+          voteScoresResults.error
+        );
+        return Err.internal("Error updating the votes with voteScores");
+      }
+
       // Queue message if category or downvoted status changed
       const prev = pollUpdateResult.previousDocument;
       if (prev) {
-        const categoryChanged = prev.crowdSourcedCategory !== primaryCategory;
+        const categoryChanged = prev.crowdSourcedCategory !== crowdSourcedCategory;
         const downvotedChanged = (prev.shortformResponse?.downvoted ?? false) !== isDownvoted;
 
         if (categoryChanged || downvotedChanged) {
@@ -152,7 +180,7 @@ export async function POST(req: NextRequest, { params }) {
             await env.POLL_UPDATE_QUEUE.send({
               id: prev.checkId,
               isHumanAssessed: true,
-              crowdsourcedCategory: primaryCategory,
+              crowdsourcedCategory: crowdSourcedCategory,
               isCommunityNoteDownvoted: isDownvoted,
             });
           } catch (queueError) {
