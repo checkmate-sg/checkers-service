@@ -3,15 +3,15 @@ import {
   getCategoryCountsByPollId,
   getResponseCategoryCountsByPollId,
   getTotalTruthScoreValue,
-  getTotalVoteRequestsCount,
-} from "./voteAssessmentUtils";
+  getTotalVoteRequestsCount
+} from './voteAssessmentUtils';
 
 export async function voteAssessment(pollId: string): Promise<{
   success: boolean;
   data?: any | null;
   error?: string;
 }> {
-  console.log("Vote Assessment");
+  // console.log("Vote Assessment");
 
   try {
     // Get categoryCounts

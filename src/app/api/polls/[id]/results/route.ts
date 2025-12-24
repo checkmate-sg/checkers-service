@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from "@/auth";
-import { Err } from "@/lib/api/error";
+import { auth } from '@/auth';
+import { Err } from '@/lib/api/error';
 import {
   getCategoryCountsByPollId,
-  getResponseCategoryCountsByPollId,
-} from "@/lib/helpers/voteAssessment/voteAssessmentUtils";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+  getResponseCategoryCountsByPollId
+} from '@/lib/helpers/voteAssessment/voteAssessmentUtils';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export async function GET(req: NextRequest, { params }) {
   // Get and calculate the results/statistics for a specific poll by _id
@@ -22,7 +22,6 @@ export async function GET(req: NextRequest, { params }) {
 
     const categoryCount = await getCategoryCountsByPollId(id);
     if (categoryCount instanceof NextResponse) return categoryCount;
-    console.log(categoryCount);
 
     // Only if 'info' is part of the categories -> then we will compute the truthScore statistics
     const truthScorePipeline: any[] = [
