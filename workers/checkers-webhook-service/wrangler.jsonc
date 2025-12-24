@@ -1,0 +1,188 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "checkers-webhook-service",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-24",
+  "observability": {
+    "enabled": true,
+  },
+  "kv_namespaces": [
+    {
+      "binding": "OTP_KV",
+      "id": "dd6c7922642349859ec36c978882ccc7",
+    },
+  ],
+  "compatibility_flags": ["nodejs_compat"],
+  "dev": {
+    "port": 8791,
+  },
+  "queues": {
+    "producers": [
+      {
+        "queue": "whatsapp-adhoc-message-queue",
+        "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+      },
+    ],
+  },
+  /**
+   * Service Bindings
+   */
+  "services": [
+    {
+      "binding": "CHECKERS_DB_SERVICE",
+      "service": "checkers-db-service",
+    },
+    {
+      "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+      "service": "checkers-reminder-alarm-service",
+    },
+    {
+      "binding": "WHATSAPP_MESSAGE_SERVICE",
+      "service": "whatsapp-adhoc-message-handler",
+    },
+    {
+      "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+      "service": "whatsapp-checker-event-handler",
+    },
+  ],
+  /**
+   * Environment Variables (secrets set via wrangler secret put)
+   * - TELEGRAM_BOT_TOKEN: Telegram bot token
+   * - TELEGRAM_WEBHOOK_SECRET: Secret for verifying webhook requests
+   */
+  "vars": {
+    "ENVIRONMENT": "local",
+    "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
+    "TYPEFORM_URL": "https://better-sg.typeform.com/to/MlihTUDx",
+    "WHATSAPP_BOT_LINK": "https://wa.me/15556491968",
+  },
+  "env": {
+    "staging": {
+      "name": "checkers-webhook-service-staging",
+      "routes": [
+        {
+          "pattern": "checkers-webhook.staging.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "HOST_URL": "https://checkers-staging.checkmate.sg",
+        "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
+        "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OTP_KV",
+          "id": "635524c1abc04822b856ae710b0b5d3f",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "whatsapp-adhoc-message-queue-staging",
+            "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+        ],
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service-staging",
+        },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service-staging",
+        },
+        {
+          "binding": "WHATSAPP_MESSAGE_SERVICE",
+          "service": "whatsapp-adhoc-message-handler-staging",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler-staging",
+        },
+      ],
+    },
+    "production": {
+      "name": "checkers-webhook-service",
+      "routes": [
+        {
+          "pattern": "checkers-webhook.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "HOST_URL": "https://checkers.checkmate.sg",
+        "TYPEFORM_URL": "https://better-sg.typeform.com/to/nH8xme9G",
+        "WHATSAPP_BOT_LINK": "https://ref.checkmate.sg/add",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OTP_KV",
+          "id": "dd6c7922642349859ec36c978882ccc7",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "whatsapp-adhoc-message-queue",
+            "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+        ],
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service",
+        },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service",
+        },
+        {
+          "binding": "WHATSAPP_MESSAGE_SERVICE",
+          "service": "whatsapp-adhoc-message-handler",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler",
+        },
+      ],
+    },
+  },
+
+  /**
+   * Smart Placement
+   * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  // "placement": {  "mode": "smart" }
+  /**
+   * Bindings
+   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+   * databases, object storage, AI inference, real-time communication and more.
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   * Note: Use secrets to store sensitive data.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+  // "vars": {  "MY_VARIABLE": "production_value" }
+  /**
+   * Static Assets
+   * https://developers.cloudflare.com/workers/static-assets/binding/
+   */
+  // "assets": {  "directory": "./public/",  "binding": "ASSETS" }
+  /**
+   * Service Bindings (communicate between multiple Workers)
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+   */
+  // "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+}
