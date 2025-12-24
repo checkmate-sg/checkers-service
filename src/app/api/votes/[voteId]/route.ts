@@ -61,6 +61,8 @@ export async function POST(req: NextRequest, { params }) {
     // Get the Vote
     const voteResult = await env.CHECKERS_DB_SERVICE.findOneVote(filter);
 
+    console.log(voteResult);
+
     if (!voteResult.success) {
       return Err.notFound();
     }
@@ -87,6 +89,24 @@ export async function POST(req: NextRequest, { params }) {
     if (result.modifiedCount === 0) {
       return Err.notFound("Vote not found or no changes made");
     }
+
+    // Increase numVoted in Checkers only if this is a first-time vote (voteTimestamp was null)
+    if (voteResult.data.votedTimestamp === null) {
+      const checkerId = session.user.id;
+      const checkerUpdateResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
+        {_id: checkerId},
+        {$inc: {numVoted: 1}}
+      );
+
+      if (!checkerUpdateResult.success) {
+        console.error("Error updating checker numVote: ", checkerUpdateResult.error);
+        // Don't fail the request - the vote was already saved
+      }
+    }
+
+
+
+
 
     // Vote Service to calculate whether the votes are correct/wrong
     const pollId = voteResult.data.pollId;
