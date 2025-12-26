@@ -5,6 +5,12 @@ import { PollAPI, PollRequest, VoteAPI } from '@/shared/types/schema';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export async function POST(req: Request) {
+  // Verify API key
+  const apiKey = req.headers.get('x-api-key');
+  if (!apiKey || apiKey !== process.env.API_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = (await req.json()) as PollRequest;
     const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } =
