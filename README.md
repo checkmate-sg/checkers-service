@@ -52,10 +52,10 @@ pnpm dev
 
 | Worker | HTTP Port | Description |
 |--------|-----------|-------------|
-| checkers-db-service | 8788 | MongoDB database service |
-| checkers-reminder-alarm-service | 8789 | Durable Object alarms for reminders |
-| checkers-batch-service | 8790 | Daily cron jobs for lifecycle |
-| checkers-webhook-service | 8791 | Telegram & poll webhooks |
+| checkers-db-service | 9080 | MongoDB database service |
+| checkers-reminder-alarm-service | 9081 | Durable Object alarms for reminders |
+| checkers-batch-service | 9082 | Daily cron jobs for lifecycle |
+| checkers-webhook-service | 9083 | Telegram & poll webhooks |
 
 ## Checker Lifecycle Management
 
@@ -109,7 +109,7 @@ The poll webhook is handled by `checkers-webhook-service`. See [workers/checkers
 
 ```bash
 # Local development
-curl -X POST http://localhost:8791/polls/webhook \
+curl -X POST http://localhost:9083/polls/webhook \
   -H "Content-Type: application/json" \
   -H "x-api-key: <your-api-key>" \
   -d '{

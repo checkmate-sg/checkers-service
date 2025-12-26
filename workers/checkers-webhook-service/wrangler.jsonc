@@ -18,7 +18,7 @@
   ],
   "compatibility_flags": ["nodejs_compat"],
   "dev": {
-    "port": 8791,
+    "port": 9083,
   },
   "queues": {
     "producers": [
