@@ -32,7 +32,7 @@ Looking forward to seeing you again 🤗`;
 
 interface Env {
   TELEGRAM_BOT_TOKEN: string;
-  CHKECERS_REMINDER_DURABLE_OBJECT: DurableObjectNamespace<CheckersReminderDurableObject>;
+  CHECKERS_REMINDER_DURABLE_OBJECT: DurableObjectNamespace<CheckersReminderDurableObject>;
 }
 
 /**
@@ -187,8 +187,8 @@ export default class extends WorkerEntrypoint<Env> {
    * Get or create a Durable Object instance for a checker.
    */
   private getDurableObject(checkerId: string) {
-    const id = this.env.CHKECERS_REMINDER_DURABLE_OBJECT.idFromName(checkerId);
-    return this.env.CHKECERS_REMINDER_DURABLE_OBJECT.get(id);
+    const id = this.env.CHECKERS_REMINDER_DURABLE_OBJECT.idFromName(checkerId);
+    return this.env.CHECKERS_REMINDER_DURABLE_OBJECT.get(id);
   }
 
   /**
