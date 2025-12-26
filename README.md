@@ -7,6 +7,7 @@ A Telegram miniapp for crowd-sourcing fact-checking of messages.
 ### Prerequisites
 
 - Node.js (v18 or higher)
+- pnpm (v10 or higher)
 - MongoDB Atlas account
 - Telegram Bot Token
 - Git
@@ -18,57 +19,43 @@ A Telegram miniapp for crowd-sourcing fact-checking of messages.
 git clone https://github.com/checkmate-sg/checkers-service
 cd checkers-service
 
-# Install dependencies
-npm install
+# Install dependencies (pnpm monorepo - installs all workers too)
+pnpm install
 
 # Copy environment variables template
 cp .env.example .env.development.local
 
-# Configure your .env.local with:
+# Configure your .env.development.local with:
 # - MongoDB connection string
 # - Telegram bot token
 # - NextAuth configuration
 
-# Start the development server for the webapp
-npm run dev
+# Copy worker environment variables
+cp workers/checkers-db-service/.dev.vars.example workers/checkers-db-service/.dev.vars
+cp workers/checkers-webhook-service/.dev.vars.example workers/checkers-webhook-service/.dev.vars
+# ... repeat for other workers as needed
+```
+
+### Running Locally
+
+```bash
+# Terminal 1: Start all Cloudflare Workers in parallel
+pnpm dev:workers
+
+# Terminal 2: Start the NextJS app
+pnpm dev
 
 # The app will be available at http://localhost:3002
 ```
 
-### Running Workers Locally
+### Worker Ports
 
-```bash
-# Database service (required)
-cd workers/checkers-db-service
-npm install
-npm run dev
-
-# Batch service (for lifecycle management)
-cd workers/checkers-batch-service
-npm install
-npm run dev  # add --test-scheduled for manual triggers
-
-# Alarm service (for reactivation reminders)
-cd workers/checker-reminder-alarm-service
-npm install
-npm run dev
-```
-
-## Running the setup locally each time doing development
-
-```bash
-# Terminal 1: Database service
-npm run dev:db
-
-# Terminal 2: Batch service (optional, for lifecycle testing)
-cd workers/checkers-batch-service && npm run dev --test-scheduled
-
-# Terminal 3: Alarm service (optional, for reminder testing)
-cd workers/checker-reminder-alarm-service && npm run dev
-
-# Terminal 4: Webapp
-npm run dev
-```
+| Worker | HTTP Port | Description |
+|--------|-----------|-------------|
+| checkers-db-service | 8788 | MongoDB database service |
+| checkers-reminder-alarm-service | 8789 | Durable Object alarms for reminders |
+| checkers-batch-service | 8790 | Daily cron jobs for lifecycle |
+| checkers-webhook-service | 8791 | Telegram & poll webhooks |
 
 ## Checker Lifecycle Management
 
@@ -114,46 +101,40 @@ This project is built with:
 - NextAuthV5
 - Telegram miniapp/bot
 
-## Using Postman
+## Testing the Poll Webhook
 
-- Select the Body tab (right next to Headers).
-- Choose raw.
-- In the dropdown to the right of Text, select JSON.
-- Follow the submissions below
+The poll webhook is handled by `checkers-webhook-service`. See [workers/checkers-webhook-service/README.md](workers/checkers-webhook-service/README.md) for full API documentation.
 
-POST <replace this vercel url>/api/polls/webhook
+### Quick Test
 
-Example body for submission (following PollRequest interface):
-
-```json
-{
-  "checkId": "check_123456",
-  "imageUrl": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300",
-  "caption": "Example image caption",
-  "text": "This is the main text content to be fact-checked",
-  "longformResponse": {
-    "en": "Detailed analysis in English...",
-    "cn": "中文详细分析...",
-    "links": ["https://source1.com", "https://source2.com"],
-    "timestamp": "2024-01-15T10:30:00Z"
-  },
-  "shortformResponse": {
-    "en": "Brief summary in English",
-    "cn": "中文简短摘要",
-    "links": ["https://source1.com"],
-    "timestamp": "2024-01-15T10:30:00Z"
-  }
-}
+```bash
+# Local development
+curl -X POST http://localhost:8791/polls/webhook \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <your-api-key>" \
+  -d '{
+    "checkId": "check_123456",
+    "text": "This is the main text content to be fact-checked",
+    "shortformResponse": {
+      "en": "Brief summary in English",
+      "cn": null,
+      "links": ["https://source1.com"],
+      "timestamp": "2024-01-15T10:30:00Z",
+      "downvoted": false
+    }
+  }'
 ```
 
 Expected response:
 
 ```json
 {
-  "message": "Vote submitted successfully",
+  "message": "Poll created successfully",
   "id": "66abcdef123..."
 }
 ```
+
+**Note:** `text` and `imageUrl` are mutually exclusive - you can provide both fields but one must be null.
 
 ## Moving Forward
 

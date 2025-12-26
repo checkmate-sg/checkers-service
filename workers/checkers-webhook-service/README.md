@@ -59,7 +59,7 @@ x-api-key: <API_KEY>
 **Required fields:** `checkId`
 
 **Validation rules:**
-- `text` and `imageUrl` are mutually exclusive - cannot provide both
+- `text` and `imageUrl` are mutually exclusive - both can be present in the request but only one can have a truthy value (the other must be `null` or omitted)
 
 #### Responses
 
