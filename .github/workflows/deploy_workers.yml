@@ -99,7 +99,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           ENV_NAME="${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
-          pnpm --filter ${{ matrix.worker-dir }} run deploy -- --env $ENV_NAME
+          cd workers/${{ matrix.worker-dir }}
+          pnpm exec wrangler deploy --env $ENV_NAME
 
   # Tier 2: Workers that depend on Tier 1 (deploy after Tier 1 completes)
   deploy-tier-2:
@@ -144,4 +145,5 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           ENV_NAME="${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
-          pnpm --filter ${{ matrix.worker-dir }} run deploy -- --env $ENV_NAME
+          cd workers/${{ matrix.worker-dir }}
+          pnpm exec wrangler deploy --env $ENV_NAME
