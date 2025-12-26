@@ -6,6 +6,11 @@ import { usePathname } from "next/navigation";
 const BottomNavigation = () => {
   const pathname = usePathname();
 
+  // Hide navigation on unauthorized page
+  if (pathname === "/unauthorized") {
+    return null;
+  }
+
   const navItems = [
     {
       path: "/dashboard",
