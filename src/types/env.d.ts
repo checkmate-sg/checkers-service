@@ -58,7 +58,6 @@ declare global {
     POLL_UPDATE_QUEUE: Queue<PollUpdateMessage>;
 
     // Environment variables (these extend the base CloudflareEnv)
-    TELEGRAM_WEBHOOK_SECRET?: string;
     NEXTAUTH_URL?: string;
     TYPEFORM_URL?: string;
     WHATSAPP_BOT_LINK?: string;
