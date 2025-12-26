@@ -62,6 +62,7 @@
         "ENVIRONMENT": "staging",
         "NEXTAUTH_URL": "https://checkers.staging.checkmate.sg",
       },
+      "routes": ["checkers-staging.checkmate.sg"],
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
@@ -114,6 +115,7 @@
         "ENVIRONMENT": "production",
         "NEXTAUTH_URL": "https://checkers.checkmate.sg",
       },
+      "routes": ["checkers.checkmate.sg"],
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
