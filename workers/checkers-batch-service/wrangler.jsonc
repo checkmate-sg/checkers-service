@@ -23,7 +23,7 @@
    * Dev configuration
    */
   "dev": {
-    "port": 8790,
+    "port": 9082,
   },
   /**
    * Service Bindings
