@@ -41,4 +41,5 @@ interface Env {
   WHATSAPP_MESSAGE_SERVICE: WhatsAppMessageService;
   TYPEFORM_SECRET_TOKEN: string;
   WHATSAPP_CHECKER_HANDLER_SERVICE: WhatsAppCheckerHandlerService;
+  API_KEY: string;
 }

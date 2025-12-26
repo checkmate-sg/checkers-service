@@ -1,56 +1,50 @@
-import { NextResponse } from 'next/server';
+import { Context } from "hono";
+import { Bot, InlineKeyboard } from "grammy";
+import type { PollRequest, PollAPI, VoteAPI } from "./types";
 
-import { createInlineKeyboard, sendMessage } from '@/lib/telegramHelpers/telegram';
-import { PollAPI, PollRequest, VoteAPI } from '@/shared/types/schema';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
+  const env = c.env;
 
-export async function POST(req: Request) {
   // Verify API key
-  const apiKey = req.headers.get('x-api-key');
-  if (!apiKey || apiKey !== process.env.API_KEY) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const apiKey = c.req.header("x-api-key");
+  if (!apiKey || apiKey !== env.API_KEY) {
+    return c.json({ error: "Unauthorized" }, 401);
   }
 
   try {
-    const body = (await req.json()) as PollRequest;
+    const body = (await c.req.json()) as PollRequest;
     const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } =
       body;
 
-    // console.log("Received poll webhook:", body);
     // Validate required fields
     if (!checkId) {
-      return NextResponse.json({ error: "Missing 'checkId'" }, { status: 400 });
+      return c.json({ error: "Missing 'checkId'" }, 400);
     }
 
     // Validate that text and imageUrl are mutually exclusive
     if (text && imageUrl) {
-      return NextResponse.json(
+      return c.json(
         { error: "Cannot provide both 'text' and 'imageUrl' - they are mutually exclusive" },
-        { status: 400 }
+        400
       );
     }
-
-    // Get Cloudflare context and database service
-    const { env } = getCloudflareContext();
 
     // Check if poll with this checkId already exists
     const existingPollResult = await env.CHECKERS_DB_SERVICE.findOnePoll({
       checkId: checkId,
     });
 
-    // console.log(existingPollResult.data);
-
     if (existingPollResult.success && existingPollResult.data) {
-      return NextResponse.json(
+      return c.json(
         {
           error: "Poll with this checkId already exists",
-          id: existingPollResult.data._id?.toString() || existingPollResult.data._id,
+          id: existingPollResult.data._id,
         },
-        { status: 409 }
+        409
       );
     }
 
-    // Create new poll (without _id, let the DB service handle it)
+    // Create new poll
     const newPoll: Omit<PollAPI, "_id"> = {
       checkId: checkId,
       text: text || null,
@@ -109,38 +103,37 @@ export async function POST(req: Request) {
     const insertResult = await env.CHECKERS_DB_SERVICE.insertPoll(newPoll);
 
     if (!insertResult.success) {
-      console.error("[WEBHOOK ERROR]", insertResult.error);
-      return NextResponse.json(
-        { error: insertResult.error || "Failed to create poll" },
-        { status: 500 }
-      );
+      console.error("[POLL WEBHOOK ERROR]", insertResult.error);
+      return c.json({ error: insertResult.error || "Failed to create poll" }, 500);
     }
 
-    // Builds a previewText for notification
+    // Build preview text for notification
     let previewText = "";
     if (text) {
       previewText = text.length > 50 ? text.substring(0, 50) + "..." : text;
     }
-
     if (imageUrl) {
       previewText = previewText ? `${previewText}\n <Image 🖼️>` : "<Image 🖼️>";
     }
 
-    // Despatch Poll
-    // Get all the active checkers who is currently active
+    // Get all active checkers
     const activeCheckersResult = await env.CHECKERS_DB_SERVICE.findCheckers(
       {
         isActive: true,
         isOnboardingComplete: true,
       },
       { dailyAssignmentCount: 1 }
-    ); // activeCheckerResult.data is Checker[]
+    );
 
+    // Create Telegram bot instance
+    const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
+
+    // Send vote requests to each checker
     for (const checker of activeCheckersResult.data) {
-      // Create a vote request in the database for each checker
+      // Create a vote request in the database
       const voteRequest: Omit<VoteAPI, "_id"> = {
-        pollId: insertResult.id, // Use the poll's _id, not checkId
-        checkerId: checker._id?.toString() || checker._id,
+        pollId: insertResult.id!,
+        checkerId: checker._id!,
         createdTimestamp: new Date(),
         votedTimestamp: null,
         category: null,
@@ -148,33 +141,35 @@ export async function POST(req: Request) {
         responseCategory: null,
         commentOnResponse: null,
       };
+
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
 
       if (!insertVoteResult.success) {
-        console.error("[WEBHOOK ERROR]", insertVoteResult.error);
-        return NextResponse.json(
-          { error: insertVoteResult.error || "Failed to create poll" },
-          { status: 500 }
-        );
+        console.error("[POLL WEBHOOK ERROR]", insertVoteResult.error);
+        return c.json({ error: insertVoteResult.error || "Failed to create vote" }, 500);
       }
 
-      const voteRequestPath = `${process.env.HOST_URL}/votes/${insertVoteResult.id}`;
+      const voteRequestPath = `${env.HOST_URL}/votes/${insertVoteResult.id}`;
 
-      // Send each checker the vote request message
-      await sendMessage(checker.telegramId, previewText, {
-        reply_markup: createInlineKeyboard([
-          [{ text: "Vote 🗳️!", web_app: { url: voteRequestPath } }],
-        ]),
-      });
+      // Send Telegram notification
+      const keyboard = new InlineKeyboard().webApp("Vote 🗳️!", voteRequestPath);
+
+      try {
+        await bot.api.sendMessage(checker.telegramId, previewText, {
+          reply_markup: keyboard,
+        });
+      } catch (error) {
+        console.error(`Failed to send message to checker ${checker.telegramId}:`, error);
+        // Continue with other checkers even if one fails
+      }
     }
 
-    // Return the string ID from the database service
-    return NextResponse.json({
+    return c.json({
       message: "Poll created successfully",
       id: insertResult.id,
     });
   } catch (err) {
-    console.error("[WEBHOOK ERROR]", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("[POLL WEBHOOK ERROR]", err);
+    return c.json({ error: "Server error" }, 500);
   }
 }
