@@ -118,8 +118,8 @@ export function useTelegramAuth() {
         setError(err instanceof Error ? err.message : "Authentication failed");
         setIsLoading(false);
 
-        // Redirect to unauthorized page after 3 seconds
-        setTimeout(() => router.push("/unauthorized"), 3000);
+        // Redirect to unauthorized page immediately
+        router.push("/unauthorized");
       }
     };
 
