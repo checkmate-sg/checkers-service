@@ -262,19 +262,6 @@ importers:
         specifier: ^4.33.2
         version: 4.56.0(@cloudflare/workers-types@4.20251225.0)
 
-  workers/checkers-batch-service:
-    dependencies:
-      grammy:
-        specifier: ^1.38.4
-        version: 1.38.4
-    devDependencies:
-      typescript:
-        specifier: ^5.5.2
-        version: 5.9.3
-      wrangler:
-        specifier: ^4.56.0
-        version: 4.56.0(@cloudflare/workers-types@4.20251225.0)
-
   workers/checkers-db-service:
     dependencies:
       mongodb:
@@ -293,6 +280,19 @@ importers:
       vitest:
         specifier: ~2.1.9
         version: 2.1.9(@types/node@22.19.3)(terser@5.16.9)
+
+  workers/checkers-event-handler-service:
+    dependencies:
+      grammy:
+        specifier: ^1.38.4
+        version: 1.38.4
+    devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.56.0
+        version: 4.56.0(@cloudflare/workers-types@4.20251225.0)
 
   workers/checkers-reminder-alarm-service:
     dependencies:
