@@ -59,7 +59,7 @@
         "binding": "CHECKERS_EVENTS_QUEUE",
       },
       {
-        "queue": "poll-update-queue",
+        "queue": "checkers-poll-update-queue",
         "binding": "POLL_UPDATE_QUEUE",
       },
     ],
@@ -95,7 +95,7 @@
       "queues": {
         "producers": [
           {
-            "queue": "poll-update-queue-staging",
+            "queue": "checkers-poll-update-queue-staging",
             "binding": "POLL_UPDATE_QUEUE",
           },
         ],
@@ -133,7 +133,7 @@
       "queues": {
         "producers": [
           {
-            "queue": "poll-update-queue",
+            "queue": "checkers-poll-update-queue",
             "binding": "POLL_UPDATE_QUEUE",
           },
         ],
