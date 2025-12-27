@@ -154,6 +154,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const db = this.client.db(DB_NAME);
       const votesCollection = db.collection<Vote>("votes");
 
+      // Validate checkerId before creating ObjectId
+      if (!baseFilter?.checkerId || !ObjectId.isValid(baseFilter.checkerId)) {
+        return { success: false, error: `Invalid checkerId: ${baseFilter?.checkerId}` };
+      }
+
       const baseMatch: any = { checkerId: new ObjectId(baseFilter.checkerId) };
       if (baseFilter?.voteCheckerStatus === true) {
         // Means voted

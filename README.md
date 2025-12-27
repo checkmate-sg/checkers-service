@@ -54,7 +54,7 @@ pnpm dev
 |--------|-----------|-------------|
 | checkers-db-service | 9080 | MongoDB database service |
 | checkers-reminder-alarm-service | 9081 | Durable Object alarms for reminders |
-| checkers-batch-service | 9082 | Daily cron jobs for lifecycle |
+| checkers-event-handler-service | 9082 | Queue consumer + daily cron jobs for lifecycle |
 | checkers-webhook-service | 9083 | Telegram & poll webhooks |
 
 ## Checker Lifecycle Management

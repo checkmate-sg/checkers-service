@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "checkers-batch-service",
+  "name": "checkers-event-handler-service",
   "main": "src/index.ts",
   "compatibility_date": "2025-12-20",
   "compatibility_flags": ["nodejs_compat"],
@@ -52,12 +52,29 @@
     "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
     "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
   },
+  "queues": {
+    "producers": [
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
+      },
+      {
+        "queue": "poll-update-queue",
+        "binding": "POLL_UPDATE_QUEUE",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "checkers-events-queue",
+      },
+    ],
+  },
   /**
    * Environment-specific configurations
    */
   "env": {
     "staging": {
-      "name": "checkers-batch-service-staging",
+      "name": "checkers-event-handler-service-staging",
       "vars": {
         "ENVIRONMENT": "staging",
         "HOST_URL": "https://checkers-staging.checkmate.sg",
@@ -75,9 +92,22 @@
           "service": "checkers-reminder-alarm-service-staging",
         },
       ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "poll-update-queue-staging",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "checkers-events-queue-staging",
+          },
+        ],
+      },
     },
     "production": {
-      "name": "checkers-batch-service",
+      "name": "checkers-event-handler-service",
       "vars": {
         "ENVIRONMENT": "production",
         "HOST_URL": "https://checkers.checkmate.sg",
@@ -100,6 +130,19 @@
           "service": "tail-consumer-service",
         },
       ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "poll-update-queue",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "checkers-events-queue",
+          },
+        ],
+      },
     },
   },
 }

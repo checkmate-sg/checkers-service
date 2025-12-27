@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
 import { Err } from '@/lib/api/error';
+import {
+  createVoteSubmittedEvent,
+  publishCheckersEvent,
+} from '@/lib/helpers/events/publishCheckersEvent';
 import { voteAssessment } from '@/lib/helpers/voteAssessment/voteAssessment';
 import { Vote } from '@/lib/request/external/lib/data-contracts';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
@@ -88,8 +92,18 @@ export async function POST(req: NextRequest, { params }) {
       return Err.notFound("Vote not found or no changes made");
     }
 
-    // Vote Service to calculate whether the votes are correct/wrong
+    // Send event to queue for background processing
+    const eventResult = await publishCheckersEvent(
+      env,
+      createVoteSubmittedEvent({ voteId })
+    );
     const pollId = voteResult.data.pollId;
+    if (!eventResult.success) {
+      console.error("Failed to publish vote.submitted event:", eventResult.error);
+      // Don't fail the request - just log
+    }
+
+    // Vote Service to calculate whether the votes are correct/wrong
     const crowdSourcedCategoryResults = await voteAssessment(pollId);
     if (!crowdSourcedCategoryResults.success) {
       console.error("Error in vote assessment: ", crowdSourcedCategoryResults.error);
