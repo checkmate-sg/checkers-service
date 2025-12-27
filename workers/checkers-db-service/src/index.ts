@@ -532,6 +532,32 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async findVotes(
+    filter: Filter<Vote>
+  ): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const votes = await votesCollection.find(processedFilter).toArray();
+
+      const votesWithStringIds = votes.map(vote => ({
+        ...vote,
+        _id: vote._id?.toString(),
+        pollId: vote.pollId?.toString(),
+        checkerId: vote.checkerId?.toString(),
+      }));
+
+      return { success: true, data: votesWithStringIds as VoteAPI[] };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find votes");
+      return { success: false, error: errorMessage };
+    }
+  }
+
   async getLeaderboardInfo(
     startOfMonth: Date,
     startOfNextMonth: Date
@@ -721,6 +747,11 @@ export default class extends WorkerEntrypoint<Env> {
   async findOneVote(filter: Filter<Vote>) {
     const durableObject = this.getDurableObject();
     return durableObject.findOneVote(filter);
+  }
+
+  async findVotes(filter: Filter<Vote>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findVotes(filter);
   }
 
   async getLeaderboardInfo(

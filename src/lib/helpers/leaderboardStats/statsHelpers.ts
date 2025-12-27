@@ -42,7 +42,7 @@ export function checkAccuracy(
         return null;
     }
     if (voteCategory === "info") {
-       if (!["misleading", "untrue", "accurae"].includes(crowdSourcedCategory)){
+       if (!["misleading", "untrue", "accurate"].includes(crowdSourcedCategory)){
         return false;
        }
        if (crowdSourcedTruthScore === null || voteTruthScore === null) {

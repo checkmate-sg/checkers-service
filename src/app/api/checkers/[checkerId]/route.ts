@@ -16,7 +16,6 @@ export async function GET(req: NextRequest, { params }) {
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
 
-
     if (!result.success) {
       return Err.notFound();
     }
