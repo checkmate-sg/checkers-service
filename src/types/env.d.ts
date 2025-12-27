@@ -1,6 +1,17 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
 import { CheckerAPI, PollAPI, PollUpdateMessage, VoteAPI } from "@/shared/types/schema";
 
+// Event types for the checkers event queue
+interface CheckersEvent<T = unknown> {
+  type: string;
+  data: T;
+  timestamp: string;
+}
+
+interface VoteSubmittedEventData {
+  voteId: string;
+}
+
 declare global {
   interface CloudflareEnv {
     // Service bindings
@@ -54,8 +65,14 @@ declare global {
     };
     CHECKMATE_WHATSAPP_SERVICE?: any;
 
+    // Event handler service binding (for local dev queue publishing)
+    CHECKERS_EVENT_HANDLER_SERVICE?: {
+      addToCheckersEventQueue(event: CheckersEvent): Promise<{ success: boolean; error?: string }>;
+    };
+
     // Queue bindings
     POLL_UPDATE_QUEUE: Queue<PollUpdateMessage>;
+    CHECKERS_EVENTS_QUEUE: Queue<CheckersEvent>;
 
     // Environment variables (these extend the base CloudflareEnv)
     NEXTAUTH_URL?: string;

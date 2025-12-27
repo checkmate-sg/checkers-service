@@ -9,6 +9,16 @@ import {
 } from "./constants";
 import { sendOTP, checkOTP } from "./otp";
 
+// Safely answer callback query - don't let failures block the handler
+async function safeAnswerCallbackQuery(ctx: Context): Promise<void> {
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (err) {
+    // Ignore "query is too old" errors - the button click is still valid
+    console.warn("Failed to answer callback query (likely expired):", err);
+  }
+}
+
 // Create bot instance with env available via closure
 export function createBot(token: string, env: Env): Bot {
   const bot = new Bot(token);
@@ -135,7 +145,7 @@ export function createBot(token: string, env: Env): Bot {
   // ============================================
 
   bot.callbackQuery("QUIZ_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     // Verify quiz was actually completed via Typeform webhook
@@ -160,7 +170,7 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("WA_SERVICE_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     // Verify user has actually used the WhatsApp service
@@ -189,7 +199,7 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("TG_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
     const userId = ctx.from!.id;
 
@@ -213,14 +223,14 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     await sendCompletionPrompt(ctx, env, telegramId);
   });
 
   bot.callbackQuery("ONBOARD_AGAIN", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
@@ -237,17 +247,17 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("RESOURCES", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     await ctx.reply(RESOURCES_MESSAGE, { parse_mode: "HTML" });
   });
 
   bot.callbackQuery("REQUEST_NUMBER", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     await sendNumberPrompt(ctx);
   });
 
   bot.callbackQuery("SEND_OTP", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
@@ -263,7 +273,7 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("reactivate", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });

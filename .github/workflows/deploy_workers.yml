@@ -34,7 +34,7 @@ jobs:
       - name: Determine changed workers
         id: changed-workers
         run: |
-          ALL_WORKER_DIRS='["checkers-db-service","checkers-reminder-alarm-service","checkers-batch-service","checkers-webhook-service"]'
+          ALL_WORKER_DIRS='["checkers-db-service","checkers-reminder-alarm-service","checkers-event-handler-service","checkers-webhook-service"]'
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
             echo "Force deploying all workers"
@@ -112,7 +112,7 @@ jobs:
     strategy:
       matrix:
         worker-dir:
-          - checkers-batch-service
+          - checkers-event-handler-service
           - checkers-webhook-service
     timeout-minutes: 30
     steps:

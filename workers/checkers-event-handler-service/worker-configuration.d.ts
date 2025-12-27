@@ -15,4 +15,14 @@ interface Env {
   CHECKERS_CHAT_ID: string;
   CHECKERS_DB_SERVICE: CheckersDBService;
   CHECKER_REMINDER_ALARM_SERVICE: CheckerReminderAlarmService;
+  CHECKERS_EVENTS_QUEUE: Queue<unknown>;
+  POLL_UPDATE_QUEUE: Queue<PollUpdateMessage>;
+}
+
+// Message payload for poll update queue (sent to CheckMate platform when assessment changes)
+interface PollUpdateMessage {
+  id: string; // checkId
+  isHumanAssessed: boolean;
+  crowdsourcedCategory: string | null;
+  isCommunityNoteDownvoted: boolean;
 }
