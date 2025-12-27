@@ -14,6 +14,8 @@ tags:
     description: API for managing Polls
   - name: Votes 
     description: API for managing Votes 
+  - name: Leaderboard 
+    description: API for managing Leaderboard 
 
 paths:
   '/checkers/{checkerId}':
@@ -352,6 +354,34 @@ paths:
                       description: The database identifier of the updated vote 
         '400':
           $ref: '#/components/responses/InvalidParametersError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  '/leaderboard':
+    get:
+      summary: Get leaderboard information 
+      description: Retrieves leaderboard data for the current month. 
+      tags:
+        - Leaderboard 
+      responses:
+        '200':
+          description: Successfully retrieved leaderboard information 
+          content: 
+            application/json:
+              schema:
+                type: object 
+                properties: 
+                  success: 
+                    type: boolean
+                    example: true 
+                  data:
+                    type: array
+                    items: 
+                      $ref: "#/components/schemas/Leaderboard"
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '404':
@@ -736,6 +766,42 @@ components:
                 URL of the image in the poll, if any 
             crowdSourcedCategory:
               $ref: '#/components/schemas/Category'
+    
+    Leaderboard:
+      type: object
+      required:
+        - _id
+        - checkerName
+        - numberOfVotes 
+        - totalScore 
+        - averageResponseTime 
+        - accuracy 
+        - correctVotes
+      properties:
+        _id: 
+          type: string 
+          description: Checkers Ids 
+        checkerName:
+          type: string 
+          description: Name from the checkers collection 
+        numberOfVotes:
+          type: integer
+          description: Total count of votes 
+        totalScore:
+          type: number 
+          description: Sum of all scores 
+        averageResponseTime:
+          type: number 
+          format: float 
+          description: Average response time in hours 
+        accuracy:
+          type: number 
+          format: float 
+          description: Percentage (0-100), rounded to 2 d.p. 
+        correctVotes:
+          type: integer 
+          description: Count of votes where isCorrect = true 
+
               
     PaginationTotal:
       description: the count of the total number of records
