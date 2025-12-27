@@ -1,5 +1,6 @@
-import { Context } from "hono";
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard } from 'grammy';
+import { Context } from 'hono';
+
 import type { PollRequest, PollAPI, VoteAPI } from "./types";
 
 export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {

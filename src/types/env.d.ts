@@ -1,5 +1,5 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, PollUpdateMessage, VoteAPI } from "@/shared/types/schema";
+import { CheckerAPI, PollAPI, PollUpdateMessage, VoteAPI } from '@/shared/types/schema';
 
 declare global {
   interface CloudflareEnv {
@@ -51,6 +51,7 @@ declare global {
       ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number }>;
       findOnePoll(filter: any): Promise<{ success: boolean; data?: PollAPI; error?: string }>;
       findOneVote(filter: any): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
+      getLeaderboardInfo(startOfMonth: Date, startOfNextMonth: Date):  Promise<{ success: boolean, data?: LeaderboardAPI[], total?: number, error?: string}>;
     };
     CHECKMATE_WHATSAPP_SERVICE?: any;
 

@@ -23,6 +23,7 @@ type ObjectIdToString<T> = {
 export type CheckerAPI = ObjectIdToString<Checker>;
 export type PollAPI = ObjectIdToString<Poll>;
 export type VoteAPI = ObjectIdToString<Vote>;
+export type LeaderboardAPI = ObjectIdToString<Leaderboard> // _id is the checkers Id
 
 // User/Checker schema
 export interface Checker extends BaseDocument {
@@ -179,3 +180,14 @@ export interface VoteChecker extends BaseDocument {
   isCorrect: boolean | null; // Whether the vote matched the consensus
   poll: Poll;
 }
+
+// Leaderboard
+export interface Leaderboard extends BaseDocument {
+  checkerName: string; // Name from checkers collection
+  numberOfVotes: number;  // Total count of votes 
+  totalScore: number; // Sum of all scores 
+  averageResponseTime: number; // Average response time in hrs
+  accuracy: number; // Percentage (0-100), rounded to 2 d.p.
+  correctVotes: number; // Count of votes where isCorrect = true 
+}
+
