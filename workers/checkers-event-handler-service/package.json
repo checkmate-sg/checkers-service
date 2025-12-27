@@ -1,5 +1,5 @@
 {
-	"name": "checkers-batch-service",
+	"name": "checkers-event-handler-service",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
@@ -10,7 +10,7 @@
 	},
 	"devDependencies": {
 		"typescript": "^5.5.2",
-		"wrangler": "^4.56.0"
+		"wrangler": "4.54.0"
 	},
 	"dependencies": {
 		"grammy": "^1.38.4"

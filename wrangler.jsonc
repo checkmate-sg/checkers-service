@@ -24,6 +24,10 @@
       "binding": "CHECKER_REMINDER_ALARM_SERVICE",
       "service": "checkers-reminder-alarm-service",
     },
+    {
+      "binding": "CHECKERS_EVENT_HANDLER_SERVICE",
+      "service": "checkers-event-handler-service",
+    },
   ],
   // R2 incremental cache
   "r2_buckets": [
@@ -46,6 +50,10 @@
       {
         "queue": "checkers-poll-update-queue",
         "binding": "POLL_UPDATE_QUEUE",
+      },
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
       },
     ],
   },
@@ -106,6 +114,10 @@
             "queue": "checkers-poll-update-queue-staging",
             "binding": "POLL_UPDATE_QUEUE",
           },
+          {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
         ],
       },
       "observability": {
@@ -163,6 +175,10 @@
           {
             "queue": "checkers-poll-update-queue",
             "binding": "POLL_UPDATE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },

@@ -33,8 +33,8 @@ src/
 shared/types/schema.ts          # DB schemas (Checker, Poll, Vote)
 workers/
 ├── checkers-db-service/        # Cloudflare Worker for MongoDB
-├── checkers-batch-service/     # Daily cron jobs for lifecycle management
-└── checker-reminder-alarm-service/  # Durable Object alarms for reminders
+├── checkers-event-handler-service/  # Queue consumer + daily cron jobs for lifecycle
+└── checkers-reminder-alarm-service/ # Durable Object alarms for reminders
 ```
 
 ## Core Features
@@ -57,7 +57,7 @@ workers/
 Name → Phone → Quiz → WhatsApp → Group Chat → NLB Partnership
 
 ### Checker Lifecycle Management
-Automated via `checkers-batch-service` (daily crons) and `checker-reminder-alarm-service` (Durable Object alarms):
+Automated via `checkers-event-handler-service` (queue consumer + daily crons) and `checkers-reminder-alarm-service` (Durable Object alarms):
 
 **Inactivity Flow:**
 - Day 3: Warning message ("you'll be deactivated in 7 days")
@@ -95,10 +95,12 @@ Located in `src/lib/helpers/voteAssessment/`. Determines consensus based on:
 - Different vote thresholds for different category types (e.g., 4 votes for clear scams, 10+ for borderline cases)
 - Truth scores mapped: <1.5 = untrue, 1.5-3.75 = misleading, >3.75 = accurate
 
-### Batch Service
-`workers/checkers-batch-service/` runs daily cron jobs:
-- 8:11 PM SGT: Inactivity checks (3-day warning, 10-day deactivation)
-- 8:41 PM SGT: Programme checks (60-day extension, 90-day offboarding)
+### Event Handler Service
+`workers/checkers-event-handler-service/` handles:
+- **Queue events**: Processes `vote.submitted` events for background vote assessment
+- **Daily crons**:
+  - 8:11 PM SGT: Inactivity checks (3-day warning, 10-day deactivation)
+  - 8:41 PM SGT: Programme checks (60-day extension, 90-day offboarding)
 
 ### Alarm Service
 `workers/checker-reminder-alarm-service/` uses Durable Objects to schedule per-checker reminders after deactivation. Alarms are cancelled when checker reactivates via the "Reactivate Now" button.
@@ -112,8 +114,8 @@ npm run deploy     # Deploy to Cloudflare
 
 # Workers (run in separate terminals)
 cd workers/checkers-db-service && npm run dev
-cd workers/checkers-batch-service && npm run dev      # use --test-scheduled for manual triggers
-cd workers/checker-reminder-alarm-service && npm run dev
+cd workers/checkers-event-handler-service && npm run dev  # use --test-scheduled for manual triggers
+cd workers/checkers-reminder-alarm-service && npm run dev
 ```
 
 ## External Integrations

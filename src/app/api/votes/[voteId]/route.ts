@@ -4,6 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { Err } from '@/lib/api/error';
 import {
+  createVoteSubmittedEvent,
+  publishCheckersEvent
+} from '@/lib/helpers/events/publishCheckersEvent';
+import {
   checkAccuracy,
   computeGamificationScore
 } from '@/lib/helpers/leaderboardStats/statsHelpers';
@@ -100,22 +104,18 @@ export async function POST(req: NextRequest, { params }) {
       return Err.notFound("Vote not found or no changes made");
     }
 
-    // Increase numVoted in Checkers only if this is a first-time vote (voteTimestamp was null)
-    if (voteResult.data.votedTimestamp === null) {
-      const checkerId = session.user.id;
-      const checkerUpdateResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
-        {_id: checkerId},
-        {$inc: {numVoted: 1}}
-      );
-
-      if (!checkerUpdateResult.success) {
-        console.error("Error updating checker numVote: ", checkerUpdateResult.error);
-        // Don't fail the request - the vote was already saved
-      }
+    // Send event to queue for background processing
+    const eventResult = await publishCheckersEvent(
+      env,
+      createVoteSubmittedEvent({ voteId })
+    );
+    const pollId = voteResult.data.pollId;
+    if (!eventResult.success) {
+      console.error("Failed to publish vote.submitted event:", eventResult.error);
+      // Don't fail the request - just log
     }
 
     // Vote Service to calculate whether the votes are correct/wrong
-    const pollId = voteResult.data.pollId;
     const crowdSourcedCategoryResults = await voteAssessment(pollId);
     if (!crowdSourcedCategoryResults.success) {
       console.error("Error in vote assessment: ", crowdSourcedCategoryResults.error);
