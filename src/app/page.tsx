@@ -54,17 +54,8 @@ export default function HomePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-500 mb-4">Authentication failed: {error}</p>
-          <button
-            onClick={() => {
-              // Reset the redirect flag and reload
-              hasRedirected.current = false;
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
+          <Loader2 className="animate-spin mx-auto mb-4" size={32} />
+          <p>Redirecting...</p>
         </div>
       </div>
     );

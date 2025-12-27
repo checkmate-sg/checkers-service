@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { webhookCallback } from "grammy";
 import { createBot } from "./bot";
 import { handleTypeformWebhook } from "./typeform";
+import { handlePollWebhook } from "./polls";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -31,4 +32,8 @@ app.post("/telegram", async c => {
 });
 // Typeform webhook endpoint for quiz completion
 app.post("/typeform", handleTypeformWebhook);
+
+// Poll webhook endpoint for receiving checks from CheckMate
+app.post("/polls/webhook", handlePollWebhook);
+
 export default app;

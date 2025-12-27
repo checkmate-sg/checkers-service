@@ -1,0 +1,149 @@
+name: Deploy CF Workers
+# Trigger the workflow on pushes to staging/main branches when worker code changes
+# or manually via workflow_dispatch with optional parameters
+on:
+  push:
+    branches:
+      - staging
+      - main
+    paths:
+      - "workers/**" # Run when worker code changes
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: Force deploy all workers
+        required: false
+        default: false
+        type: boolean
+      specific_worker:
+        description: Deploy a specific worker (leave empty for automatic detection)
+        required: false
+        type: string
+
+jobs:
+  scan-for-changes:
+    name: Scan for worker code changes
+    runs-on: ubuntu-latest
+    outputs:
+      worker-dirs: ${{ steps.changed-workers.outputs.worker-dirs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed workers
+        id: changed-workers
+        run: |
+          ALL_WORKER_DIRS='["checkers-db-service","checkers-reminder-alarm-service","checkers-batch-service","checkers-webhook-service"]'
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
+            echo "Force deploying all workers"
+            WORKER_DIRS="$ALL_WORKER_DIRS"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.specific_worker }}" ]]; then
+            echo "Deploying specific worker: ${{ github.event.inputs.specific_worker }}"
+            WORKER_DIRS="[\"${{ github.event.inputs.specific_worker }}\"]"
+          else
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+            WORKER_CHANGES=$(echo "$CHANGED_FILES" | grep "^workers/" || true)
+            if [[ -z "$WORKER_CHANGES" ]]; then
+              echo "No worker changes detected"
+              echo "worker-dirs=[]" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            WORKER_DIRS=$(echo "$WORKER_CHANGES" | grep -o "workers/[^/]*" | cut -d'/' -f2 | sort | uniq | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+
+          echo "worker-dirs=$WORKER_DIRS" >> $GITHUB_OUTPUT
+          echo "Changed worker directories: $WORKER_DIRS"
+
+  # Tier 1: Workers with no dependencies (deploy in parallel)
+  deploy-tier-1:
+    name: "Deploy ${{ matrix.worker-dir }} to ${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
+    needs: scan-for-changes
+    if: ${{ needs.scan-for-changes.outputs.worker-dirs != '[]' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+    strategy:
+      matrix:
+        worker-dir:
+          - checkers-db-service
+          - checkers-reminder-alarm-service
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.5.2
+
+      - name: Check if worker has changes
+        id: check-changes
+        run: |
+          CHANGED_WORKERS='${{ needs.scan-for-changes.outputs.worker-dirs }}'
+          if echo $CHANGED_WORKERS | jq -e 'contains(["${{ matrix.worker-dir }}"])' > /dev/null; then
+            echo "Worker ${{ matrix.worker-dir }} has changes, will deploy"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "Worker ${{ matrix.worker-dir }} has no changes, skipping"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: pnpm install
+
+      - name: Deploy with Wrangler CLI
+        if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV_NAME="${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
+          cd workers/${{ matrix.worker-dir }}
+          pnpm exec wrangler deploy --env $ENV_NAME
+
+  # Tier 2: Workers that depend on Tier 1 (deploy after Tier 1 completes)
+  deploy-tier-2:
+    name: "Deploy ${{ matrix.worker-dir }} to ${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
+    needs: [scan-for-changes, deploy-tier-1]
+    if: ${{ needs.scan-for-changes.outputs.worker-dirs != '[]' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+    strategy:
+      matrix:
+        worker-dir:
+          - checkers-batch-service
+          - checkers-webhook-service
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.5.2
+
+      - name: Check if worker has changes
+        id: check-changes
+        run: |
+          CHANGED_WORKERS='${{ needs.scan-for-changes.outputs.worker-dirs }}'
+          if echo $CHANGED_WORKERS | jq -e 'contains(["${{ matrix.worker-dir }}"])' > /dev/null; then
+            echo "Worker ${{ matrix.worker-dir }} has changes, will deploy"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "Worker ${{ matrix.worker-dir }} has no changes, skipping"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: pnpm install
+
+      - name: Deploy with Wrangler CLI
+        if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV_NAME="${{ github.ref_name == 'main' && 'production' || github.ref_name }}"
+          cd workers/${{ matrix.worker-dir }}
+          pnpm exec wrangler deploy --env $ENV_NAME

@@ -23,7 +23,7 @@
    * Dev configuration
    */
   "dev": {
-    "port": 8790,
+    "port": 9082,
   },
   /**
    * Service Bindings
@@ -71,8 +71,8 @@
           "service": "checkers-db-service-staging",
         },
         {
-          "binding": "CHECKER_PROGRAMME_ALARM_SERVICE",
-          "service": "checkers-programme-alarm-service-staging",
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service-staging",
         },
       ],
     },
@@ -91,8 +91,8 @@
           "service": "checkers-db-service",
         },
         {
-          "binding": "CHECKER_PROGRAMME_ALARM_SERVICE",
-          "service": "checkers-programme-alarm-service",
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service",
         },
       ],
       "tail_consumers": [

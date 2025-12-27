@@ -18,7 +18,7 @@
   ],
   "compatibility_flags": ["nodejs_compat"],
   "dev": {
-    "port": 8791,
+    "port": 9083,
   },
   "queues": {
     "producers": [
@@ -71,7 +71,7 @@
       ],
       "vars": {
         "ENVIRONMENT": "staging",
-        "HOST_URL": "https://checkers-staging.checkmate.sg",
+        "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
       },

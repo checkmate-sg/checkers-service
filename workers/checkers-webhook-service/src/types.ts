@@ -1,4 +1,4 @@
-import type { Checker } from "../../../shared/types/schema";
+import type { Checker, Poll, Vote, Response, ShortformResponse, HumanResponse } from "../../../shared/types/schema";
 
 // Service binding types (RPC interfaces)
 interface CheckersDbService {
@@ -6,6 +6,15 @@ interface CheckersDbService {
     success: boolean;
     data?: CheckerAPI;
     error?: string;
+  }>;
+  findCheckers(
+    filter: Record<string, unknown>,
+    options?: Record<string, unknown>
+  ): Promise<{
+    success: boolean;
+    data: CheckerAPI[];
+    error?: string;
+    total: number;
   }>;
   insertChecker(
     checker: Omit<Checker, "_id">,
@@ -15,6 +24,19 @@ interface CheckersDbService {
     filter: Record<string, unknown>,
     update: Record<string, unknown>
   ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+  findOnePoll(filter: Record<string, unknown>): Promise<{
+    success: boolean;
+    data?: PollAPI;
+    error?: string;
+  }>;
+  insertPoll(
+    poll: Omit<PollAPI, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }>;
+  insertVote(
+    vote: Omit<VoteAPI, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }>;
 }
 
 interface CheckerReminderAlarmService {
@@ -59,4 +81,65 @@ export interface CheckerAPI {
   lastVotedTimestamp: Date | null;
   getNameMessageId: string | null;
   dailyAssignmentCount: number;
+}
+
+// Poll with string IDs (API format)
+export interface PollAPI {
+  _id?: string;
+  checkId: string;
+  text: string | null;
+  imageURL: string | null;
+  caption: string | null;
+  longformResponse: Response;
+  shortformResponse: ShortformResponse;
+  humanResponse: HumanResponse;
+  crowdSourcedCategory:
+    | "scam"
+    | "illicit"
+    | "untrue"
+    | "misleading"
+    | "accurate"
+    | "satire"
+    | "spam"
+    | "legitimate"
+    | "irrelevant"
+    | "unsure"
+    | null;
+  crowdSourcedTruthScore: number | null;
+  startedTimestamp: Date;
+  assessedTimestamp: Date | null;
+}
+
+// Vote with string IDs (API format)
+export interface VoteAPI {
+  _id?: string;
+  pollId: string;
+  checkerId: string;
+  createdTimestamp: Date;
+  votedTimestamp: Date | null;
+  category:
+    | "scam"
+    | "illicit"
+    | "info"
+    | "satire"
+    | "spam"
+    | "legitimate"
+    | "irrelevant"
+    | "unsure"
+    | "pass"
+    | null;
+  truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null;
+  responseCategory: "great" | "acceptable" | "unacceptable" | null;
+  commentOnResponse: string | null;
+}
+
+// Poll request from CheckMate AI platform
+export interface PollRequest {
+  checkId: string;
+  imageUrl: string | null;
+  caption: string | null;
+  text: string | null;
+  longformResponse: Response | null;
+  shortformResponse: ShortformResponse | null;
+  humanResponse: HumanResponse | null;
 }
