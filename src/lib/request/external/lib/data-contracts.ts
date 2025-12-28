@@ -240,6 +240,29 @@ export type VotesMessageBrief = Vote & {
   crowdSourcedCategory?: Category;
 };
 
+export interface Leaderboard {
+  /** Checkers Ids */
+  _id: string;
+  /** Name from the checkers collection */
+  checkerName: string;
+  /** Total count of votes */
+  numberOfVotes: number;
+  /** Sum of all scores */
+  totalScore: number;
+  /**
+   * Average response time in hours
+   * @format float
+   */
+  averageResponseTime: number;
+  /**
+   * Percentage (0-100), rounded to 2 d.p.
+   * @format float
+   */
+  accuracy: number;
+  /** Count of votes where isCorrect = true */
+  correctVotes: number;
+}
+
 /**
  * the count of the total number of records
  * @example 100

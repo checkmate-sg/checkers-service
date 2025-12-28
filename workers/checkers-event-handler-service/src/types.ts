@@ -50,7 +50,11 @@ export interface VoteAPI {
   category: string | null;
   truthScore: number | null;
   responseCategory: string | null;
+  createdTimestamp: Date;
   votedTimestamp: Date | null;
+  responseTime: number | null;
+  score: number | null;
+  isCorrect: boolean | null;
 }
 
 export interface PollAPI {
@@ -76,6 +80,13 @@ export interface CheckersDBService {
   findOneVote(
     filter: Record<string, unknown>
   ): Promise<DBServiceResult<VoteAPI>>;
+  findVotes(
+    filter: Record<string, unknown>
+  ): Promise<DBServiceResult<VoteAPI[]>>;
+  updateOneVote(
+    filter: Record<string, unknown>,
+    update: Record<string, unknown>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
   findOnePoll(
     filter: Record<string, unknown>
   ): Promise<DBServiceResult<PollAPI>>;
@@ -108,6 +119,20 @@ export interface CheckersEvent<T = unknown> {
 // Event-specific data types
 export interface VoteSubmittedData {
   voteId: string;
+}
+
+export interface AssessmentCompleteData {
+  pollId: string;
+  primaryCategory: string;
+  truthScore: number | null;
+  isDownvoted: boolean;
+}
+
+export interface PrimaryCategoryChangedData {
+  pollId: string;
+  primaryCategory: string;
+  truthScore: number | null;
+  isDownvoted: boolean;
 }
 
 // Handler result type

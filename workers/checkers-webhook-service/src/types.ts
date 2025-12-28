@@ -131,6 +131,9 @@ export interface VoteAPI {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null;
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  responseTime: number | null; // Time taken to submit the vote in hours
+  score: number | null; // Score awarded for this vote
+  isCorrect: boolean | null; // Whether the vote matched the consensus
 }
 
 // Poll request from CheckMate AI platform

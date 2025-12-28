@@ -7,7 +7,16 @@ import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
  */
 import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
 
-import { Checker, CheckerAPI, Poll, PollAPI, Vote, VoteAPI } from '@/shared/types/schema';
+import {
+  Checker,
+  CheckerAPI,
+  Leaderboard,
+  LeaderboardAPI,
+  Poll,
+  PollAPI,
+  Vote,
+  VoteAPI
+} from '@/shared/types/schema';
 
 import { VoteFilter } from './types';
 
@@ -522,6 +531,133 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       return { success: false, error: errorMessage };
     }
   }
+
+  async findVotes(
+    filter: Filter<Vote>
+  ): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const votes = await votesCollection.find(processedFilter).toArray();
+
+      const votesWithStringIds = votes.map(vote => ({
+        ...vote,
+        _id: vote._id?.toString(),
+        pollId: vote.pollId?.toString(),
+        checkerId: vote.checkerId?.toString(),
+      }));
+
+      return { success: true, data: votesWithStringIds as VoteAPI[] };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find votes");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async getLeaderboardInfo(
+    startOfMonth: Date,
+    startOfNextMonth: Date
+  ): Promise<{ success: boolean, data?: LeaderboardAPI[], total?: number, error?: string}>{
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      const aggregationPipeline = [
+        {
+          // Step 1: Filter by currrent month 
+          $match: {
+            votedTimestamp: {
+              $gte: startOfMonth, 
+              $lt: startOfNextMonth 
+            }
+          }
+        }, 
+        {
+          // Step 2: Group by checkerId and calculate metrics 
+          $group: {
+            _id: "$checkerId",
+            numberOfVotes: { $sum: 1 },
+            totalScore: { $sum: "$score" },
+            averageResponseTime: { $avg: "$responseTime" },
+            correctVotes: {
+              $sum: {
+                $cond: [{ $eq: ["$isCorrect", true]}, 1, 0]
+              }
+            }
+          }
+        },
+        {
+          // Step 3: Calculate accuracy percentage 
+          $addFields: {
+            accuracy: {
+              $multiply: [
+                { $divide: ["$correctVotes", "$numberOfVotes"] },
+                100
+              ]
+            }
+          }
+        },
+        {
+          // Step 4: Lookup checker details from checkers collection 
+          $lookup: {
+            from: "checkers",
+            localField: "_id",
+            foreignField: "_id",
+            as: "checkerInfo"
+          }
+        },
+        {
+          // Step 5: Unwind the checkerInfo array 
+          $unwind: {
+            path: "$checkerInfo",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // Step 6: Project final output with desired fields 
+          $project: {
+            _id: 1, 
+            checkerName: "$checkerInfo.name",
+            numberOfVotes: 1, 
+            totalScore: 1, 
+            averageResponseTime: 1,
+            accuracy: { $round: ["$accuracy", 2]}, // Round to 2d.p
+            correctVotes: 1
+          }
+        },
+        {
+          // Step 7: sort by total scores (descending)
+          $sort: {totalScore: -1}
+        }
+      ]
+
+      const results = await votesCollection.aggregate<Leaderboard>(aggregationPipeline).toArray();
+
+      if (!results) {
+        return { success: true, data: undefined, total: results.length };
+      }
+
+      // Convert ObjectId to string before returning
+      const resultsWithStringId = results.map(result => ({
+        ...result, 
+        _id: result._id?.toString()
+      }))
+
+      return { success: true, data: resultsWithStringId, total: results.length };
+
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage }, "Failed to fetch leaderboard statistics");
+      return { success: false, error: errorMessage };
+    }
+
+  }
 }
 
 export default class extends WorkerEntrypoint<Env> {
@@ -611,5 +747,18 @@ export default class extends WorkerEntrypoint<Env> {
   async findOneVote(filter: Filter<Vote>) {
     const durableObject = this.getDurableObject();
     return durableObject.findOneVote(filter);
+  }
+
+  async findVotes(filter: Filter<Vote>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findVotes(filter);
+  }
+
+  async getLeaderboardInfo(
+    startOfMonth: Date,
+    startOfNextMonth: Date
+  ) {
+    const durableObject = this.getDurableObject();
+    return durableObject.getLeaderboardInfo(startOfMonth, startOfNextMonth)
   }
 }

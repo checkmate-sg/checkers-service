@@ -1,10 +1,17 @@
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { Bot } from "grammy";
 
+import { handleAssessmentComplete } from "./handlers/queue/onAssessmentComplete";
+import { handlePrimaryCategoryChanged } from "./handlers/queue/onPrimaryCategoryChanged";
 import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
-import type { CheckersEvent, VoteSubmittedData } from "./types";
+import type {
+  AssessmentCompleteData,
+  CheckersEvent,
+  PrimaryCategoryChangedData,
+  VoteSubmittedData,
+} from "./types";
 
 export default class extends WorkerEntrypoint<Env> {
   /**
@@ -38,6 +45,14 @@ export default class extends WorkerEntrypoint<Env> {
         switch (event.type) {
           case "vote.submitted":
             await handleVoteSubmitted(this.env, event.data as VoteSubmittedData);
+            break;
+
+          case "assessment.complete":
+            await handleAssessmentComplete(this.env, event.data as AssessmentCompleteData);
+            break;
+
+          case "primaryCategory.changed":
+            await handlePrimaryCategoryChanged(this.env, event.data as PrimaryCategoryChangedData);
             break;
 
           default:

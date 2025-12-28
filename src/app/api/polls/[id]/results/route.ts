@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from "@/auth";
-import { Err } from "@/lib/api/error";
+import { auth } from '@/auth';
+import { Err } from '@/lib/api/error';
 import {
   getCategoryCountsByPollId,
-  getResponseCategoryCountsByPollId,
-} from "@/lib/helpers/voteAssessment/voteAssessmentUtils";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+  getResponseCategoryCountsByPollId
+} from '@/shared/helpers/voteAssessment';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export async function GET(req: NextRequest, { params }) {
   // Get and calculate the results/statistics for a specific poll by _id
@@ -20,9 +20,9 @@ export async function GET(req: NextRequest, { params }) {
     const { id } = await params;
     if (!id) return Err.badParams("Missing id parameter");
 
-    const categoryCount = await getCategoryCountsByPollId(id);
-    if (categoryCount instanceof NextResponse) return categoryCount;
-    console.log(categoryCount);
+    const categoryCountResult = await getCategoryCountsByPollId(env.CHECKERS_DB_SERVICE, id);
+    if ("error" in categoryCountResult) return Err.internal(categoryCountResult.error);
+    const categoryCount = categoryCountResult;
 
     // Only if 'info' is part of the categories -> then we will compute the truthScore statistics
     const truthScorePipeline: any[] = [
@@ -64,9 +64,9 @@ export async function GET(req: NextRequest, { params }) {
       truthScoreStats[item._id] = item.count;
     });
 
-    const responseCategoryCounts = await getResponseCategoryCountsByPollId(id);
-    if (responseCategoryCounts instanceof NextResponse) return responseCategoryCounts;
-    console.log(responseCategoryCounts);
+    const responseCategoryResult = await getResponseCategoryCountsByPollId(env.CHECKERS_DB_SERVICE, id);
+    if ("error" in responseCategoryResult) return Err.internal(responseCategoryResult.error);
+    const responseCategoryCounts = responseCategoryResult;
 
     // Build final stats, excluding null keys from both category counts
     const { null: _catNull, ...categoryStatsWithoutNull } = categoryCount as Record<

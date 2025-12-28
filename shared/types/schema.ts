@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
 
 //NOSQL DATA TYPES
 
@@ -23,6 +23,7 @@ type ObjectIdToString<T> = {
 export type CheckerAPI = ObjectIdToString<Checker>;
 export type PollAPI = ObjectIdToString<Poll>;
 export type VoteAPI = ObjectIdToString<Vote>;
+export type LeaderboardAPI = ObjectIdToString<Leaderboard> // _id is the checkers Id
 
 // User/Checker schema
 export interface Checker extends BaseDocument {
@@ -104,6 +105,9 @@ export interface Vote extends BaseDocument {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  responseTime: number | null; // Time taken to submit the vote in hours
+  score: number | null; // Score awarded for this vote
+  isCorrect: boolean | null; // Whether the vote matched the consensus
 }
 
 // OTHER TYPES
@@ -171,5 +175,19 @@ export interface VoteChecker extends BaseDocument {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null; // The truth score assigned to the message by the checker, on a 0-5 scale. Null means no truth score
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  responseTime: number | null; // Time taken to submit the vote in hours
+  score: number | null; // Score awarded for this vote
+  isCorrect: boolean | null; // Whether the vote matched the consensus
   poll: Poll;
 }
+
+// Leaderboard
+export interface Leaderboard extends BaseDocument {
+  checkerName: string; // Name from checkers collection
+  numberOfVotes: number;  // Total count of votes 
+  totalScore: number; // Sum of all scores 
+  averageResponseTime: number; // Average response time in hrs
+  accuracy: number; // Percentage (0-100), rounded to 2 d.p.
+  correctVotes: number; // Count of votes where isCorrect = true 
+}
+

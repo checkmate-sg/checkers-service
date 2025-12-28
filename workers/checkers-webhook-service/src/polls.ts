@@ -1,5 +1,6 @@
-import { Context } from "hono";
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard } from 'grammy';
+import { Context } from 'hono';
+
 import type { PollRequest, PollAPI, VoteAPI } from "./types";
 
 export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
@@ -140,6 +141,9 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
         truthScore: null,
         responseCategory: null,
         commentOnResponse: null,
+        responseTime: null, 
+        score: null, 
+        isCorrect: null
       };
 
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
