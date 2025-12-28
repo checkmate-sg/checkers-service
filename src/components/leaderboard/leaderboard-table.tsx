@@ -100,7 +100,7 @@ export function LeaderboardTable({ currentUserId }: LeaderboardTableProps) {
     }, [leaderboardList?.data, currentUserId])
     return (
         <Card className="h-full w-full overflow-auto mt-3">
-            <TooltipProvider>
+            <TooltipProvider delayDuration={0}>
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -110,7 +110,7 @@ export function LeaderboardTable({ currentUserId }: LeaderboardTableProps) {
                                         <TooltipTrigger asChild>
                                             <span className="cursor-help">{col.icon}</span>
                                         </TooltipTrigger>
-                                        <TooltipContent>
+                                        <TooltipContent side="top" className="max-w-xs">
                                             <p>{col.description}</p>
                                         </TooltipContent>
                                     </Tooltip>
