@@ -23,6 +23,7 @@ type ObjectIdToString<T> = {
 export type CheckerAPI = ObjectIdToString<Checker>;
 export type PollAPI = ObjectIdToString<Poll>;
 export type VoteAPI = ObjectIdToString<Vote>;
+export type ProgrammeAPI = ObjectIdToString<Programme>;
 export type LeaderboardAPI = ObjectIdToString<Leaderboard> // _id is the checkers Id
 
 // User/Checker schema
@@ -57,6 +58,7 @@ export interface Checker extends BaseDocument {
   lastVotedTimestamp: Date | null; // The time the Checker last voted
   getNameMessageId: string | null; // The message ID of the message the Checker used to set their name
   dailyAssignmentCount: Number; // The number of polls the Checker has been assigned to vote on today
+  currentProgrammeId: ObjectId | null; // Reference to the active Programme, null if not enrolled
 }
 
 // Message to be checked
@@ -110,6 +112,24 @@ export interface Vote extends BaseDocument {
   isCorrect: boolean | null; // Whether the vote matched the consensus
 }
 
+// Programme enrollment for a checker
+export interface Programme extends BaseDocument {
+  checkerId: ObjectId; // Reference to the Checker
+  startDate: Date; // When the checker enrolled (onboarding completion)
+  endDate: Date | null; // When the programme ended (completion/offboarding), null if active
+  status: "active" | "completed" | "extended" | "offboarded"; // Current programme status
+  targets: {
+    votes: number; // Target number of votes (e.g., 50)
+    accuracy: number; // Target accuracy percentage (e.g., 60)
+    reports: number; // Target number of reports (e.g., 10)
+  };
+  votesAtStart: number; // Snapshot of checker.numVoted at enrollment
+  hasReceivedExtension: boolean; // Whether Day 60 extension notice was sent
+  hasReceivedLowAccuracyWarning: boolean; // Whether low accuracy warning was sent
+  certificateUrl: string | null; // URL to the generated certificate
+  completedAt: Date | null; // When the checker graduated
+}
+
 // OTHER TYPES
 export interface Response {
   //format of the AI generated responses passed from CheckMate AI platform
@@ -153,6 +173,7 @@ export enum Collections {
   CHECKERS = "checkers",
   POLLS = "polls",
   VOTES = "votes",
+  PROGRAMMES = "programmes",
 }
 
 // VoteChecker - join both Vote and Poll

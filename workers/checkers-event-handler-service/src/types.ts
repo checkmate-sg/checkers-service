@@ -32,6 +32,7 @@ export interface CheckerAPI {
   lastVotedTimestamp: Date | null;
   getNameMessageId: string | null;
   dailyAssignmentCount: number;
+  currentProgrammeId: string | null;
 }
 
 // Database service result wrapper
@@ -67,8 +68,29 @@ export interface PollAPI {
   };
 }
 
+export interface ProgrammeAPI {
+  _id: string;
+  checkerId: string;
+  startDate: Date;
+  endDate: Date | null;
+  status: "active" | "completed" | "extended" | "offboarded";
+  targets: {
+    votes: number;
+    accuracy: number;
+    reports: number;
+  };
+  votesAtStart: number;
+  hasReceivedExtension: boolean;
+  hasReceivedLowAccuracyWarning: boolean;
+  certificateUrl: string | null;
+  completedAt: Date | null;
+}
+
 // Service binding interfaces
 export interface CheckersDBService {
+  findOneChecker(
+    filter: Record<string, unknown>
+  ): Promise<DBServiceResult<CheckerAPI>>;
   findCheckers(
     filter: Record<string, unknown>,
     options?: { sort?: Record<string, 1 | -1> }
@@ -98,6 +120,17 @@ export interface CheckersDBService {
     pollId: string,
     aggregationPipeline: unknown[]
   ): Promise<DBServiceResult<unknown[]>>;
+  findOneProgramme(
+    filter: Record<string, unknown>
+  ): Promise<DBServiceResult<ProgrammeAPI>>;
+  findProgrammes(
+    filter: Record<string, unknown>,
+    options?: { sort?: Record<string, 1 | -1> }
+  ): Promise<DBServiceResult<ProgrammeAPI[]>>;
+  updateOneProgramme(
+    filter: Record<string, unknown>,
+    update: Record<string, unknown>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
 }
 
 export interface CheckerReminderAlarmService {

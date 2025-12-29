@@ -14,6 +14,8 @@ import {
   LeaderboardAPI,
   Poll,
   PollAPI,
+  Programme,
+  ProgrammeAPI,
   Vote,
   VoteAPI
 } from '@/shared/types/schema';
@@ -57,6 +59,9 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
     if (typeof convertedFilter.checkerId === "string") {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
+    }
+    if (typeof convertedFilter.currentProgrammeId === "string") {
+      convertedFilter.currentProgrammeId = new ObjectId(convertedFilter.currentProgrammeId);
     }
     // checkId is kept as string (external system ID, not MongoDB ObjectId)
 
@@ -414,6 +419,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const checkerWithStringId = {
         ...checker,
         _id: checker._id?.toString(),
+        currentProgrammeId: checker.currentProgrammeId?.toString() ?? null,
       };
 
       return { success: true, data: checkerWithStringId as CheckerAPI };
@@ -455,6 +461,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const checkersWithStringId = checkers.map(checker => ({
         ...checker,
         _id: checker._id?.toString(),
+        currentProgrammeId: checker.currentProgrammeId?.toString() ?? null,
       }));
 
       const totalCheckers = checkersWithStringId.length;
@@ -658,6 +665,134 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
 
   }
+
+  async insertProgramme(
+    programme: Omit<Programme, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection("programmes");
+
+      const objectId = customId ? new ObjectId(customId) : new ObjectId();
+      const idString = objectId.toString();
+
+      // Convert string checkerId to ObjectId
+      const programmeData = {
+        ...programme,
+        _id: objectId,
+        checkerId:
+          typeof programme.checkerId === "string"
+            ? new ObjectId(programme.checkerId)
+            : programme.checkerId,
+      };
+
+      await programmesCollection.insertOne(programmeData);
+
+      return { success: true, id: idString };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, programme }, "Failed to insert programme");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findOneProgramme(
+    filter: Filter<Programme>
+  ): Promise<{ success: boolean; data?: ProgrammeAPI; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const programme = await programmesCollection.findOne(processedFilter);
+
+      if (!programme) {
+        return { success: true, data: undefined };
+      }
+
+      const programmeWithStringIds = {
+        ...programme,
+        _id: programme._id?.toString(),
+        checkerId: programme.checkerId?.toString(),
+      };
+
+      return { success: true, data: programmeWithStringIds as ProgrammeAPI };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find programme");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findProgrammes(
+    filter: Filter<Programme>,
+    options?: {
+      sort?: Record<string, 1 | -1>;
+    }
+  ): Promise<{ success: boolean; data?: ProgrammeAPI[]; error?: string; total?: number }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      let findProgrammes = programmesCollection.find(processedFilter);
+
+      if (options?.sort) {
+        findProgrammes = findProgrammes.sort(options.sort);
+      }
+
+      const programmes = await findProgrammes.toArray();
+
+      if (!programmes) {
+        return { success: true, data: undefined };
+      }
+
+      const programmesWithStringIds = programmes.map(programme => ({
+        ...programme,
+        _id: programme._id?.toString(),
+        checkerId: programme.checkerId?.toString(),
+      }));
+
+      return {
+        success: true,
+        data: programmesWithStringIds as ProgrammeAPI[],
+        total: programmesWithStringIds.length,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find programmes");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async updateOneProgramme(
+    filter: Filter<Programme>,
+    update: UpdateFilter<Programme>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const processedUpdate = this.convertStringIdsToObjectIds(update);
+
+      const result = await programmesCollection.updateOne(processedFilter, processedUpdate);
+
+      return {
+        success: true,
+        modifiedCount: result.modifiedCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter, update }, "Failed to update programme");
+      return { success: false, error: errorMessage };
+    }
+  }
 }
 
 export default class extends WorkerEntrypoint<Env> {
@@ -760,5 +895,30 @@ export default class extends WorkerEntrypoint<Env> {
   ) {
     const durableObject = this.getDurableObject();
     return durableObject.getLeaderboardInfo(startOfMonth, startOfNextMonth)
+  }
+
+  async insertProgramme(programme: Omit<Programme, "_id">, customId?: string) {
+    const durableObject = this.getDurableObject();
+    return durableObject.insertProgramme(programme, customId);
+  }
+
+  async findOneProgramme(filter: Filter<Programme>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findOneProgramme(filter);
+  }
+
+  async findProgrammes(
+    filter: Filter<Programme>,
+    options?: {
+      sort?: Record<string, 1 | -1>;
+    }
+  ) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findProgrammes(filter, options);
+  }
+
+  async updateOneProgramme(filter: Filter<Programme>, update: UpdateFilter<Programme>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.updateOneProgramme(filter, update);
   }
 }

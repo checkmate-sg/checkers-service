@@ -37,6 +37,10 @@
       "binding": "CHECKER_REMINDER_ALARM_SERVICE",
       "service": "checkers-reminder-alarm-service",
     },
+    {
+      "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+      "service": "whatsapp-checker-event-handler",
+    },
   ],
   /**
    * Environment Variables (secrets set via wrangler secret put)
@@ -91,6 +95,10 @@
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service-staging",
         },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler-staging",
+        },
       ],
       "queues": {
         "producers": [
@@ -123,6 +131,10 @@
         {
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler",
         },
       ],
       "tail_consumers": [

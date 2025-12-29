@@ -5,6 +5,7 @@ import type { HandlerResult } from "../../types";
 
 /**
  * Process 60-day programme extension notices
+ * Queries Programme collection for active programmes past 60 days
  */
 async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
@@ -12,21 +13,31 @@ async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerRe
 
   const thresholdDate = new Date(Date.now() - PROGRAMME_EXTENSION_DAYS * DAYS_MS);
 
-  // Find checkers who onboarded > 60 days ago and haven't completed/received extension
-  const result = await env.CHECKERS_DB_SERVICE.findCheckers({
-    isOnboardingComplete: true,
-    hasCompletedProgramme: false,
+  // Find programmes that are active, haven't received extension, and started > 60 days ago
+  const result = await env.CHECKERS_DB_SERVICE.findProgrammes({
+    status: "active",
     hasReceivedExtension: false,
-    onboardingTime: { $lt: thresholdDate },
-    onboardingStatus: { $ne: "offboarded" },
+    startDate: { $lt: thresholdDate },
   });
 
   if (!result.success || !result.data) {
-    return { processed: 0, errors: [result.error || "Failed to fetch checkers"] };
+    return { processed: 0, errors: [result.error || "Failed to fetch programmes"] };
   }
 
-  for (const checker of result.data) {
+  for (const programme of result.data) {
     try {
+      // Fetch the checker details
+      const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+        _id: programme.checkerId,
+      });
+
+      if (!checkerResult.success || !checkerResult.data) {
+        errors.push(`Checker not found for programme ${programme._id}`);
+        continue;
+      }
+
+      const checker = checkerResult.data;
+
       // Send extension notice
       await bot.api.sendMessage(
         checker.telegramId,
@@ -34,16 +45,16 @@ async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerRe
         { parse_mode: "HTML" }
       );
 
-      // Mark as received extension
-      await env.CHECKERS_DB_SERVICE.updateOneChecker(
-        { _id: checker._id },
-        { $set: { hasReceivedExtension: true } }
+      // Update programme: mark as extended
+      await env.CHECKERS_DB_SERVICE.updateOneProgramme(
+        { _id: programme._id },
+        { $set: { status: "extended", hasReceivedExtension: true } }
       );
 
       processed++;
-      console.log(`Sent programme extension notice to checker ${checker._id}`);
+      console.log(`Sent programme extension notice to checker ${checker._id} (programme ${programme._id})`);
     } catch (err) {
-      const errorMsg = `Failed to process extension for checker ${checker._id}: ${err}`;
+      const errorMsg = `Failed to process extension for programme ${programme._id}: ${err}`;
       console.error(errorMsg);
       errors.push(errorMsg);
     }
@@ -54,6 +65,7 @@ async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerRe
 
 /**
  * Process 90-day programme offboarding
+ * Queries Programme collection for extended programmes past 90 days
  */
 async function processProgrammeOffboarding(
   env: Env,
@@ -65,22 +77,30 @@ async function processProgrammeOffboarding(
 
   const thresholdDate = new Date(Date.now() - PROGRAMME_OFFBOARDING_DAYS * DAYS_MS);
 
-  // Find checkers who onboarded > 90 days ago, haven't completed programme,
-  // and have already received their extension notice
-  const result = await env.CHECKERS_DB_SERVICE.findCheckers({
-    isOnboardingComplete: true,
-    hasCompletedProgramme: false,
-    hasReceivedExtension: true,
-    onboardingTime: { $lt: thresholdDate },
-    onboardingStatus: { $ne: "offboarded" },
+  // Find programmes that are extended (received extension) and started > 90 days ago
+  const result = await env.CHECKERS_DB_SERVICE.findProgrammes({
+    status: "extended",
+    startDate: { $lt: thresholdDate },
   });
 
   if (!result.success || !result.data) {
-    return { processed: 0, errors: [result.error || "Failed to fetch checkers"] };
+    return { processed: 0, errors: [result.error || "Failed to fetch programmes"] };
   }
 
-  for (const checker of result.data) {
+  for (const programme of result.data) {
     try {
+      // Fetch the checker details
+      const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({
+        _id: programme.checkerId,
+      });
+
+      if (!checkerResult.success || !checkerResult.data) {
+        errors.push(`Checker not found for programme ${programme._id}`);
+        continue;
+      }
+
+      const checker = checkerResult.data;
+
       // Send offboarding message
       await bot.api.sendMessage(
         checker.telegramId,
@@ -97,6 +117,17 @@ async function processProgrammeOffboarding(
         // Continue with offboarding even if group removal fails
       }
 
+      // Update programme record
+      await env.CHECKERS_DB_SERVICE.updateOneProgramme(
+        { _id: programme._id },
+        {
+          $set: {
+            status: "offboarded",
+            endDate: new Date(),
+          },
+        }
+      );
+
       // Update checker record
       await env.CHECKERS_DB_SERVICE.updateOneChecker(
         { _id: checker._id },
@@ -105,14 +136,15 @@ async function processProgrammeOffboarding(
             isActive: false,
             offboardingTime: new Date(),
             onboardingStatus: "offboarded",
+            currentProgrammeId: null,
           },
         }
       );
 
       processed++;
-      console.log(`Offboarded checker ${checker._id}`);
+      console.log(`Offboarded checker ${checker._id} (programme ${programme._id})`);
     } catch (err) {
-      const errorMsg = `Failed to process offboarding for checker ${checker._id}: ${err}`;
+      const errorMsg = `Failed to process offboarding for programme ${programme._id}: ${err}`;
       console.error(errorMsg);
       errors.push(errorMsg);
     }

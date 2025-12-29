@@ -1,4 +1,4 @@
-import type { Checker, Poll, Vote, Response, ShortformResponse, HumanResponse } from "../../../shared/types/schema";
+import type { Checker, Poll, Vote, Programme, Response, ShortformResponse, HumanResponse } from "../../../shared/types/schema";
 
 // Service binding types (RPC interfaces)
 interface CheckersDbService {
@@ -24,6 +24,10 @@ interface CheckersDbService {
     filter: Record<string, unknown>,
     update: Record<string, unknown>
   ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+  insertProgramme(
+    programme: Omit<Programme, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }>;
   findOnePoll(filter: Record<string, unknown>): Promise<{
     success: boolean;
     data?: PollAPI;
@@ -81,6 +85,7 @@ export interface CheckerAPI {
   lastVotedTimestamp: Date | null;
   getNameMessageId: string | null;
   dailyAssignmentCount: number;
+  currentProgrammeId: string | null;
 }
 
 // Poll with string IDs (API format)

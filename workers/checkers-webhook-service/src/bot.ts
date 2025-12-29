@@ -708,16 +708,48 @@ async function sendNLBPrompt(ctx: Context, env: Env, telegramId: string): Promis
 
 async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
   try {
+    // Fetch checker to get _id and numVoted
+    const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+    if (!checkerResult.success || !checkerResult.data) {
+      throw new Error("Checker not found");
+    }
+    const checker = checkerResult.data;
+    const now = new Date();
+
+    // Create programme for the checker
+    const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
+      checkerId: checker._id!,
+      startDate: now,
+      endDate: null,
+      status: "active",
+      targets: {
+        votes: parseInt(env.PROGRAMME_TARGET_VOTES, 10),
+        accuracy: parseInt(env.PROGRAMME_TARGET_ACCURACY, 10),
+        reports: parseInt(env.PROGRAMME_TARGET_REPORTS, 10),
+      },
+      votesAtStart: checker.numVoted,
+      hasReceivedExtension: false,
+      hasReceivedLowAccuracyWarning: false,
+      certificateUrl: null,
+      completedAt: null,
+    });
+
+    if (!programmeResult.success) {
+      console.error(`Failed to create programme: ${programmeResult.error}`);
+    }
+
+    // Update checker with onboarding completion and programme ID
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       {
         $set: {
           onboardingStatus: "completed",
           isOnboardingComplete: true,
-          onboardingTime: new Date(),
+          onboardingTime: now,
           isActive: true,
-          lastActivatedDate: new Date(),
-          updatedAt: new Date(),
+          lastActivatedDate: now,
+          updatedAt: now,
+          currentProgrammeId: programmeResult.id || null,
         },
       }
     );
