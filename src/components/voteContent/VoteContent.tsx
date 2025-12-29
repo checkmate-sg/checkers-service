@@ -39,7 +39,7 @@ export const VoteContent = ({ voteId,
 
   return (
       <>
-      <div className="grid grid-flow-row items-center gap-2 p-3">
+      <div className="grid grid-flow-row items-center gap-2 p-3 w-full max-w-full overflow-hidden">
         <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
 
         {poll.shortformResponse.en && !showNoteAfterVote? (

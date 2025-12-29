@@ -142,7 +142,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
         <div key={index} className="w-full">
           <Button
             variant={selectedCategory === cat.name ? "voteCategories" : "default"}
-            className="flex flex-row items-center justify-start gap-2 max-w-md space-x-3 text-sm w-full"
+            className="flex flex-row items-center justify-start gap-2 space-x-3 text-sm w-full"
             key={index}
             onClick={() => handleSelection(cat.name)}
           >
