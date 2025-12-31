@@ -7,15 +7,14 @@ import { useGetVotesById } from '@/hooks/votes/useGetVotesById';
 
 import CommunityNoteCard from './CommunityNoteCard';
 import MessageCard from './MessageCard';
+import ReferenceLinksCard from './ReferenceLinksCard';
 import VoteResultsDisplay from './VoteResultsDisplay';
 import VotingSystem from './VotingSystem';
 
 interface VoteContentProps {
   voteId: string;
-  showNoteAfterVote: boolean;
 }
-export const VoteContent = ({ voteId, 
-                              showNoteAfterVote } : VoteContentProps) => {
+export const VoteContent = ({ voteId }: VoteContentProps) => {
   const { data: vote, isLoading: isLoading_Vote, error: isError_Vote } = useGetVotesById(voteId);
 
   // Fetch the poll using pollId (which is the poll's _id)
@@ -37,12 +36,19 @@ export const VoteContent = ({ voteId,
   // handle error states
   if (isError_Poll) return <div>Failed to load poll</div>;
 
+  // A/B test flag from vote data (fallback to false for existing votes without the field)
+  const showNoteAfterVote = vote.showNoteAfterVote ?? false;
+
   return (
       <>
       <div className="grid grid-flow-row items-center gap-2 p-3">
         <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
 
-        {poll.shortformResponse.en && !showNoteAfterVote? (
+        {showNoteAfterVote && poll.shortformResponse.links && (
+          <ReferenceLinksCard links={poll.shortformResponse.links} />
+        )}
+
+        {poll.shortformResponse.en && !showNoteAfterVote ? (
           <CommunityNoteCard
             responseEN={poll.shortformResponse.en}
             responseCN={poll.shortformResponse.cn}
