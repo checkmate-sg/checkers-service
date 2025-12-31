@@ -96,6 +96,7 @@
     min-height: 100dvh;
     min-height: -webkit-fill-available; /* legacy iOS */
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   *,
@@ -108,6 +109,8 @@
     @apply bg-background text-foreground;
     min-height: inherit;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 
