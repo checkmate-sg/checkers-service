@@ -28,7 +28,7 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
 
   const results = data?.pages.flatMap((page: any) => page.data.items ?? []) ?? [];
 
-  // console.log(results);
+  console.log(results);
 
   const handleLoadData = useCallback(() => {
     // Check if there's more data to load
@@ -55,6 +55,7 @@ export const InfiniteVoteMessageList = (props: InfiniteVoteMessageProps) => {
             truthScore={result.truthScore}
             responseCategory={result.responseCategory}
             commentOnResponse={result.commentOnResponse}
+            isCorrect={result.isCorrect}
           />
         );
       })}
