@@ -134,6 +134,7 @@ export interface VoteAPI {
   responseTime: number | null; // Time taken to submit the vote in hours
   score: number | null; // Score awarded for this vote
   isCorrect: boolean | null; // Whether the vote matched the consensus
+  showNoteAfterVote: boolean; // A/B test flag: true = show community note after voting, false = show before
 }
 
 // Poll request from CheckMate AI platform

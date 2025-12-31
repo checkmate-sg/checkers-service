@@ -141,9 +141,10 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
         truthScore: null,
         responseCategory: null,
         commentOnResponse: null,
-        responseTime: null, 
-        score: null, 
-        isCorrect: null
+        responseTime: null,
+        score: null,
+        isCorrect: null,
+        showNoteAfterVote: Math.random() < 0.5, // A/B test: 50/50 split
       };
 
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);

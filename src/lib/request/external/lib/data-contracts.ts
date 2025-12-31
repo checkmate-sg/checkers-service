@@ -219,6 +219,8 @@ export type Vote = BaseDocument & {
   /** Evaluation for an AI response quality (nullable) */
   responseCategory?: ResponseCategory;
   commentOnResponse?: string | null;
+  /** A/B test flag: true = show community note after voting, false = show before */
+  showNoteAfterVote?: boolean;
 };
 
 /** POST reqeust body to update the Vote Content of user  */
