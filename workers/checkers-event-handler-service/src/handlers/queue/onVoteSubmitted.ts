@@ -1,5 +1,5 @@
-import { voteAssessment } from "@/shared/helpers/voteAssessment";
-import { checkAccuracy, computeGamificationScore } from "@/shared/helpers/scoring";
+import { checkAccuracy, computeGamificationScore } from '@/shared/helpers/scoring';
+import { voteAssessment } from '@/shared/helpers/voteAssessment';
 
 import type { VoteSubmittedData } from "../../types";
 

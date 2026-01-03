@@ -1,3 +1,5 @@
+import { Loader2 } from 'lucide-react';
+
 import { useGetPollResultsById } from '@/hooks/polls/useGetPollResults';
 
 import VoteChart from './VoteChart';
@@ -19,7 +21,11 @@ export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
 
   // TODO: Create a loading component for all the pages
   if (isLoading) {
-    return <>Loading...</>;
+    return (
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
   }
 
   return (

@@ -212,3 +212,10 @@ export interface Leaderboard extends BaseDocument {
   correctVotes: number; // Count of votes where isCorrect = true 
 }
 
+export interface ProgrammeProgress {
+  voteCount: number; 
+  accuracy: number | null; 
+  reportCount: number;
+}
+
+

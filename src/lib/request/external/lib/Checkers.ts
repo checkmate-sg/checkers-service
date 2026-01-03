@@ -10,7 +10,13 @@
  * ---------------------------------------------------------------
  */
 
-import { APIError, APIPagination, Checker, VotesMessageBrief } from "./data-contracts";
+import {
+  APIError,
+  APIPagination,
+  Checker,
+  ProgrammeProgressResponse,
+  VotesMessageBrief,
+} from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
 export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
@@ -74,6 +80,21 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       path: `/checkers/${checkerId}/votes`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Retrieves the programme details and current progress for a specific checker. Return the programme information along with progress metrics compared to targets
+   *
+   * @tags Checkers
+   * @name ProgrammeDetail
+   * @summary Get programme progress statistics
+   * @request GET:/checkers/{checkerId}/programme
+   */
+  programmeDetail = (checkerId: string, params: RequestParams = {}) =>
+    this.request<ProgrammeProgressResponse, APIError>({
+      path: `/checkers/${checkerId}/programme`,
+      method: "GET",
       format: "json",
       ...params,
     });

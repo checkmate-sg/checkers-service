@@ -1,10 +1,11 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from 'lucide-react';
 
-import { useGetCheckersById } from "@/hooks/checkers/useGetCheckersDetails";
+import { useGetCheckersById } from '@/hooks/checkers/useGetCheckersDetails';
+import { useGetCheckersProgrammeById } from '@/hooks/checkers/useGetCheckersProgramme';
 
-import { ProgressItem } from "../common/progress-item/ProgressItem";
+import { ProgressItem } from '../common/progress-item/ProgressItem';
 
 interface CheckersDashboardProps {
   checkerId: string;
@@ -13,22 +14,30 @@ interface CheckersDashboardProps {
 export const CheckersDashboard = ({ checkerId }: CheckersDashboardProps) => {
   const isProd = process.env.NODE_ENV === "production";
 
-  // TODO: Add numReported using API from WhatsApp Service
-  const numReported = 3;
+  const { data: checker, isLoading: checkerLoading, error: checkerError } = useGetCheckersById(checkerId);
 
-  // TODO: Voting Accuracy
-  const votingAccuracy = 70;
+  const { data: programme, isLoading: programmeLoading, error: programmeError} = useGetCheckersProgrammeById(checkerId);
 
-  // TODO: Set the numVotesTarget, numReportTarget, and numAccuracyTarget dynamically
-
-  const { data: checker, isLoading, error } = useGetCheckersById(checkerId);
-
-  if (isLoading)
+  if (checkerLoading || programmeLoading)
     return (
       <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
+    
+    if (checkerError || programmeError) {
+      return (
+        <div className="p-4 max-w-md mx-auto flex flex-col items-center justify-center min-h-[200px] gap-3">
+          <AlertCircle className="text-red-500" size={32} />
+          <p className="text-red-600 text-center font-medium">
+            Something went wrong loading your dashboard.
+          </p>
+          <p className="text-gray-500 text-sm text-center">
+            {checkerError?.message || programmeError?.message || "Please try again later."}
+          </p>
+        </div>
+      );
+    }
 
   return (
     <div className="flex flex-col gap-y-4 p-4">
@@ -39,8 +48,8 @@ export const CheckersDashboard = ({ checkerId }: CheckersDashboardProps) => {
       <ProgressItem
         name="Messages Voted On"
         imgSrc="/votes.png"
-        currentNum={checker.numVoted}
-        targetNum={50}
+        currentNum={programme.progress.votes.current}
+        targetNum={programme.progress.votes.target}
         isPercentageTarget={false}
         tooltipHeader="Messages Voted On"
         tooltipDescription={`Number of messages that you have voted on (passing does not count). You need to vote on at least 20 messages.`}
@@ -49,8 +58,8 @@ export const CheckersDashboard = ({ checkerId }: CheckersDashboardProps) => {
       <ProgressItem
         name="Voting Accuracy"
         imgSrc="/accuracy.png"
-        currentNum={votingAccuracy}
-        targetNum={60}
+        currentNum={programme.progress.accuracy.current ?? 0}
+        targetNum={programme.progress.accuracy.target}
         isPercentageTarget={true}
         tooltipHeader="Voting Accuracy (%)"
         tooltipDescription={`% of your votes that match the majority vote. You need to obtain at least 60%
@@ -60,8 +69,8 @@ export const CheckersDashboard = ({ checkerId }: CheckersDashboardProps) => {
       <ProgressItem
         name="Messages Reported"
         imgSrc="/message.png"
-        currentNum={numReported}
-        targetNum={10}
+        currentNum={programme.progress.reports.current}
+        targetNum={programme.progress.reports.target}
         isPercentageTarget={false}
         tooltipHeader="Messages Reported"
         tooltipDescription={

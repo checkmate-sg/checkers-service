@@ -3,6 +3,8 @@
  * Used by both NextJS API routes and Cloudflare Workers
  */
 
+import { VoteAPI } from '../types/schema';
+
 /**
  * Compute gamification score based on response time and correctness
  * Faster correct votes earn more points (Kahoot-style)
@@ -54,4 +56,22 @@ export function checkAccuracy(
     return Math.abs(crowdSourcedTruthScore - voteTruthScore) <= 1;
   }
   return crowdSourcedCategory === voteCategory;
+}
+
+export function computeAccuracyPercentage(
+  votes: VoteAPI[]
+): number | null {
+  // 1. Filter to only assessed votes (isCorrect is not null)
+  const assessedVotes = votes.filter(v => v.isCorrect !== null);
+
+  // 2. Return null if no assessed votes yet 
+  if (assessedVotes.length === 0) {
+    return null;
+  }
+
+  // 3. Count correct votes 
+  const correctVotes = assessedVotes.filter(v => v.isCorrect === true);
+
+  // 4. Calculate precentage 
+  return (correctVotes.length / assessedVotes.length) * 100;
 }

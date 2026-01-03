@@ -1,7 +1,7 @@
 /**
  * Typeform webhook handler for quiz completion
  */
-import { Context } from "hono";
+import { Context } from 'hono';
 
 interface TypeformAnswer {
   type: string;
@@ -81,6 +81,7 @@ export async function handleTypeformWebhook(c: Context<{ Bindings: Env }>): Prom
   try {
     const signature = c.req.header("typeform-signature");
     const rawBody = await c.req.text();
+
 
     // Verify signature if secret is configured
     if (env.TYPEFORM_SECRET_TOKEN) {

@@ -1,14 +1,15 @@
-import { Bot, Context, InlineKeyboard, Keyboard } from "grammy";
-import type { CheckerAPI } from "./types";
-import {
-  NLB_SURE_IMAGE,
-  RESOURCES_MESSAGE,
-  progressBar,
-  normalizePhoneNumber,
-  createNewChecker,
-} from "./constants";
-import { sendOTP, checkOTP } from "./otp";
+import { Bot, Context, InlineKeyboard, Keyboard } from 'grammy';
 
+import {
+  createNewChecker,
+  NLB_SURE_IMAGE,
+  normalizePhoneNumber,
+  progressBar,
+  RESOURCES_MESSAGE
+} from './constants';
+import { checkOTP, sendOTP } from './otp';
+
+import type { CheckerAPI } from "./types";
 // Safely answer callback query - don't let failures block the handler
 async function safeAnswerCallbackQuery(ctx: Context): Promise<void> {
   try {
@@ -156,7 +157,9 @@ export function createBot(token: string, env: Env): Bot {
       await ctx.reply(
         `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
       );
+      // Mock the resutls
       const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
+      // const checkResult = {"exists": true}
       if (checkResult.exists) {
         await sendTGGroupPrompt(ctx, env, telegramId, true);
       } else {

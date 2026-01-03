@@ -5,7 +5,7 @@ import { auth } from '@/auth';
 import { Err } from '@/lib/api/error';
 import {
   createVoteSubmittedEvent,
-  publishCheckersEvent,
+  publishCheckersEvent
 } from '@/lib/helpers/events/publishCheckersEvent';
 import { Vote } from '@/lib/request/external/lib/data-contracts';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
@@ -86,6 +86,23 @@ export async function POST(req: NextRequest, { params }) {
 
     if (result.modifiedCount === 0) {
       return Err.notFound("Vote not found or no changes made");
+    }
+
+    // Update numVoted in Checkers
+    const checkerResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
+      {_id: voteResult.data.checkerId},
+      {
+        $inc: {numVoted: 1},
+        $set: { lastVotedTimestamp: new Date()}
+      }
+    )
+
+    if (!checkerResult.success) {
+      return Err.internal("Failed to update checker");
+    }
+
+    if (checkerResult.modifiedCount === 0) {
+      return Err.notFound("Checker not found or no changes made");
     }
 
     // Publish event for async processing (assessment + scoring)

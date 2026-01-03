@@ -8,6 +8,11 @@ export async function getReportCount(
   fromDate?: Date
 ): Promise<{ count: number; error?: string }> {
   try {
+
+    // Mock data for local development 
+    if (process.env.NODE_ENV === "development") {
+      return { count: 2}
+    }
     if (!env.WHATSAPP_CHECKER_HANDLER_SERVICE) {
       console.warn("WHATSAPP_CHECKER_HANDLER_SERVICE not available");
       return { count: 0, error: "Service not available" };
