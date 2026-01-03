@@ -98,4 +98,32 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       format: "json",
       ...params,
     });
+  /**
+   * @description Retrieves voting statistics for a specific checker over the last 30 days
+   *
+   * @tags Checkers
+   * @name StatsDetail
+   * @summary Get checker statistics
+   * @request GET:checkers/{checkerId}/stats
+   */
+  statsDetail = (checkerId: string, params: RequestParams = {}) =>
+    this.request<
+      {
+        /** Number of votes cast by the checker */
+        voteCount: number;
+        /**
+         * Accuracy percentage of the checker's votes
+         * @format float
+         */
+        accuracy: number;
+        /** Number of reports associated with the checker */
+        reports: number;
+      },
+      APIError
+    >({
+      path: `checkers/${checkerId}/stats`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
 }

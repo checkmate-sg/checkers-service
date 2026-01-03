@@ -127,6 +127,46 @@ paths:
           $ref: '#/components/responses/AuthenticationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  
+  'checkers/{checkerId}/stats':
+    get: 
+      summary: Get checker statistics
+      description: Retrieves voting statistics for a specific checker over the last 30 days 
+      tags: 
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path 
+          description: Checker ID
+          required: true 
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieve checker statistics 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voteCount:
+                    type: integer
+                    description: Number of votes cast by the checker
+                  accuracy:
+                    type: number
+                    format: float
+                    description: Accuracy percentage of the checker's votes
+                  reports:
+                    type: integer
+                    description: Number of reports associated with the checker
+                required:
+                  - voteCount
+                  - accuracy
+                  - reports
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
       
           
   '/polls/webhook':

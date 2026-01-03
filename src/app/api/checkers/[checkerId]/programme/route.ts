@@ -16,9 +16,24 @@ export async function GET(req: NextRequest, { params }) {
 
         if (!checkerId) return Err.badParams("Missing checkerId parameter");
 
+        // Fetch Checker's data 
+        const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({_id: checkerId});
+
+        if (!checkerResult.success) {
+            return Err.notFound();
+        }
+
+        if (checkerResult.data.currentProgrammeId === null) {
+            // No active programme 
+            return NextResponse.json({
+                programme: null, 
+                progress: null
+            }, { status: 200});
+        }
+
         // Programme Result 
         const programmeResult = await env.CHECKERS_DB_SERVICE.findOneProgramme(
-            {checkerId: checkerId}
+            {_id: checkerResult.data.currentProgrammeId}
         )
 
         if (!programmeResult.success) {
@@ -50,6 +65,7 @@ export async function GET(req: NextRequest, { params }) {
         }, { status: 200})
 
     } catch (error) {
+        console.log("Error: ", error);
         return Err.internal();
     }
 

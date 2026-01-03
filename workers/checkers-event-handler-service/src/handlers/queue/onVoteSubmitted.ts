@@ -1,8 +1,8 @@
+import { checkGraduation } from '@/shared/helpers/checkGraduation';
 import { checkAccuracy, computeGamificationScore } from '@/shared/helpers/scoring';
 import { voteAssessment } from '@/shared/helpers/voteAssessment';
 
 import type { VoteSubmittedData } from "../../types";
-
 /**
  * Handle vote.submitted events from the queue
  *
@@ -88,6 +88,9 @@ export async function handleVoteSubmitted(
       { $set: { isCorrect, score } }
     );
   }
+
+  // Check if this vote triggers graduation for the checker 
+  await checkGraduation(env, vote.checkerId)
 
   // 5. Emit follow-up events based on actual state changes
   if (isFirstAssessment) {
