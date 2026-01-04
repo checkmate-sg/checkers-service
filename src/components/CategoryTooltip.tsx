@@ -9,9 +9,9 @@ const CategoryTooltip = ({ category }: CategoryTooltipProps) => {
   const getTooltipContent = (category: string) => {
     switch (category) {
       case "Scam":
-        return "Intended to obtain money/personal information via deception";
       case "Illicit":
-        return "Other potential illicit activity, e.g. moneylending/prostitution";
+      case "Scam/Illicit":
+        return "Intended to obtain money/personal information via deception, or other illicit activity (e.g. moneylending, prostitution)";
       case "News/Info/Opinion":
         return "Content intended to inform/convince/mislead a broad base of people";
       case "Satire":
