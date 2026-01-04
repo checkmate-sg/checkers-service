@@ -216,50 +216,38 @@ const VotePage = () => {
       return;
     }
 
-    try {
-      const submitData = {
-        category: selectedCategory,
-        tags: selectedTags,
-        aiRating,
-        comment: comment.trim(),
-        checkerId,
-        // Include additional fields
-        ...(selectedCategory === "News/Info/Opinion" && {
-          veracityScore: parseInt(veracityScore),
-        }),
-        ...(selectedCategory === "No Verifiable Content" && {
-          sourceCredibility,
-        }),
-      };
+    const submitData = {
+      category: selectedCategory,
+      tags: selectedTags,
+      aiRating,
+      comment: comment.trim(),
+      checkerId,
+      // Include additional fields
+      ...(selectedCategory === "News/Info/Opinion" && {
+        veracityScore: parseInt(veracityScore),
+      }),
+      ...(selectedCategory === "No Verifiable Content" && {
+        sourceCredibility,
+      }),
+    };
 
-      console.log("Submitting vote data:", submitData);
+    // Navigate immediately (optimistic UI)
+    toast({
+      title: hasUserVoted ? "Updating vote..." : "Submitting vote...",
+      description: "Thank you for helping fight misinformation.",
+    });
+    router.push("/dashboard");
 
-      const response = await fetch(`/api/votes/${voteId}/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(submitData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit vote");
-      }
-
-      toast({
-        title: hasUserVoted ? "Vote Updated!" : "Vote Submitted!",
-        description: "Thank you for helping fight misinformation.",
-      });
-
-      router.push("/dashboard");
-    } catch (err) {
+    // Fire API call in background (don't await)
+    fetch(`/api/votes/${voteId}/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(submitData),
+    }).catch(err => {
       console.error("Error submitting vote:", err);
-      toast({
-        title: "Error",
-        description: "Failed to submit vote. Please try again.",
-        variant: "destructive",
-      });
-    }
+    });
   };
 
   const getRatingIcon = rating => {

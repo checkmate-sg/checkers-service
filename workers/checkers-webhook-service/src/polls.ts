@@ -165,10 +165,12 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
           reply_markup: keyboard,
         });
 
-        // Store the message ID for later button text updates
-        await env.CHECKERS_DB_SERVICE.updateOneVote(
-          { _id: insertVoteResult.id },
-          { $set: { telegramMessageId: sentMessage.message_id } }
+        // Store the message ID for later button text updates (non-blocking)
+        c.executionCtx.waitUntil(
+          env.CHECKERS_DB_SERVICE.updateOneVote(
+            { _id: insertVoteResult.id },
+            { $set: { telegramMessageId: sentMessage.message_id } }
+          )
         );
       } catch (error) {
         console.error(`Failed to send message to checker ${checker.telegramId}:`, error);
