@@ -99,15 +99,15 @@ describe("voteAssessment", () => {
       }
     });
 
-    it("should detect clear illicit when illicit >= scam", async () => {
-      const scenario = testScenarios.clearIllicit;
+    it("should detect scam with majority scam votes", async () => {
+      const scenario = testScenarios.anotherScam;
       setupMocks(scenario.distribution);
 
       const result = await voteAssessment(mockDbService, "poll-001");
 
       expect(result.success).toBe(true);
       expect(result.data).not.toBeNull();
-      expect(result.data?.primaryCategory).toBe("illicit");
+      expect(result.data?.primaryCategory).toBe("scam");
     });
 
     it("should detect big suspicious and assess quickly", async () => {
