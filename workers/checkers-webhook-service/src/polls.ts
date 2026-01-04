@@ -145,6 +145,7 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
         score: null,
         isCorrect: null,
         showNoteAfterVote: Math.random() < 0.5, // A/B test: 50/50 split
+        telegramMessageId: null,
       };
 
       const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
@@ -160,9 +161,15 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
       const keyboard = new InlineKeyboard().webApp("Vote 🗳️!", voteRequestPath);
 
       try {
-        await bot.api.sendMessage(checker.telegramId, previewText, {
+        const sentMessage = await bot.api.sendMessage(checker.telegramId, previewText, {
           reply_markup: keyboard,
         });
+
+        // Store the message ID for later button text updates
+        await env.CHECKERS_DB_SERVICE.updateOneVote(
+          { _id: insertVoteResult.id },
+          { $set: { telegramMessageId: sentMessage.message_id } }
+        );
       } catch (error) {
         console.error(`Failed to send message to checker ${checker.telegramId}:`, error);
         // Continue with other checkers even if one fails

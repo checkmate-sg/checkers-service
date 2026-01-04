@@ -37,6 +37,10 @@ interface CheckersDbService {
     vote: Omit<VoteAPI, "_id">,
     customId?: string
   ): Promise<{ success: boolean; id?: string; error?: string }>;
+  updateOneVote(
+    filter: Record<string, unknown>,
+    update: Record<string, unknown>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
 }
 
 interface CheckerReminderAlarmService {
@@ -135,6 +139,7 @@ export interface VoteAPI {
   score: number | null; // Score awarded for this vote
   isCorrect: boolean | null; // Whether the vote matched the consensus
   showNoteAfterVote: boolean; // A/B test flag: true = show community note after voting, false = show before
+  telegramMessageId: number | null; // The Telegram message ID for the vote notification
 }
 
 // Poll request from CheckMate AI platform

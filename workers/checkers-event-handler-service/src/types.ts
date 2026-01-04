@@ -55,6 +55,7 @@ export interface VoteAPI {
   responseTime: number | null;
   score: number | null;
   isCorrect: boolean | null;
+  telegramMessageId: number | null;
 }
 
 export interface PollAPI {
