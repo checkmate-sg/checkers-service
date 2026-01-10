@@ -3,6 +3,7 @@ import { checkAccuracy, computeGamificationScore } from '@/shared/helpers/scorin
 import { voteAssessment } from '@/shared/helpers/voteAssessment';
 
 import type { VoteSubmittedData } from "../../types";
+import { updateVoteButtonText } from "../../utils";
 /**
  * Handle vote.submitted events from the queue
  *
@@ -30,6 +31,15 @@ export async function handleVoteSubmitted(
 
   const vote = voteResult.data;
   const pollId = vote.pollId;
+
+  // Update checker's lastVotedTimestamp for inactivity tracking
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
+    { _id: vote.checkerId },
+    { $set: { lastVotedTimestamp: new Date() } }
+  );
+
+  // Update Telegram button text to indicate vote was submitted
+  await updateVoteButtonText(env, vote);
 
   // 2. Run vote assessment
   const assessmentResult = await voteAssessment(env.CHECKERS_DB_SERVICE, pollId);

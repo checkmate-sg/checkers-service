@@ -3,7 +3,17 @@
  * Used by both NextJS API routes and Cloudflare Workers
  */
 
-const ALL_CATEGORIES = ["scam", "illicit", "info", "satire", "spam", "legitimate", "irrelevant", "unsure", "pass", null];
+const ALL_CATEGORIES = [
+  "scam",
+  "info",
+  "satire",
+  "spam",
+  "legitimate",
+  "irrelevant",
+  "unsure",
+  "pass",
+  null,
+];
 const ALL_RESPONSE_CATEGORIES = ["great", "acceptable", "unacceptable", null];
 
 export interface VoteAssessmentResult {
@@ -31,7 +41,7 @@ export async function voteAssessment(
     // Get category counts
     const categoryCounts = await getCategoryCountsByPollId(dbService, pollId);
     if ("error" in categoryCounts) {
-      return { success: false, error: categoryCounts.error };
+      return { success: false, error: categoryCounts.error as string };
     }
 
     // Get total vote requests count
@@ -44,10 +54,10 @@ export async function voteAssessment(
     const factCheckerCount = totalVoteRequestsCount - categoryCounts["pass"];
 
     // validResponseCount = checkers who actually voted (excludes pass AND null/not-voted-yet)
-    const validResponseCount = totalVoteRequestsCount - categoryCounts["pass"] - categoryCounts["null"];
+    const validResponseCount =
+      totalVoteRequestsCount - categoryCounts["pass"] - categoryCounts["null"];
 
-    // susCount = scamCount + illicitCount
-    const susCount = categoryCounts["scam"] + categoryCounts["illicit"];
+    const susCount = categoryCounts["scam"];
 
     // noClaimCount = irrelevantCount + legitimateCount
     const noClaimCount = categoryCounts["irrelevant"] + categoryCounts["legitimate"];
@@ -56,8 +66,7 @@ export async function voteAssessment(
     const totalTruthScoreValue = await getTotalTruthScoreValue(dbService, pollId);
     const truthScore = computeTruthScore(categoryCounts["info"], totalTruthScoreValue);
 
-    // harmfulCount = scamCount + illicitCount
-    let harmfulCount = categoryCounts["scam"] + categoryCounts["illicit"];
+    let harmfulCount = categoryCounts["scam"];
 
     // harmlessCount = legitimateCount + spamCount
     let harmlessCount = categoryCounts["legitimate"] + categoryCounts["spam"];
@@ -75,8 +84,7 @@ export async function voteAssessment(
 
     const isBigSus = susCount > 0.75 * validResponseCount;
     const isSus = isBigSus || susCount > 0.5 * validResponseCount;
-    const isScam = isSus && categoryCounts["scam"] >= categoryCounts["illicit"];
-    const isIllicit = isSus && !isScam;
+    const isScam = isSus; // scam and illicit merged - susCount includes both
     const isInfo = categoryCounts["info"] > 0.5 * validResponseCount;
     const isSatire = categoryCounts["satire"] > 0.5 * validResponseCount;
     const isSpam = categoryCounts["spam"] > 0.5 * validResponseCount;
@@ -97,7 +105,7 @@ export async function voteAssessment(
     // Get responseCategory counts for downvote check
     const responseCategory = await getResponseCategoryCountsByPollId(dbService, pollId);
     if ("error" in responseCategory) {
-      return { success: false, error: responseCategory.error };
+      return { success: false, error: responseCategory.error as string };
     }
 
     const isDownvoted = responseCategory["unacceptable"] > 0.5 * validResponseCount && isAssessed;
@@ -107,9 +115,6 @@ export async function voteAssessment(
     switch (true) {
       case isScam:
         primaryCategory = "scam";
-        break;
-      case isIllicit:
-        primaryCategory = "illicit";
         break;
       case isSatire:
         primaryCategory = "satire";
@@ -200,10 +205,7 @@ async function getTotalVoteRequestsCount(
   return (result.data as Array<{ totalVoteRequestCount: number }>)[0].totalVoteRequestCount;
 }
 
-async function getTotalTruthScoreValue(
-  dbService: DBService,
-  pollId: string
-): Promise<number> {
+async function getTotalTruthScoreValue(dbService: DBService, pollId: string): Promise<number> {
   const pipeline = [
     { $match: { truthScore: { $ne: null } } },
     { $group: { _id: null, totalTruthScore: { $sum: "$truthScore" } } },

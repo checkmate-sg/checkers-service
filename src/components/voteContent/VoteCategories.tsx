@@ -1,20 +1,19 @@
 "use client";
 
-import { MegaphoneIcon, NewspaperIcon, XCircleIcon } from 'lucide-react';
-import { useState } from 'react';
+import { MegaphoneIcon, NewspaperIcon, XCircleIcon } from "lucide-react";
+import { useState } from "react";
 
 import {
   EllipsisHorizontalCircleIcon,
   FaceSmileIcon,
   PaperAirplaneIcon,
   QuestionMarkCircleIcon,
-  ShieldExclamationIcon
-} from '@heroicons/react/20/solid';
+} from "@heroicons/react/20/solid";
 
-import TooltipWithHelperIcon from '../common/TooltipwithHelperIcon';
-import { Button } from '../ui/button';
-import InfoOptions from './InfoOptions';
-import NvcOptions from './NvcOptions';
+import TooltipWithHelperIcon from "../common/TooltipwithHelperIcon";
+import { Button } from "../ui/button";
+import InfoOptions from "./InfoOptions";
+import NvcOptions from "./NvcOptions";
 
 interface VotingCategoriesProps {
   category: string | null;
@@ -30,14 +29,8 @@ const CATEGORIES = [
   {
     name: "scam",
     icon: <XCircleIcon className="h-7 w-7" />,
-    display: "Scam",
-    description: "Intended to obtain money/personal information via deception",
-  },
-  {
-    name: "illicit",
-    icon: <ShieldExclamationIcon className="h-7 w-7" />,
-    display: "Illicit",
-    description: "Other potential illicit activity, e.g. moneylending/prostitution",
+    display: "Scam/Illicit",
+    description: "Illicit activity (e.g. scams, moneylending, prostitution)",
   },
   {
     name: "info",
@@ -86,6 +79,8 @@ function getSelectedCategory(category: string | null) {
       return "nvc";
     case "legitimate":
       return "nvc";
+    case "illicit":
+      return "scam"; // illicit merged into scam
     default:
       return category;
   }
@@ -100,7 +95,6 @@ export default function VoteCategories(props: VotingCategoriesProps) {
   const [NVCCategory, setNVCCategory] = useState<string | null>(null);
 
   const handleSelection = (value: string) => {
-
     setSelectedCategory(value);
     switch (value) {
       case "nvc":
@@ -112,7 +106,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
         break;
       default:
         props.onVoteCategorySelection(value);
-        if (props.hasCommunityNote===true) {
+        if (props.hasCommunityNote === true) {
           props.onNextStep(2);
         }
         break;
@@ -120,10 +114,9 @@ export default function VoteCategories(props: VotingCategoriesProps) {
   };
 
   const handleNVCSelection = (value: string) => {
-
     setNVCCategory(value);
     props.onVoteCategorySelection(value);
-    if (props.hasCommunityNote===true) {
+    if (props.hasCommunityNote === true) {
       props.onNextStep(2);
     }
   };
@@ -131,7 +124,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
   const handleTruthScoreChange = (value: string) => {
     setTruthScore(parseInt(value));
     props.onTruthScoreChange(parseInt(value));
-    if (props.hasCommunityNote===true) {
+    if (props.hasCommunityNote === true) {
       props.onNextStep(2);
     }
   };
@@ -142,7 +135,7 @@ export default function VoteCategories(props: VotingCategoriesProps) {
         <div key={index} className="w-full">
           <Button
             variant={selectedCategory === cat.name ? "voteCategories" : "default"}
-            className="flex flex-row items-center justify-start gap-2 max-w-md space-x-3 text-sm w-full"
+            className="flex flex-row items-center justify-start gap-2 space-x-3 text-sm w-full"
             key={index}
             onClick={() => handleSelection(cat.name)}
           >

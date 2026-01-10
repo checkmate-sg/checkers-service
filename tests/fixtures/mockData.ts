@@ -135,15 +135,15 @@ export const testScenarios = {
 
   // Big suspicious (>75%): only need >4 votes
   bigSuspicious: {
-    distribution: { scam: 10, illicit: 6, legitimate: 4 },
+    distribution: { scam: 16, legitimate: 4 },
     expectedCategory: "scam",
     expectedAssessed: true,
   },
 
-  // Clear illicit: illicit >= scam when both are sus
-  clearIllicit: {
-    distribution: { illicit: 7, scam: 5, legitimate: 8 },
-    expectedCategory: "illicit",
+  // Another scam scenario (previously tested illicit, now merged)
+  anotherScam: {
+    distribution: { scam: 12, legitimate: 8 },
+    expectedCategory: "scam",
     expectedAssessed: true,
   },
 

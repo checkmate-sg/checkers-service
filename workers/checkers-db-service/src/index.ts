@@ -221,6 +221,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             truthScore: 1,
             responseCategory: 1,
             commentOnResponse: 1,
+            isCorrect: 1,
             poll: {
               _id: { $toString: "$poll._id" },
               checkId: {

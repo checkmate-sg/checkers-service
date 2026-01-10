@@ -5,7 +5,6 @@ import {
   MegaphoneIcon,
   NewspaperIcon,
   QuestionMarkCircleIcon,
-  ShieldExclamationIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
 
@@ -20,12 +19,9 @@ export default function VoteResult(Prop: VoteResultProps) {
 
     switch (Prop.category) {
       case "scam":
-        catName = "Scam";
+      case "illicit": // illicit merged into scam
+        catName = "Scam/Illicit";
         catIcon = <XCircleIcon className="h-7 w-7" />;
-        break;
-      case "illicit":
-        catName = "Illicit";
-        catIcon = <ShieldExclamationIcon className="h-7 w-7" />;
         break;
       case "info":
       case "untrue":

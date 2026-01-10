@@ -65,12 +65,8 @@ export default function VoteChart(Props: VoteChartProps) {
 
   const data = [
     {
-      name: "Scam",
-      count: assessedInfo.scam,
-    },
-    {
-      name: "Illicit",
-      count: assessedInfo.illicit,
+      name: "Scam/Illicit",
+      count: (assessedInfo.scam ?? 0) + (assessedInfo.illicit ?? 0),
     },
     infoObj,
     {

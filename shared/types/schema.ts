@@ -110,6 +110,8 @@ export interface Vote extends BaseDocument {
   responseTime: number | null; // Time taken to submit the vote in hours
   score: number | null; // Score awarded for this vote
   isCorrect: boolean | null; // Whether the vote matched the consensus
+  showNoteAfterVote: boolean; // A/B test flag: true = show community note after voting, false = show before
+  telegramMessageId: number | null; // The Telegram message ID for the vote notification (used to update button text after voting)
 }
 
 // Programme enrollment for a checker

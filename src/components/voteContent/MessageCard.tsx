@@ -78,7 +78,7 @@ export default function MessageCard(props: MessageCardProps) {
   const textParts = splitTextByUrls(textToShow);
 
   return (
-    <Card className="bg-orange-200 p-3 mx-3 my-2 border-orange-200">
+    <Card className="bg-orange-200 p-3 my-2 border-orange-200 w-full overflow-hidden">
       <CardContent className="-m-2">
         <div className="flex items-center my-3">
           <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-[#ff327d] mr-2 flex-shrink-0" />
@@ -100,7 +100,7 @@ export default function MessageCard(props: MessageCardProps) {
                         href={line}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
+                        className="text-blue-500 hover:underline break-all"
                       >
                         {line}
                       </a>
