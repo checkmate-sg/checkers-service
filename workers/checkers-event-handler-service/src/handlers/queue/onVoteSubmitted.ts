@@ -32,6 +32,12 @@ export async function handleVoteSubmitted(
   const vote = voteResult.data;
   const pollId = vote.pollId;
 
+  // Update checker's lastVotedTimestamp for inactivity tracking
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
+    { _id: vote.checkerId },
+    { $set: { lastVotedTimestamp: new Date() } }
+  );
+
   // Update Telegram button text to indicate vote was submitted
   await updateVoteButtonText(env, vote);
 
