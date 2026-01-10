@@ -28,6 +28,15 @@ interface CheckersDbService {
     programme: Omit<Programme, "_id">,
     customId?: string
   ): Promise<{ success: boolean; id?: string; error?: string }>;
+  findProgrammes(
+    filter: Record<string, unknown>,
+    options?: Record<string, unknown>
+  ): Promise<{
+    success: boolean;
+    data?: ProgrammeAPI[];
+    error?: string;
+    total?: number;
+  }>;
   findOnePoll(filter: Record<string, unknown>): Promise<{
     success: boolean;
     data?: PollAPI;
@@ -139,6 +148,25 @@ export interface VoteAPI {
   responseTime: number | null; // Time taken to submit the vote in hours
   score: number | null; // Score awarded for this vote
   isCorrect: boolean | null; // Whether the vote matched the consensus
+}
+
+// Programme with string IDs (API format)
+export interface ProgrammeAPI {
+  _id?: string;
+  checkerId: string;
+  startDate: Date;
+  endDate: Date | null;
+  status: "active" | "completed" | "extended" | "offboarded";
+  targets: {
+    votes: number;
+    accuracy: number;
+    reports: number;
+  };
+  votesAtStart: number;
+  hasReceivedExtension: boolean;
+  hasReceivedLowAccuracyWarning: boolean;
+  certificateUrl: string | null;
+  completedAt: Date | null;
 }
 
 // Poll request from CheckMate AI platform
