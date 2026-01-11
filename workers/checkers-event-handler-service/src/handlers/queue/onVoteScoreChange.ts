@@ -2,7 +2,7 @@ import { Bot } from "grammy";
 
 import { calculateProgrammeProgress } from "@/lib/helpers/programmeProgress";
 
-import { ACCURACY_NUDGE_THRESHOLD, ACCURACY_NUDGE_VOTE_THRESHOLD, MESSAGES } from "../../constants";
+import { MESSAGES } from "../../constants";
 import type { VoteScoreChangedData } from "../../types";
 
 /**
@@ -66,8 +66,8 @@ export async function handleVoteScoreChange(env: Env, data: VoteScoreChangedData
 /**
  * Check if accuracy nudge should be sent
  * Conditions:
- * - ≥20 votes cast (ACCURACY_NUDGE_VOTE_THRESHOLD)
- * - <50% accuracy (ACCURACY_NUDGE_THRESHOLD)
+ * - Votes cast >= env.ACCURACY_NUDGE_VOTE_THRESHOLD
+ * - Accuracy < env.ACCURACY_NUDGE_THRESHOLD
  * - hasReceivedLowAccuracyWarning === false
  */
 async function checkAccuracyNudge(
@@ -76,18 +76,21 @@ async function checkAccuracyNudge(
   programme: { _id: string; hasReceivedLowAccuracyWarning: boolean },
   progress: { voteCount: number; accuracy: number | null }
 ): Promise<void> {
+  const voteThreshold = parseInt(env.ACCURACY_NUDGE_VOTE_THRESHOLD, 20);
+  const accuracyThreshold = parseInt(env.ACCURACY_NUDGE_THRESHOLD, 50);
+
   // Already received warning - skip
   if (programme.hasReceivedLowAccuracyWarning) {
     return;
   }
 
   // Not enough votes yet
-  if (progress.voteCount < ACCURACY_NUDGE_VOTE_THRESHOLD) {
+  if (progress.voteCount < voteThreshold) {
     return;
   }
 
   // Accuracy is above threshold (or null)
-  if (progress.accuracy === null || progress.accuracy >= ACCURACY_NUDGE_THRESHOLD) {
+  if (progress.accuracy === null || progress.accuracy >= accuracyThreshold) {
     return;
   }
 
@@ -165,6 +168,11 @@ async function checkGraduation(
     data: {
       checkerId: checker._id,
       programmeId: programme._id,
+      stats: {
+        voteCount: progress.voteCount,
+        accuracy: progress.accuracy ?? 0,
+        reportCount: progress.reportCount,
+      },
     },
     timestamp: new Date().toISOString(),
   });

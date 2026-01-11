@@ -172,6 +172,11 @@ export interface PrimaryCategoryChangedData {
 export interface ProgrammeCompletedData {
   checkerId: string;
   programmeId: string;
+  stats: {
+    voteCount: number;
+    accuracy: number;
+    reportCount: number;
+  };
 }
 
 export interface VoteScoreChangedData {

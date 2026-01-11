@@ -106,10 +106,10 @@ export async function handleProgrammeCompletion(
       const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
       const message = MESSAGES.graduation({
         name: checker.name || "Checker",
-        numMessages: programme.targets.votes,
-        accuracy: programme.targets.accuracy,
+        numMessages: data.stats.voteCount,
+        accuracy: data.stats.accuracy,
         numReferred: 0, // Referrals not implemented yet
-        numReported: programme.targets.reports,
+        numReported: data.stats.reportCount,
         surveyLink: env.COMPLETED_SURVEY_LINK,
       });
 
