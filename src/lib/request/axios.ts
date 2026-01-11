@@ -1,4 +1,4 @@
-import libAxios from 'axios';
+import libAxios from "axios";
 
 libAxios.defaults.paramsSerializer = params => {
   const str: string[] = [];

@@ -65,6 +65,7 @@ export function createNewChecker(telegramId: string): {
   lastVotedTimestamp: null;
   getNameMessageId: null;
   dailyAssignmentCount: 0;
+  currentProgrammeId: null;
 } {
   return {
     name: null,
@@ -87,5 +88,6 @@ export function createNewChecker(telegramId: string): {
     lastVotedTimestamp: null,
     getNameMessageId: null,
     dailyAssignmentCount: 0,
+    currentProgrammeId: null,
   };
 }

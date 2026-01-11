@@ -26,6 +26,10 @@
         "queue": "whatsapp-adhoc-message-queue",
         "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
       },
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
+      },
     ],
   },
   /**
@@ -59,6 +63,9 @@
     "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
     "TYPEFORM_URL": "https://better-sg.typeform.com/to/MlihTUDx",
     "WHATSAPP_BOT_LINK": "https://wa.me/15556491968",
+    "PROGRAMME_TARGET_VOTES": "1",
+    "PROGRAMME_TARGET_ACCURACY": "60",
+    "PROGRAMME_TARGET_REPORTS": "0",
   },
   "env": {
     "staging": {
@@ -74,6 +81,9 @@
         "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
+        "PROGRAMME_TARGET_VOTES": "1",
+        "PROGRAMME_TARGET_ACCURACY": "60",
+        "PROGRAMME_TARGET_REPORTS": "0",
       },
       "kv_namespaces": [
         {
@@ -86,6 +96,10 @@
           {
             "queue": "whatsapp-adhoc-message-queue-staging",
             "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },
@@ -121,6 +135,9 @@
         "HOST_URL": "https://checkers.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/nH8xme9G",
         "WHATSAPP_BOT_LINK": "https://ref.checkmate.sg/add",
+        "PROGRAMME_TARGET_VOTES": "50",
+        "PROGRAMME_TARGET_ACCURACY": "60",
+        "PROGRAMME_TARGET_REPORTS": "5",
       },
       "kv_namespaces": [
         {
@@ -133,6 +150,10 @@
           {
             "queue": "whatsapp-adhoc-message-queue",
             "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },

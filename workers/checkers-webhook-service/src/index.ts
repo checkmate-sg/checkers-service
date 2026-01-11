@@ -3,6 +3,7 @@ import { webhookCallback } from "grammy";
 import { createBot } from "./bot";
 import { handleTypeformWebhook } from "./typeform";
 import { handlePollWebhook } from "./polls";
+import { handleCheckerStatsWebhook } from "./checker-stats";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -35,5 +36,8 @@ app.post("/typeform", handleTypeformWebhook);
 
 // Poll webhook endpoint for receiving checks from CheckMate
 app.post("/polls/webhook", handlePollWebhook);
+
+// Checker stats endpoint for ops automation
+app.get("/checker-stats", handleCheckerStatsWebhook);
 
 export default app;

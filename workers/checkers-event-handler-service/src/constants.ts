@@ -31,7 +31,10 @@ If you need a refresher, you can refer to our <a href="${quizLink}">onboarding q
 
 You're almost there, let's finish strong! 💪`,
 
-  programmeOffboarding: (name: string, surveyLink: string) => `📍 CheckMate Fact-checker Programme Status
+  programmeOffboarding: (
+    name: string,
+    surveyLink: string
+  ) => `📍 CheckMate Fact-checker Programme Status
 
 Hi ${name},
 
@@ -44,4 +47,45 @@ As part of this process, you'll also be removed from the Checkers' Crew Telegram
 Thank you for your contribution,
 
 The CheckMate Team`,
+
+  graduation: (params: {
+    name: string;
+    numMessages: number;
+    accuracy: number;
+    numReferred: number;
+    numReported: number;
+    surveyLink: string;
+  }) => `<b>📍 Congratulations, You've Graduated! 🎉</b>
+
+Hi ${params.name},
+
+Huge congratulations on completing the CheckMate checkers' programme! You've worked hard, and completed the following:
+
+No. of messages voted on: ${params.numMessages}
+Accuracy: ${params.accuracy}%
+No. of new users referred: ${params.numReferred}
+No. of messages reported: ${params.numReported}
+
+Your dedication has clearly paid off! 🎓
+
+We'd love to hear about your experience - please take a moment to fill out <a href='${params.surveyLink}'>our survey</a>
+
+To view your official completion certificate or to add it to your LinkedIn profile, just press the respective buttons below.
+
+Thank you for being part of the Checkers' Crew. We're so proud of you! 💪`,
+
+  accuracyNudge: (params: {
+    name: string;
+    numMessages: number;
+    accuracyThreshold: number;
+    groupLink: string;
+  }) => `<b>📍 Let's Review Together!</b>
+
+Hi ${params.name},
+
+It looks like you've had some challenges with your first ${params.numMessages} messages, with over ${params.accuracyThreshold}% of them marked incorrect. Don't worry! This is all part of the learning process. 😊
+
+We recommend revisiting the resources which you can access by pressing the button below. If you're still unsure about categorization, feel free to ask any questions in the <a href='${params.groupLink}'>Checker's Telegram group</a>. We're here to help you improve and succeed!
+
+Keep going, you've got this 💪`,
 };

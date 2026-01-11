@@ -28,6 +28,10 @@
       "binding": "CHECKERS_EVENT_HANDLER_SERVICE",
       "service": "checkers-event-handler-service",
     },
+    {
+      "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+      "service": "whatsapp-checker-event-handler",
+    },
   ],
   // R2 incremental cache
   "r2_buckets": [
@@ -93,6 +97,10 @@
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service-staging",
         },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler-staging",
+        },
       ],
       "r2_buckets": [
         {
@@ -154,6 +162,10 @@
         {
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler",
         },
       ],
       "r2_buckets": [

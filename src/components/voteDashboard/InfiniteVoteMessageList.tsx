@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { SimpleInfinityScroll } from '../common/SimplyInfinityScroll';
-import { VoteMessageCard } from './voteMessageCard';
+import { SimpleInfinityScroll } from "../common/SimplyInfinityScroll";
+import { VoteMessageCard } from "./voteMessageCard";
 
 interface InfiniteVoteMessageProps {
   useGetCheckersVoteDetailHook: (params: {

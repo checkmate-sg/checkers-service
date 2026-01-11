@@ -1,9 +1,8 @@
-import { voteAssessment } from "@/shared/helpers/voteAssessment";
 import { checkAccuracy, computeGamificationScore } from "@/shared/helpers/scoring";
+import { voteAssessment } from "@/shared/helpers/voteAssessment";
 
 import type { VoteSubmittedData } from "../../types";
 import { updateVoteButtonText } from "../../utils";
-
 /**
  * Handle vote.submitted events from the queue
  *
@@ -15,10 +14,7 @@ import { updateVoteButtonText } from "../../utils";
  *    - Score the submitter's vote
  *    - Emit assessment.complete or primaryCategory.changed based on actual state change
  */
-export async function handleVoteSubmitted(
-  env: Env,
-  data: VoteSubmittedData
-): Promise<void> {
+export async function handleVoteSubmitted(env: Env, data: VoteSubmittedData): Promise<void> {
   const { voteId } = data;
   console.log(`Processing vote.submitted for voteId: ${voteId}`);
 
@@ -32,11 +28,39 @@ export async function handleVoteSubmitted(
   const vote = voteResult.data;
   const pollId = vote.pollId;
 
-  // Update checker's lastVotedTimestamp for inactivity tracking
-  await env.CHECKERS_DB_SERVICE.updateOneChecker(
-    { _id: vote.checkerId },
-    { $set: { lastVotedTimestamp: new Date() } }
-  );
+  // Calculate response time in hours
+  let responseTime: number | null = null;
+  if (vote.votedTimestamp && vote.createdTimestamp) {
+    const votedTs = new Date(vote.votedTimestamp).getTime();
+    const createdTs = new Date(vote.createdTimestamp).getTime();
+    responseTime = (votedTs - createdTs) / (1000 * 60 * 60);
+  }
+
+  // Check if this is first vote (responseTime was null) vs edit
+  const isFirstVote = vote.responseTime === null;
+
+  // Update vote with responseTime
+  if (responseTime !== null) {
+    await env.CHECKERS_DB_SERVICE.updateOneVote({ _id: voteId }, { $set: { responseTime } });
+  }
+
+  // Update checker's stats
+  // - Always update lastVotedTimestamp (for activity tracking)
+  // - Only increment numVoted on first vote (not edits)
+  if (isFirstVote) {
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
+      { _id: vote.checkerId },
+      {
+        $inc: { numVoted: 1 },
+        $set: { lastVotedTimestamp: new Date() },
+      }
+    );
+  } else {
+    await env.CHECKERS_DB_SERVICE.updateOneChecker(
+      { _id: vote.checkerId },
+      { $set: { lastVotedTimestamp: new Date() } }
+    );
+  }
 
   // Update Telegram button text to indicate vote was submitted
   await updateVoteButtonText(env, vote);
@@ -84,19 +108,34 @@ export async function handleVoteSubmitted(
   const categoryChanged = !isFirstAssessment && previousCategory !== primaryCategory;
   const downvotedChanged = previousDownvoted !== isDownvoted;
 
-  // 4. Score the submitter's vote (if poll is assessed)
+  // 4. Score the submitter's vote (if poll is assessed) and emit vote.scoreChanged if needed
   if (vote.votedTimestamp && vote.createdTimestamp) {
-    const isCorrect = checkAccuracy(vote.category, vote.truthScore, primaryCategory, truthScore);
+    const newIsCorrect = checkAccuracy(vote.category, vote.truthScore, primaryCategory, truthScore);
     const score = computeGamificationScore(
       new Date(vote.createdTimestamp),
       new Date(vote.votedTimestamp),
-      isCorrect
+      newIsCorrect
     );
 
-    await env.CHECKERS_DB_SERVICE.updateOneVote(
+    const voteUpdateResult = await env.CHECKERS_DB_SERVICE.updateOneVote(
       { _id: voteId },
-      { $set: { isCorrect, score } }
+      { $set: { isCorrect: newIsCorrect, score } }
     );
+
+    // Emit vote.scoreChanged if isCorrect value changed
+    const previousIsCorrect = voteUpdateResult.previousDocument?.isCorrect ?? null;
+    if (previousIsCorrect !== newIsCorrect) {
+      await env.CHECKERS_EVENTS_QUEUE.send({
+        type: "vote.scoreChanged",
+        data: {
+          checkerId: vote.checkerId,
+          voteId,
+          previousIsCorrect,
+          newIsCorrect,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   // 5. Emit follow-up events based on actual state changes

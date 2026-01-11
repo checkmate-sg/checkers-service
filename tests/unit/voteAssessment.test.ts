@@ -44,7 +44,7 @@ function setupMocks(
     { _id: "great", count: greatCount },
     { _id: "acceptable", count: acceptableCount },
     { _id: "unacceptable", count: unacceptableCount },
-  ].filter((item) => item.count > 0);
+  ].filter(item => item.count > 0);
 
   // Mock getVotesDetails to return different data based on the pipeline
   mockGetVotesDetails.mockImplementation((pollId: string, pipeline: unknown[]) => {

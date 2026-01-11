@@ -1,15 +1,15 @@
 "use client";
 
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
-import { useGetPollDetailsById } from '@/hooks/polls/useGetPollDetails';
-import { useGetVotesById } from '@/hooks/votes/useGetVotesById';
+import { useGetPollDetailsById } from "@/hooks/polls/useGetPollDetails";
+import { useGetVotesById } from "@/hooks/votes/useGetVotesById";
 
-import CommunityNoteCard from './CommunityNoteCard';
-import MessageCard from './MessageCard';
-import ReferenceLinksCard from './ReferenceLinksCard';
-import VoteResultsDisplay from './VoteResultsDisplay';
-import VotingSystem from './VotingSystem';
+import CommunityNoteCard from "./CommunityNoteCard";
+import MessageCard from "./MessageCard";
+import ReferenceLinksCard from "./ReferenceLinksCard";
+import VoteResultsDisplay from "./VoteResultsDisplay";
+import VotingSystem from "./VotingSystem";
 
 interface VoteContentProps {
   voteId: string;
@@ -40,7 +40,7 @@ export const VoteContent = ({ voteId }: VoteContentProps) => {
   const showNoteAfterVote = vote.showNoteAfterVote ?? false;
 
   return (
-      <>
+    <>
       <div className="grid grid-flow-row items-center gap-2 p-3 w-full max-w-full overflow-hidden">
         <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
 
@@ -74,7 +74,7 @@ export const VoteContent = ({ voteId }: VoteContentProps) => {
             pollCategory={poll.crowdSourcedCategory}
             pollTruthScore={poll.crowdSourcedTruthScore}
             communityNoteCategory={vote.responseCategory}
-            hasCommunityNote={poll.shortformResponse.en===null ? false : true}
+            hasCommunityNote={poll.shortformResponse.en === null ? false : true}
           />
         )}
       </div>

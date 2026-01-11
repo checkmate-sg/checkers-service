@@ -1,10 +1,6 @@
 import { Bot } from "grammy";
 
-import {
-  INACTIVITY_DEACTIVATION_DAYS,
-  INACTIVITY_WARNING_DAYS,
-  MESSAGES,
-} from "../../constants";
+import { INACTIVITY_DEACTIVATION_DAYS, INACTIVITY_WARNING_DAYS, MESSAGES } from "../../constants";
 import type { HandlerResult } from "../../types";
 import { daysSince, getLastActiveDate } from "../../utils";
 

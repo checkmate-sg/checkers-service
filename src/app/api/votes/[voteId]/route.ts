@@ -1,14 +1,14 @@
-import { Filter, UpdateFilter } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { Filter, UpdateFilter } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from '@/auth';
-import { Err } from '@/lib/api/error';
+import { auth } from "@/auth";
+import { Err } from "@/lib/api/error";
 import {
   createVoteSubmittedEvent,
   publishCheckersEvent,
-} from '@/lib/helpers/events/publishCheckersEvent';
-import { Vote } from '@/lib/request/external/lib/data-contracts';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+} from "@/lib/helpers/events/publishCheckersEvent";
+import { Vote } from "@/lib/request/external/lib/data-contracts";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -55,17 +55,6 @@ export async function POST(req: NextRequest, { params }) {
 
     const filter: Filter<Vote> = { _id: voteId };
 
-    // Get the vote to calculate response time
-    const voteResult = await env.CHECKERS_DB_SERVICE.findOneVote(filter);
-
-    if (!voteResult.success || !voteResult.data) {
-      return Err.notFound();
-    }
-
-    const currentTimestamp = new Date();
-    const createdTimestamp = new Date(voteResult.data.createdTimestamp);
-    const responseTimeInHours = (currentTimestamp.getTime() - createdTimestamp.getTime()) / (1000 * 60 * 60);
-
     const update: UpdateFilter<Vote> = {
       $set: {
         ...(category !== undefined && { category }),
@@ -73,8 +62,7 @@ export async function POST(req: NextRequest, { params }) {
         ...(responseCategory !== undefined && { responseCategory }),
         ...(commentOnResponse !== undefined && { commentOnResponse }),
         ...otherFields,
-        votedTimestamp: currentTimestamp,
-        responseTime: responseTimeInHours,
+        votedTimestamp: new Date(),
       },
     };
 
@@ -89,10 +77,7 @@ export async function POST(req: NextRequest, { params }) {
     }
 
     // Publish event for async processing (assessment + scoring)
-    const eventResult = await publishCheckersEvent(
-      env,
-      createVoteSubmittedEvent({ voteId })
-    );
+    const eventResult = await publishCheckersEvent(env, createVoteSubmittedEvent({ voteId }));
 
     if (!eventResult.success) {
       console.error("Failed to publish vote.submitted event:", eventResult.error);

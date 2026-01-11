@@ -1,5 +1,11 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, PollUpdateMessage, VoteAPI } from '@/shared/types/schema';
+import {
+  CheckerAPI,
+  PollAPI,
+  PollUpdateMessage,
+  ProgrammeAPI,
+  VoteAPI,
+} from "@/shared/types/schema";
 
 // Event types for the checkers event queue
 interface CheckersEvent<T = unknown> {
@@ -62,9 +68,34 @@ declare global {
       ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string; total: number }>;
       findOnePoll(filter: any): Promise<{ success: boolean; data?: PollAPI; error?: string }>;
       findOneVote(filter: any): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
-      getLeaderboardInfo(startOfMonth: Date, startOfNextMonth: Date):  Promise<{ success: boolean, data?: LeaderboardAPI[], total?: number, error?: string}>;
+      findVotes(filter: any): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }>;
+      getLeaderboardInfo(
+        startOfMonth: Date,
+        startOfNextMonth: Date
+      ): Promise<{ success: boolean; data?: LeaderboardAPI[]; total?: number; error?: string }>;
+      insertProgramme(
+        programme: Omit<ProgrammeAPI, "_id">,
+        customId?: string
+      ): Promise<{ success: boolean; id?: string; error?: string }>;
+      findOneProgramme(
+        filter: any
+      ): Promise<{ success: boolean; data?: ProgrammeAPI; error?: string }>;
+      findProgrammes(
+        filter: any,
+        options?: any
+      ): Promise<{ success: boolean; data?: ProgrammeAPI[]; error?: string; total?: number }>;
+      updateOneProgramme(
+        filter: any,
+        update: any
+      ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
     };
     CHECKMATE_WHATSAPP_SERVICE?: any;
+
+    // WhatsApp checker event handler service binding
+    WHATSAPP_CHECKER_HANDLER_SERVICE?: {
+      checkUser(whatsappId: string): Promise<{ exists: boolean }>;
+      checkUserReports(whatsappId: string, fromDate?: Date | string): Promise<{ count: number }>;
+    };
 
     // Event handler service binding (for local dev queue publishing)
     CHECKERS_EVENT_HANDLER_SERVICE?: {

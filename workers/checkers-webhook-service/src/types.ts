@@ -1,4 +1,12 @@
-import type { Checker, Poll, Vote, Response, ShortformResponse, HumanResponse } from "../../../shared/types/schema";
+import type {
+  Checker,
+  Poll,
+  Vote,
+  Programme,
+  Response,
+  ShortformResponse,
+  HumanResponse,
+} from "../../../shared/types/schema";
 
 // Service binding types (RPC interfaces)
 interface CheckersDbService {
@@ -24,6 +32,19 @@ interface CheckersDbService {
     filter: Record<string, unknown>,
     update: Record<string, unknown>
   ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+  insertProgramme(
+    programme: Omit<Programme, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }>;
+  findProgrammes(
+    filter: Record<string, unknown>,
+    options?: Record<string, unknown>
+  ): Promise<{
+    success: boolean;
+    data?: ProgrammeAPI[];
+    error?: string;
+    total?: number;
+  }>;
   findOnePoll(filter: Record<string, unknown>): Promise<{
     success: boolean;
     data?: PollAPI;
@@ -85,6 +106,7 @@ export interface CheckerAPI {
   lastVotedTimestamp: Date | null;
   getNameMessageId: string | null;
   dailyAssignmentCount: number;
+  currentProgrammeId: string | null;
 }
 
 // Poll with string IDs (API format)
@@ -140,6 +162,25 @@ export interface VoteAPI {
   isCorrect: boolean | null; // Whether the vote matched the consensus
   showNoteAfterVote: boolean; // A/B test flag: true = show community note after voting, false = show before
   telegramMessageId: number | null; // The Telegram message ID for the vote notification
+}
+
+// Programme with string IDs (API format)
+export interface ProgrammeAPI {
+  _id?: string;
+  checkerId: string;
+  startDate: Date;
+  endDate: Date | null;
+  status: "active" | "completed" | "extended" | "offboarded";
+  targets: {
+    votes: number;
+    accuracy: number;
+    reports: number;
+  };
+  votesAtStart: number;
+  hasReceivedExtension: boolean;
+  hasReceivedLowAccuracyWarning: boolean;
+  certificateUrl: string | null;
+  completedAt: Date | null;
 }
 
 // Poll request from CheckMate AI platform
