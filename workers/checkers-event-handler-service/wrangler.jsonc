@@ -123,6 +123,10 @@
       "queues": {
         "producers": [
           {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
+          {
             "queue": "checkers-poll-update-queue-staging",
             "binding": "POLL_UPDATE_QUEUE",
           },
@@ -174,6 +178,10 @@
       ],
       "queues": {
         "producers": [
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
           {
             "queue": "checkers-poll-update-queue",
             "binding": "POLL_UPDATE_QUEUE",

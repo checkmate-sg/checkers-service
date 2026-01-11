@@ -147,6 +147,7 @@ async function checkGraduation(
   programme: { _id: string; targets: { votes: number; accuracy: number; reports: number } },
   progress: { voteCount: number; accuracy: number | null; reportCount: number }
 ): Promise<void> {
+  console.log("Checking graduation conditions");
   // Check vote count threshold
   if (progress.voteCount < programme.targets.votes) {
     return;
