@@ -63,9 +63,9 @@
     "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
     "TYPEFORM_URL": "https://better-sg.typeform.com/to/MlihTUDx",
     "WHATSAPP_BOT_LINK": "https://wa.me/15556491968",
-    "PROGRAMME_TARGET_VOTES": "50",
+    "PROGRAMME_TARGET_VOTES": "1",
     "PROGRAMME_TARGET_ACCURACY": "60",
-    "PROGRAMME_TARGET_REPORTS": "5",
+    "PROGRAMME_TARGET_REPORTS": "0",
   },
   "env": {
     "staging": {
@@ -81,9 +81,9 @@
         "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
-        "PROGRAMME_TARGET_VOTES": "50",
+        "PROGRAMME_TARGET_VOTES": "1",
         "PROGRAMME_TARGET_ACCURACY": "60",
-        "PROGRAMME_TARGET_REPORTS": "5",
+        "PROGRAMME_TARGET_REPORTS": "0",
       },
       "kv_namespaces": [
         {

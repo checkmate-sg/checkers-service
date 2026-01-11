@@ -5,10 +5,6 @@ export const INACTIVITY_DEACTIVATION_DAYS = 10;
 export const PROGRAMME_EXTENSION_DAYS = 60;
 export const PROGRAMME_OFFBOARDING_DAYS = 90;
 
-// Accuracy nudge thresholds
-export const ACCURACY_NUDGE_VOTE_THRESHOLD = 20;
-export const ACCURACY_NUDGE_THRESHOLD = 50; // percentage
-
 // Message templates
 export const MESSAGES = {
   inactivityWarning: (name: string, groupLink: string) => `📍 We Miss You! 👀

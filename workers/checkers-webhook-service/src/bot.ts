@@ -146,29 +146,40 @@ export function createBot(token: string, env: Env): Bot {
   // ============================================
 
   bot.callbackQuery("QUIZ_COMPLETED", async ctx => {
+    console.log("Received QUIZ_COMPLETED callback");
     await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
-    // Verify quiz was actually completed via Typeform webhook
-    const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
-    const user = result.success ? result.data : null;
+    try {
+      // Verify quiz was actually completed via Typeform webhook
+      const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+      console.log("QUIZ_COMPLETED: DB lookup result", JSON.stringify(result));
+      const user = result.success ? result.data : null;
 
-    if (user?.isQuizComplete) {
-      await ctx.reply(
-        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
-      );
-      // Mock the resutls
-      const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
-      // const checkResult = {"exists": true}
-      if (checkResult.exists) {
-        await sendTGGroupPrompt(ctx, env, telegramId, true);
+      if (user?.isQuizComplete) {
+        await ctx.reply(
+          `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
+        );
+        const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
+        if (checkResult.exists) {
+          await sendTGGroupPrompt(ctx, env, telegramId, true);
+        } else {
+          await sendWAServicePrompt(ctx, env, telegramId, false);
+        }
       } else {
-        // User hasn't used the WhatsApp service yet
-        await sendWAServicePrompt(ctx, env, telegramId, false);
+        console.log("QUIZ_COMPLETED: Quiz not complete, showing prompt again");
+        await sendQuizPrompt(
+          ctx,
+          env,
+          telegramId,
+          user?.name || "",
+          user?.whatsappId || null,
+          false
+        );
       }
-    } else {
-      // Quiz not completed yet - prompt them to complete it
-      await sendQuizPrompt(ctx, env, telegramId, user?.name || "", user?.whatsappId || null, false);
+    } catch (error) {
+      console.error("Error in QUIZ_COMPLETED callback:", error);
+      await ctx.reply("An error occurred. Please try again or contact support.");
     }
   });
 
@@ -410,7 +421,7 @@ async function handleNameInput(
   telegramId: string,
   text: string
 ): Promise<void> {
-  if (!text || text.trim().length < 2) {
+  if (!text || text.trim().length < 1) {
     await ctx.reply("Name cannot be just spaces. Please enter a valid name.");
     await sendNamePrompt(ctx);
     return;
