@@ -1,4 +1,3 @@
-import { checkGraduation } from "@/shared/helpers/checkGraduation";
 import { checkAccuracy, computeGamificationScore } from "@/shared/helpers/scoring";
 import { voteAssessment } from "@/shared/helpers/voteAssessment";
 
@@ -109,20 +108,35 @@ export async function handleVoteSubmitted(env: Env, data: VoteSubmittedData): Pr
   const categoryChanged = !isFirstAssessment && previousCategory !== primaryCategory;
   const downvotedChanged = previousDownvoted !== isDownvoted;
 
-  // 4. Score the submitter's vote (if poll is assessed)
+  // 4. Score the submitter's vote (if poll is assessed) and emit vote.scoreChanged if needed
   if (vote.votedTimestamp && vote.createdTimestamp) {
-    const isCorrect = checkAccuracy(vote.category, vote.truthScore, primaryCategory, truthScore);
+    const newIsCorrect = checkAccuracy(vote.category, vote.truthScore, primaryCategory, truthScore);
     const score = computeGamificationScore(
       new Date(vote.createdTimestamp),
       new Date(vote.votedTimestamp),
-      isCorrect
+      newIsCorrect
     );
 
-    await env.CHECKERS_DB_SERVICE.updateOneVote({ _id: voteId }, { $set: { isCorrect, score } });
-  }
+    const voteUpdateResult = await env.CHECKERS_DB_SERVICE.updateOneVote(
+      { _id: voteId },
+      { $set: { isCorrect: newIsCorrect, score } }
+    );
 
-  // Check if this vote triggers graduation for the checker
-  await checkGraduation(env, vote.checkerId);
+    // Emit vote.scoreChanged if isCorrect value changed
+    const previousIsCorrect = voteUpdateResult.previousDocument?.isCorrect ?? null;
+    if (previousIsCorrect !== newIsCorrect) {
+      await env.CHECKERS_EVENTS_QUEUE.send({
+        type: "vote.scoreChanged",
+        data: {
+          checkerId: vote.checkerId,
+          voteId,
+          previousIsCorrect,
+          newIsCorrect,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 
   // 5. Emit follow-up events based on actual state changes
   if (isFirstAssessment) {

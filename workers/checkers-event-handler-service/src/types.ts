@@ -103,7 +103,12 @@ export interface CheckersDBService {
   updateOneVote(
     filter: Record<string, unknown>,
     update: Record<string, unknown>
-  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
+  ): Promise<{
+    success: boolean;
+    modifiedCount?: number;
+    previousDocument?: VoteAPI;
+    error?: string;
+  }>;
   findOnePoll(filter: Record<string, unknown>): Promise<DBServiceResult<PollAPI>>;
   updateOnePoll(
     filter: Record<string, unknown>,
@@ -167,6 +172,13 @@ export interface PrimaryCategoryChangedData {
 export interface ProgrammeCompletedData {
   checkerId: string;
   programmeId: string;
+}
+
+export interface VoteScoreChangedData {
+  checkerId: string;
+  voteId: string;
+  previousIsCorrect: boolean | null;
+  newIsCorrect: boolean | null;
 }
 
 // Handler result type
