@@ -1,72 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from '@/auth';
-import { Err } from '@/lib/api/error';
-import { calculateProgrammeProgress } from '@/lib/helpers/programmeProgress';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { auth } from "@/auth";
+import { Err } from "@/lib/api/error";
+import { calculateProgrammeProgress } from "@/lib/helpers/programmeProgress";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
-    const { env } = getCloudflareContext();
+  const { env } = getCloudflareContext();
 
-    try {
-        const session = await auth();
-        if (!session?.user) return Err.unauthorized();
+  try {
+    const session = await auth();
+    if (!session?.user) return Err.unauthorized();
 
-        const { checkerId } = await params;
+    const { checkerId } = await params;
 
-        if (!checkerId) return Err.badParams("Missing checkerId parameter");
+    if (!checkerId) return Err.badParams("Missing checkerId parameter");
 
-        // Fetch Checker's data 
-        const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({_id: checkerId});
+    // Fetch Checker's data
+    const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
 
-        if (!checkerResult.success) {
-            return Err.notFound();
-        }
-
-        if (checkerResult.data.currentProgrammeId === null) {
-            // No active programme 
-            return NextResponse.json({
-                programme: null, 
-                progress: null
-            }, { status: 200});
-        }
-
-        // Programme Result 
-        const programmeResult = await env.CHECKERS_DB_SERVICE.findOneProgramme(
-            {_id: checkerResult.data.currentProgrammeId}
-        )
-
-        if (!programmeResult.success) {
-            return Err.notFound();
-        }
-
-        const programmeStats = await calculateProgrammeProgress(
-            env, 
-            checkerId, 
-            {
-                startDate: programmeResult.data.startDate,
-                votesAtStart: programmeResult.data.votesAtStart
-            }
-        );
-
-        if (!programmeStats.success || !programmeStats.data) {
-            return Err.notFound();
-        }
-
-        // const daysRemaining = 
-
-        return NextResponse.json({
-            programme: programmeResult.data,
-            progress: {
-                votes: { current: programmeStats.data.voteCount,target: programmeResult.data.targets.votes},
-                accuracy: { current: programmeStats.data.accuracy, target: programmeResult.data.targets.accuracy},
-                reports: {current: programmeStats.data.reportCount, target: programmeResult.data.targets.reports}
-            }
-        }, { status: 200})
-
-    } catch (error) {
-        console.log("Error: ", error);
-        return Err.internal();
+    if (!checkerResult.success) {
+      return Err.notFound();
     }
 
+    if (checkerResult.data.currentProgrammeId === null) {
+      // No active programme
+      return NextResponse.json(
+        {
+          programme: null,
+          progress: null,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Programme Result
+    const programmeResult = await env.CHECKERS_DB_SERVICE.findOneProgramme({
+      _id: checkerResult.data.currentProgrammeId,
+    });
+
+    if (!programmeResult.success) {
+      return Err.notFound();
+    }
+
+    const programmeStats = await calculateProgrammeProgress(env, checkerId, {
+      startDate: programmeResult.data.startDate,
+      votesAtStart: programmeResult.data.votesAtStart,
+    });
+
+    if (!programmeStats.success || !programmeStats.data) {
+      return Err.notFound();
+    }
+
+    // const daysRemaining =
+
+    return NextResponse.json(
+      {
+        programme: programmeResult.data,
+        progress: {
+          votes: {
+            current: programmeStats.data.voteCount,
+            target: programmeResult.data.targets.votes,
+          },
+          accuracy: {
+            current: programmeStats.data.accuracy,
+            target: programmeResult.data.targets.accuracy,
+          },
+          reports: {
+            current: programmeStats.data.reportCount,
+            target: programmeResult.data.targets.reports,
+          },
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log("Error: ", error);
+    return Err.internal();
+  }
 }

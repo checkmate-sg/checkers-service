@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-import { LinkIcon, UserIcon } from '@heroicons/react/20/solid';
+import { LinkIcon, UserIcon } from "@heroicons/react/20/solid";
 
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 
 interface CommunityNoteCardProps {
   responseEN: string | null;

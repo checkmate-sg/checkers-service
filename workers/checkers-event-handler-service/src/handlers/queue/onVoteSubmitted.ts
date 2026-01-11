@@ -1,6 +1,6 @@
-import { checkGraduation } from '@/shared/helpers/checkGraduation';
-import { checkAccuracy, computeGamificationScore } from '@/shared/helpers/scoring';
-import { voteAssessment } from '@/shared/helpers/voteAssessment';
+import { checkGraduation } from "@/shared/helpers/checkGraduation";
+import { checkAccuracy, computeGamificationScore } from "@/shared/helpers/scoring";
+import { voteAssessment } from "@/shared/helpers/voteAssessment";
 
 import type { VoteSubmittedData } from "../../types";
 import { updateVoteButtonText } from "../../utils";
@@ -15,10 +15,7 @@ import { updateVoteButtonText } from "../../utils";
  *    - Score the submitter's vote
  *    - Emit assessment.complete or primaryCategory.changed based on actual state change
  */
-export async function handleVoteSubmitted(
-  env: Env,
-  data: VoteSubmittedData
-): Promise<void> {
+export async function handleVoteSubmitted(env: Env, data: VoteSubmittedData): Promise<void> {
   const { voteId } = data;
   console.log(`Processing vote.submitted for voteId: ${voteId}`);
 
@@ -93,14 +90,11 @@ export async function handleVoteSubmitted(
       isCorrect
     );
 
-    await env.CHECKERS_DB_SERVICE.updateOneVote(
-      { _id: voteId },
-      { $set: { isCorrect, score } }
-    );
+    await env.CHECKERS_DB_SERVICE.updateOneVote({ _id: voteId }, { $set: { isCorrect, score } });
   }
 
-  // Check if this vote triggers graduation for the checker 
-  await checkGraduation(env, vote.checkerId)
+  // Check if this vote triggers graduation for the checker
+  await checkGraduation(env, vote.checkerId);
 
   // 5. Emit follow-up events based on actual state changes
   if (isFirstAssessment) {

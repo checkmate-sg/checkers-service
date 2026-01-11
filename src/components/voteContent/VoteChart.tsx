@@ -6,8 +6,8 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
-} from 'recharts';
+  YAxis,
+} from "recharts";
 
 export interface TruthScoreBreakdown {
   total?: number;

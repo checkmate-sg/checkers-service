@@ -3,7 +3,7 @@
  * Used by both NextJS API routes and Cloudflare Workers
  */
 
-import { VoteAPI } from '../types/schema';
+import { VoteAPI } from "../types/schema";
 
 /**
  * Compute gamification score based on response time and correctness
@@ -58,20 +58,18 @@ export function checkAccuracy(
   return crowdSourcedCategory === voteCategory;
 }
 
-export function computeAccuracyPercentage(
-  votes: VoteAPI[]
-): number | null {
+export function computeAccuracyPercentage(votes: VoteAPI[]): number | null {
   // 1. Filter to only assessed votes (isCorrect is not null)
   const assessedVotes = votes.filter(v => v.isCorrect !== null);
 
-  // 2. Return null if no assessed votes yet 
+  // 2. Return null if no assessed votes yet
   if (assessedVotes.length === 0) {
     return null;
   }
 
-  // 3. Count correct votes 
+  // 3. Count correct votes
   const correctVotes = assessedVotes.filter(v => v.isCorrect === true);
 
-  // 4. Calculate precentage 
+  // 4. Calculate precentage
   return (correctVotes.length / assessedVotes.length) * 100;
 }

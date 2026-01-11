@@ -89,9 +89,7 @@ export interface ProgrammeAPI {
 
 // Service binding interfaces
 export interface CheckersDBService {
-  findOneChecker(
-    filter: Record<string, unknown>
-  ): Promise<DBServiceResult<CheckerAPI>>;
+  findOneChecker(filter: Record<string, unknown>): Promise<DBServiceResult<CheckerAPI>>;
   findCheckers(
     filter: Record<string, unknown>,
     options?: { sort?: Record<string, 1 | -1> }
@@ -100,30 +98,27 @@ export interface CheckersDBService {
     filter: Record<string, unknown>,
     update: Record<string, unknown>
   ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
-  findOneVote(
-    filter: Record<string, unknown>
-  ): Promise<DBServiceResult<VoteAPI>>;
-  findVotes(
-    filter: Record<string, unknown>
-  ): Promise<DBServiceResult<VoteAPI[]>>;
+  findOneVote(filter: Record<string, unknown>): Promise<DBServiceResult<VoteAPI>>;
+  findVotes(filter: Record<string, unknown>): Promise<DBServiceResult<VoteAPI[]>>;
   updateOneVote(
     filter: Record<string, unknown>,
     update: Record<string, unknown>
   ): Promise<{ success: boolean; modifiedCount?: number; error?: string }>;
-  findOnePoll(
-    filter: Record<string, unknown>
-  ): Promise<DBServiceResult<PollAPI>>;
+  findOnePoll(filter: Record<string, unknown>): Promise<DBServiceResult<PollAPI>>;
   updateOnePoll(
     filter: Record<string, unknown>,
     update: Record<string, unknown>
-  ): Promise<{ success: boolean; modifiedCount?: number; previousDocument?: PollAPI; error?: string }>;
+  ): Promise<{
+    success: boolean;
+    modifiedCount?: number;
+    previousDocument?: PollAPI;
+    error?: string;
+  }>;
   getVotesDetails(
     pollId: string,
     aggregationPipeline: unknown[]
   ): Promise<DBServiceResult<unknown[]>>;
-  findOneProgramme(
-    filter: Record<string, unknown>
-  ): Promise<DBServiceResult<ProgrammeAPI>>;
+  findOneProgramme(filter: Record<string, unknown>): Promise<DBServiceResult<ProgrammeAPI>>;
   findProgrammes(
     filter: Record<string, unknown>,
     options?: { sort?: Record<string, 1 | -1> }

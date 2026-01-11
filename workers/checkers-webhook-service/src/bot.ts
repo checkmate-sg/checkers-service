@@ -1,13 +1,13 @@
-import { Bot, Context, InlineKeyboard, Keyboard } from 'grammy';
+import { Bot, Context, InlineKeyboard, Keyboard } from "grammy";
 
 import {
   createNewChecker,
   NLB_SURE_IMAGE,
   normalizePhoneNumber,
   progressBar,
-  RESOURCES_MESSAGE
-} from './constants';
-import { checkOTP, sendOTP } from './otp';
+  RESOURCES_MESSAGE,
+} from "./constants";
+import { checkOTP, sendOTP } from "./otp";
 
 import type { CheckerAPI } from "./types";
 // Safely answer callback query - don't let failures block the handler

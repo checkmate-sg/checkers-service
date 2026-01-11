@@ -1,14 +1,14 @@
-import { Filter, UpdateFilter } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { Filter, UpdateFilter } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from '@/auth';
-import { Err } from '@/lib/api/error';
+import { auth } from "@/auth";
+import { Err } from "@/lib/api/error";
 import {
   createVoteSubmittedEvent,
-  publishCheckersEvent
-} from '@/lib/helpers/events/publishCheckersEvent';
-import { Vote } from '@/lib/request/external/lib/data-contracts';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+  publishCheckersEvent,
+} from "@/lib/helpers/events/publishCheckersEvent";
+import { Vote } from "@/lib/request/external/lib/data-contracts";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -64,7 +64,8 @@ export async function POST(req: NextRequest, { params }) {
 
     const currentTimestamp = new Date();
     const createdTimestamp = new Date(voteResult.data.createdTimestamp);
-    const responseTimeInHours = (currentTimestamp.getTime() - createdTimestamp.getTime()) / (1000 * 60 * 60);
+    const responseTimeInHours =
+      (currentTimestamp.getTime() - createdTimestamp.getTime()) / (1000 * 60 * 60);
 
     const update: UpdateFilter<Vote> = {
       $set: {
@@ -90,12 +91,12 @@ export async function POST(req: NextRequest, { params }) {
 
     // Update numVoted in Checkers
     const checkerResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
-      {_id: voteResult.data.checkerId},
+      { _id: voteResult.data.checkerId },
       {
-        $inc: {numVoted: 1},
-        $set: { lastVotedTimestamp: new Date()}
+        $inc: { numVoted: 1 },
+        $set: { lastVotedTimestamp: new Date() },
       }
-    )
+    );
 
     if (!checkerResult.success) {
       return Err.internal("Failed to update checker");
@@ -106,10 +107,7 @@ export async function POST(req: NextRequest, { params }) {
     }
 
     // Publish event for async processing (assessment + scoring)
-    const eventResult = await publishCheckersEvent(
-      env,
-      createVoteSubmittedEvent({ voteId })
-    );
+    const eventResult = await publishCheckersEvent(env, createVoteSubmittedEvent({ voteId }));
 
     if (!eventResult.success) {
       console.error("Failed to publish vote.submitted event:", eventResult.error);

@@ -31,7 +31,10 @@ If you need a refresher, you can refer to our <a href="${quizLink}">onboarding q
 
 You're almost there, let's finish strong! 💪`,
 
-  programmeOffboarding: (name: string, surveyLink: string) => `📍 CheckMate Fact-checker Programme Status
+  programmeOffboarding: (
+    name: string,
+    surveyLink: string
+  ) => `📍 CheckMate Fact-checker Programme Status
 
 Hi ${name},
 

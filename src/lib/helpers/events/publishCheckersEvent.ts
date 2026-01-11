@@ -50,7 +50,9 @@ export async function publishCheckersEvent(
 /**
  * Helper to create a vote.submitted event
  */
-export function createVoteSubmittedEvent(data: VoteSubmittedEventData): CheckersEvent<VoteSubmittedEventData> {
+export function createVoteSubmittedEvent(
+  data: VoteSubmittedEventData
+): CheckersEvent<VoteSubmittedEventData> {
   return {
     type: "vote.submitted",
     data,

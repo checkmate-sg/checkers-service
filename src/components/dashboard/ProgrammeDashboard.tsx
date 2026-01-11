@@ -1,16 +1,16 @@
-import { Checker, ProgrammeProgressResponse } from '@/lib/request/external/lib/data-contracts';
+import { Checker, ProgrammeProgressResponse } from "@/lib/request/external/lib/data-contracts";
 
-import { ProgressItem } from '../common/progress-item/ProgressItem';
+import { ProgressItem } from "../common/progress-item/ProgressItem";
 
 interface ProgrammeDashboardProps {
-    checker: Checker;
-    programme: ProgrammeProgressResponse
+  checker: Checker;
+  programme: ProgrammeProgressResponse;
 }
 
-export const ProgrammeDashboard = ({checker, programme}: ProgrammeDashboardProps) => {
-    const isProd = process.env.NODE_ENV === "production";
-    return (
-        <div className="flex flex-col gap-y-4 p-4">
+export const ProgrammeDashboard = ({ checker, programme }: ProgrammeDashboardProps) => {
+  const isProd = process.env.NODE_ENV === "production";
+  return (
+    <div className="flex flex-col gap-y-4 p-4">
       <h6 className="text-orange-600 text-lg font-semibold">
         Hello, {checker.name}! Up for a challenge? Attain these 3 milestones to finish the CheckMate
         Checker's Program and get certified.
@@ -58,11 +58,11 @@ export const ProgrammeDashboard = ({checker, programme}: ProgrammeDashboardProps
             >
               WhatsApp Bot
             </a>
-            . You need to submit at least {programme.progress.reports.target} messages that are not eventually marked nvc-can't tell.
+            . You need to submit at least {programme.progress.reports.target} messages that are not
+            eventually marked nvc-can't tell.
           </>
         }
       />
     </div>
-
-    )
-}
+  );
+};

@@ -1,4 +1,12 @@
-import type { Checker, Poll, Vote, Programme, Response, ShortformResponse, HumanResponse } from "../../../shared/types/schema";
+import type {
+  Checker,
+  Poll,
+  Vote,
+  Programme,
+  Response,
+  ShortformResponse,
+  HumanResponse,
+} from "../../../shared/types/schema";
 
 // Service binding types (RPC interfaces)
 interface CheckersDbService {

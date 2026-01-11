@@ -1,10 +1,10 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
-import { useGetPollResultsById } from '@/hooks/polls/useGetPollResults';
+import { useGetPollResultsById } from "@/hooks/polls/useGetPollResults";
 
-import VoteChart from './VoteChart';
-import VoteNoteChart from './VoteNoteChart';
-import VoteResult from './VoteResult';
+import VoteChart from "./VoteChart";
+import VoteNoteChart from "./VoteNoteChart";
+import VoteResult from "./VoteResult";
 
 interface VoteResultsDisplayProps {
   pollId: string | null;
@@ -13,7 +13,7 @@ interface VoteResultsDisplayProps {
   pollCategory: string | null;
   pollTruthScore: number | null;
   communityNoteCategory?: "great" | "acceptable" | "unacceptable" | null;
-  hasCommunityNote: boolean; 
+  hasCommunityNote: boolean;
 }
 
 export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
@@ -42,8 +42,11 @@ export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
       </div>
       <VoteChart assessedInfo={pollStats} />
       {Props.hasCommunityNote ? (
-        <VoteNoteChart assessedInfo={pollStats} communityNoteCategory={Props.communityNoteCategory} />
-      ): null}
+        <VoteNoteChart
+          assessedInfo={pollStats}
+          communityNoteCategory={Props.communityNoteCategory}
+        />
+      ) : null}
     </>
   );
 }

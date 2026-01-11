@@ -10,7 +10,9 @@ export async function handlePrimaryCategoryChanged(
   data: PrimaryCategoryChangedData
 ): Promise<void> {
   const { pollId, primaryCategory, truthScore } = data;
-  console.log(`Processing primaryCategory.changed for poll ${pollId}, new category: ${primaryCategory}`);
+  console.log(
+    `Processing primaryCategory.changed for poll ${pollId}, new category: ${primaryCategory}`
+  );
 
   await scoreAllVotesForPoll(env, pollId, primaryCategory, truthScore);
 }

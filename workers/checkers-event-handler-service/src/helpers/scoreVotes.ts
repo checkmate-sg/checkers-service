@@ -47,8 +47,5 @@ async function scoreVote(
     isCorrect
   );
 
-  await env.CHECKERS_DB_SERVICE.updateOneVote(
-    { _id: vote._id },
-    { $set: { isCorrect, score } }
-  );
+  await env.CHECKERS_DB_SERVICE.updateOneVote({ _id: vote._id }, { $set: { isCorrect, score } });
 }

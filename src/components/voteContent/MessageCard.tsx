@@ -1,13 +1,13 @@
 "use client";
 
-import normalizeUrl from 'normalize-url';
-import React, { useState } from 'react';
-import urlRegexSafe from 'url-regex-safe';
+import normalizeUrl from "normalize-url";
+import React, { useState } from "react";
+import urlRegexSafe from "url-regex-safe";
 
-import { ChatBubbleLeftEllipsisIcon } from '@heroicons/react/20/solid';
+import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/20/solid";
 
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 
 interface MessageCardProps {
   text: string | null;

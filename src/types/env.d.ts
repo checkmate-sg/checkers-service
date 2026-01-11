@@ -1,5 +1,11 @@
 // Extend the CloudflareEnv interface from OpenNext with our custom bindings
-import { CheckerAPI, PollAPI, PollUpdateMessage, ProgrammeAPI, VoteAPI } from '@/shared/types/schema';
+import {
+  CheckerAPI,
+  PollAPI,
+  PollUpdateMessage,
+  ProgrammeAPI,
+  VoteAPI,
+} from "@/shared/types/schema";
 
 // Event types for the checkers event queue
 interface CheckersEvent<T = unknown> {
@@ -63,12 +69,17 @@ declare global {
       findOnePoll(filter: any): Promise<{ success: boolean; data?: PollAPI; error?: string }>;
       findOneVote(filter: any): Promise<{ success: boolean; data?: VoteAPI; error?: string }>;
       findVotes(filter: any): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }>;
-      getLeaderboardInfo(startOfMonth: Date, startOfNextMonth: Date):  Promise<{ success: boolean, data?: LeaderboardAPI[], total?: number, error?: string}>;
+      getLeaderboardInfo(
+        startOfMonth: Date,
+        startOfNextMonth: Date
+      ): Promise<{ success: boolean; data?: LeaderboardAPI[]; total?: number; error?: string }>;
       insertProgramme(
         programme: Omit<ProgrammeAPI, "_id">,
         customId?: string
       ): Promise<{ success: boolean; id?: string; error?: string }>;
-      findOneProgramme(filter: any): Promise<{ success: boolean; data?: ProgrammeAPI; error?: string }>;
+      findOneProgramme(
+        filter: any
+      ): Promise<{ success: boolean; data?: ProgrammeAPI; error?: string }>;
       findProgrammes(
         filter: any,
         options?: any
@@ -83,10 +94,7 @@ declare global {
     // WhatsApp checker event handler service binding
     WHATSAPP_CHECKER_HANDLER_SERVICE?: {
       checkUser(whatsappId: string): Promise<{ exists: boolean }>;
-      checkUserReports(
-        whatsappId: string,
-        fromDate?: Date | string
-      ): Promise<{ count: number }>;
+      checkUserReports(whatsappId: string, fromDate?: Date | string): Promise<{ count: number }>;
     };
 
     // Event handler service binding (for local dev queue publishing)

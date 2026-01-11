@@ -1,6 +1,11 @@
 import { Bot } from "grammy";
 
-import { DAYS_MS, MESSAGES, PROGRAMME_EXTENSION_DAYS, PROGRAMME_OFFBOARDING_DAYS } from "../../constants";
+import {
+  DAYS_MS,
+  MESSAGES,
+  PROGRAMME_EXTENSION_DAYS,
+  PROGRAMME_OFFBOARDING_DAYS,
+} from "../../constants";
 import type { HandlerResult } from "../../types";
 
 /**
@@ -52,7 +57,9 @@ async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerRe
       );
 
       processed++;
-      console.log(`Sent programme extension notice to checker ${checker._id} (programme ${programme._id})`);
+      console.log(
+        `Sent programme extension notice to checker ${checker._id} (programme ${programme._id})`
+      );
     } catch (err) {
       const errorMsg = `Failed to process extension for programme ${programme._id}: ${err}`;
       console.error(errorMsg);

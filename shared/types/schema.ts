@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { ObjectId } from 'mongodb';
+import { ObjectId } from "mongodb";
 
 //NOSQL DATA TYPES
 
@@ -24,7 +24,7 @@ export type CheckerAPI = ObjectIdToString<Checker>;
 export type PollAPI = ObjectIdToString<Poll>;
 export type VoteAPI = ObjectIdToString<Vote>;
 export type ProgrammeAPI = ObjectIdToString<Programme>;
-export type LeaderboardAPI = ObjectIdToString<Leaderboard> // _id is the checkers Id
+export type LeaderboardAPI = ObjectIdToString<Leaderboard>; // _id is the checkers Id
 
 // User/Checker schema
 export interface Checker extends BaseDocument {
@@ -207,17 +207,15 @@ export interface VoteChecker extends BaseDocument {
 // Leaderboard
 export interface Leaderboard extends BaseDocument {
   checkerName: string; // Name from checkers collection
-  numberOfVotes: number;  // Total count of votes 
-  totalScore: number; // Sum of all scores 
+  numberOfVotes: number; // Total count of votes
+  totalScore: number; // Sum of all scores
   averageResponseTime: number; // Average response time in hrs
   accuracy: number; // Percentage (0-100), rounded to 2 d.p.
-  correctVotes: number; // Count of votes where isCorrect = true 
+  correctVotes: number; // Count of votes where isCorrect = true
 }
 
 export interface ProgrammeProgress {
-  voteCount: number; 
-  accuracy: number | null; 
+  voteCount: number;
+  accuracy: number | null;
   reportCount: number;
 }
-
-

@@ -1,11 +1,11 @@
-import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
 /**
  * Database Service Worker with Durable Objects for Connection Pooling
  *
  * This worker handles database operations for the Checkmate application.
  * Uses Durable Objects to maintain persistent MongoDB connections for improved performance.
  */
-import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
+import { Filter, MongoClient, ObjectId, UpdateFilter } from "mongodb";
 
 import {
   Checker,
@@ -17,10 +17,10 @@ import {
   Programme,
   ProgrammeAPI,
   Vote,
-  VoteAPI
-} from '@/shared/types/schema';
+  VoteAPI,
+} from "@/shared/types/schema";
 
-import { VoteFilter } from './types';
+import { VoteFilter } from "./types";
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -250,7 +250,6 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const voteChecker = await votesCollection.aggregate(basePipeline).toArray();
       const voteCheckerCount = voteChecker.length;
-
 
       const pipeline = [...basePipeline, ...aggregationPipeline];
 
@@ -569,7 +568,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   async getLeaderboardInfo(
     startOfMonth: Date,
     startOfNextMonth: Date
-  ): Promise<{ success: boolean, data?: LeaderboardAPI[], total?: number, error?: string}>{
+  ): Promise<{ success: boolean; data?: LeaderboardAPI[]; total?: number; error?: string }> {
     try {
       await this.connectPromise;
       const db = this.client.db(DB_NAME);
@@ -577,16 +576,16 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const aggregationPipeline = [
         {
-          // Step 1: Filter by currrent month 
+          // Step 1: Filter by currrent month
           $match: {
             votedTimestamp: {
-              $gte: startOfMonth, 
-              $lt: startOfNextMonth 
-            }
-          }
-        }, 
+              $gte: startOfMonth,
+              $lt: startOfNextMonth,
+            },
+          },
+        },
         {
-          // Step 2: Group by checkerId and calculate metrics 
+          // Step 2: Group by checkerId and calculate metrics
           $group: {
             _id: "$checkerId",
             numberOfVotes: { $sum: 1 },
@@ -594,55 +593,52 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             averageResponseTime: { $avg: "$responseTime" },
             correctVotes: {
               $sum: {
-                $cond: [{ $eq: ["$isCorrect", true]}, 1, 0]
-              }
-            }
-          }
+                $cond: [{ $eq: ["$isCorrect", true] }, 1, 0],
+              },
+            },
+          },
         },
         {
-          // Step 3: Calculate accuracy percentage 
+          // Step 3: Calculate accuracy percentage
           $addFields: {
             accuracy: {
-              $multiply: [
-                { $divide: ["$correctVotes", "$numberOfVotes"] },
-                100
-              ]
-            }
-          }
+              $multiply: [{ $divide: ["$correctVotes", "$numberOfVotes"] }, 100],
+            },
+          },
         },
         {
-          // Step 4: Lookup checker details from checkers collection 
+          // Step 4: Lookup checker details from checkers collection
           $lookup: {
             from: "checkers",
             localField: "_id",
             foreignField: "_id",
-            as: "checkerInfo"
-          }
+            as: "checkerInfo",
+          },
         },
         {
-          // Step 5: Unwind the checkerInfo array 
+          // Step 5: Unwind the checkerInfo array
           $unwind: {
             path: "$checkerInfo",
-            preserveNullAndEmptyArrays: true
-          }
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
-          // Step 6: Project final output with desired fields 
+          // Step 6: Project final output with desired fields
           $project: {
-            _id: 1, 
+            _id: 1,
             checkerName: "$checkerInfo.name",
-            numberOfVotes: 1, 
-            totalScore: 1, 
+            numberOfVotes: 1,
+            totalScore: 1,
             averageResponseTime: 1,
-            accuracy: { $round: ["$accuracy", 2]}, // Round to 2d.p
-            correctVotes: 1
-          }
+            accuracy: { $round: ["$accuracy", 2] }, // Round to 2d.p
+            correctVotes: 1,
+          },
         },
         {
           // Step 7: sort by total scores (descending)
-          $sort: {totalScore: -1}
-        }
-      ]
+          $sort: { totalScore: -1 },
+        },
+      ];
 
       const results = await votesCollection.aggregate<Leaderboard>(aggregationPipeline).toArray();
 
@@ -652,19 +648,16 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       // Convert ObjectId to string before returning
       const resultsWithStringId = results.map(result => ({
-        ...result, 
-        _id: result._id?.toString()
-      }))
+        ...result,
+        _id: result._id?.toString(),
+      }));
 
       return { success: true, data: resultsWithStringId, total: results.length };
-
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       console.error({ error, errorMessage }, "Failed to fetch leaderboard statistics");
       return { success: false, error: errorMessage };
     }
-
   }
 
   async insertProgramme(
@@ -890,12 +883,9 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.findVotes(filter);
   }
 
-  async getLeaderboardInfo(
-    startOfMonth: Date,
-    startOfNextMonth: Date
-  ) {
+  async getLeaderboardInfo(startOfMonth: Date, startOfNextMonth: Date) {
     const durableObject = this.getDurableObject();
-    return durableObject.getLeaderboardInfo(startOfMonth, startOfNextMonth)
+    return durableObject.getLeaderboardInfo(startOfMonth, startOfNextMonth);
   }
 
   async insertProgramme(programme: Omit<Programme, "_id">, customId?: string) {
