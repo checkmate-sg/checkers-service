@@ -76,8 +76,8 @@ async function checkAccuracyNudge(
   programme: { _id: string; hasReceivedLowAccuracyWarning: boolean },
   progress: { voteCount: number; accuracy: number | null }
 ): Promise<void> {
-  const voteThreshold = parseInt(env.ACCURACY_NUDGE_VOTE_THRESHOLD, 20);
-  const accuracyThreshold = parseInt(env.ACCURACY_NUDGE_THRESHOLD, 50);
+  const voteThreshold = parseInt(env.ACCURACY_NUDGE_VOTE_THRESHOLD) || 20;
+  const accuracyThreshold = parseInt(env.ACCURACY_NUDGE_THRESHOLD) || 50;
 
   // Already received warning - skip
   if (programme.hasReceivedLowAccuracyWarning) {
