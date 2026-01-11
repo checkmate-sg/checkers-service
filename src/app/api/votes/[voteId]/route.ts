@@ -55,18 +55,6 @@ export async function POST(req: NextRequest, { params }) {
 
     const filter: Filter<Vote> = { _id: voteId };
 
-    // Get the vote to calculate response time
-    const voteResult = await env.CHECKERS_DB_SERVICE.findOneVote(filter);
-
-    if (!voteResult.success || !voteResult.data) {
-      return Err.notFound();
-    }
-
-    const currentTimestamp = new Date();
-    const createdTimestamp = new Date(voteResult.data.createdTimestamp);
-    const responseTimeInHours =
-      (currentTimestamp.getTime() - createdTimestamp.getTime()) / (1000 * 60 * 60);
-
     const update: UpdateFilter<Vote> = {
       $set: {
         ...(category !== undefined && { category }),
@@ -74,8 +62,7 @@ export async function POST(req: NextRequest, { params }) {
         ...(responseCategory !== undefined && { responseCategory }),
         ...(commentOnResponse !== undefined && { commentOnResponse }),
         ...otherFields,
-        votedTimestamp: currentTimestamp,
-        responseTime: responseTimeInHours,
+        votedTimestamp: new Date(),
       },
     };
 
@@ -87,23 +74,6 @@ export async function POST(req: NextRequest, { params }) {
 
     if (result.modifiedCount === 0) {
       return Err.notFound("Vote not found or no changes made");
-    }
-
-    // Update numVoted in Checkers
-    const checkerResult = await env.CHECKERS_DB_SERVICE.updateOneChecker(
-      { _id: voteResult.data.checkerId },
-      {
-        $inc: { numVoted: 1 },
-        $set: { lastVotedTimestamp: new Date() },
-      }
-    );
-
-    if (!checkerResult.success) {
-      return Err.internal("Failed to update checker");
-    }
-
-    if (checkerResult.modifiedCount === 0) {
-      return Err.notFound("Checker not found or no changes made");
     }
 
     // Publish event for async processing (assessment + scoring)

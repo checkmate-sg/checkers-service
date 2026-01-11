@@ -164,6 +164,11 @@ export interface PrimaryCategoryChangedData {
   isDownvoted: boolean;
 }
 
+export interface ProgrammeCompletedData {
+  checkerId: string;
+  programmeId: string;
+}
+
 // Handler result type
 export interface HandlerResult {
   processed: number;

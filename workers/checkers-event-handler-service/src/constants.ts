@@ -47,4 +47,30 @@ As part of this process, you'll also be removed from the Checkers' Crew Telegram
 Thank you for your contribution,
 
 The CheckMate Team`,
+
+  graduation: (params: {
+    name: string;
+    numMessages: number;
+    accuracy: number;
+    numReferred: number;
+    numReported: number;
+    surveyLink: string;
+  }) => `<b>📍 Congratulations, You've Graduated! 🎉</b>
+
+Hi ${params.name},
+
+Huge congratulations on completing the CheckMate checkers' programme! You've worked hard, and completed the following:
+
+No. of messages voted on: ${params.numMessages}
+Accuracy: ${params.accuracy}%
+No. of new users referred: ${params.numReferred}
+No. of messages reported: ${params.numReported}
+
+Your dedication has clearly paid off! 🎓
+
+We'd love to hear about your experience - please take a moment to fill out <a href='${params.surveyLink}'>our survey</a>
+
+To view your official completion certificate or to add it to your LinkedIn profile, just press the respective buttons below.
+
+Thank you for being part of the Checkers' Crew. We're so proud of you! 💪`,
 };

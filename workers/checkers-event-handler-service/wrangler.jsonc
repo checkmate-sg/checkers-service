@@ -42,6 +42,12 @@
       "service": "whatsapp-checker-event-handler",
     },
   ],
+  "r2_buckets": [
+    {
+      "bucket_name": "checkmate-certificates",
+      "binding": "CERTIFICATES_BUCKET",
+    },
+  ],
   /**
    * Environment Variables (secrets set via wrangler secret put)
    * - TELEGRAM_BOT_TOKEN: Telegram bot token
@@ -55,6 +61,8 @@
     "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
     "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
     "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+    "BUCKET_HOST": "https://certificates.checkmate.sg",
+    "LINKEDIN_ORG_ID": "103003347",
   },
   "queues": {
     "producers": [
@@ -85,6 +93,8 @@
         "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
         "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
         "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+        "BUCKET_HOST": "https://certificates.staging.checkmate.sg",
+        "LINKEDIN_ORG_ID": "103003347",
       },
       "services": [
         {
@@ -98,6 +108,12 @@
         {
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler-staging",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "bucket_name": "checkmate-certificates-staging",
+          "binding": "CERTIFICATES_BUCKET",
         },
       ],
       "queues": {
@@ -122,6 +138,8 @@
         "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
         "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
         "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+        "BUCKET_HOST": "https://certificates.checkmate.sg",
+        "LINKEDIN_ORG_ID": "103003347",
       },
       "services": [
         {
@@ -135,6 +153,12 @@
         {
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "bucket_name": "checkmate-certificates",
+          "binding": "CERTIFICATES_BUCKET",
         },
       ],
       "tail_consumers": [

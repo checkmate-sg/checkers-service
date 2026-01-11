@@ -3,6 +3,7 @@ import { Bot } from "grammy";
 
 import { handleAssessmentComplete } from "./handlers/queue/onAssessmentComplete";
 import { handlePrimaryCategoryChanged } from "./handlers/queue/onPrimaryCategoryChanged";
+import { handleProgrammeCompletion } from "./handlers/queue/onProgrammeCompletion";
 import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
@@ -10,6 +11,7 @@ import type {
   AssessmentCompleteData,
   CheckersEvent,
   PrimaryCategoryChangedData,
+  ProgrammeCompletedData,
   VoteSubmittedData,
 } from "./types";
 
@@ -53,6 +55,10 @@ export default class extends WorkerEntrypoint<Env> {
 
           case "primaryCategory.changed":
             await handlePrimaryCategoryChanged(this.env, event.data as PrimaryCategoryChangedData);
+            break;
+
+          case "programme.completed":
+            await handleProgrammeCompletion(this.env, event.data as ProgrammeCompletedData);
             break;
 
           default:
