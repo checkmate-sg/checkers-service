@@ -84,7 +84,7 @@ export async function sendOTP(whatsappId: string, checkerId: string, env: Env): 
 
     // Send OTP via WhatsApp queue
     try {
-      // console.log("OTP: ", otp);
+      console.log("OTP: ", otp);
       await env.WHATSAPP_MESSAGE_SERVICE.sendOtp(whatsappId, otp);
     } catch (error) {
       await env.WHATSAPP_ADHOC_MESSAGE_QUEUE.send({
