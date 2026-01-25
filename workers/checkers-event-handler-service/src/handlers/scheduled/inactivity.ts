@@ -105,7 +105,10 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
         );
 
         processed++;
-        console.log(`Sent inactivity warning to checker ${checker._id}`);
+        const minutesSinceActive = Math.round(daysSinceActive * 24 * 60);
+        console.log(
+          `Sent inactivity warning to checker ${checker._id} (inactive for ${minutesSinceActive} minutes, threshold: ${params.INACTIVITY_WARNING_DAYS * 24 * 60} minutes)`
+        );
       }
     } catch (err) {
       const errorMsg = `Failed to process warning for checker ${checker._id}: ${err}`;
@@ -193,7 +196,10 @@ async function processDeactivations(env: Env, bot: Bot): Promise<HandlerResult> 
         );
 
         processed++;
-        console.log(`Deactivated checker ${checker._id} and scheduled reminders`);
+        const minutesSinceActive = Math.round(daysSinceActive * 24 * 60);
+        console.log(
+          `Deactivated checker ${checker._id} (inactive for ${minutesSinceActive} minutes, threshold: ${INACTIVITY_DEACTIVATION_DAYS * 24 * 60} minutes) and scheduled reminders`
+        );
       }
     } catch (err) {
       const errorMsg = `Failed to process deactivation for checker ${checker._id}: ${err}`;
