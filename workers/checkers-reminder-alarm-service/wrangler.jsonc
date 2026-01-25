@@ -29,6 +29,12 @@
       "new_classes": ["CheckersReminderDurableObject"],
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
   /**
    * Dev configuration
    * Configuration for local development environment
@@ -46,6 +52,12 @@
       "vars": {
         "ENVIRONMENT": "staging",
       },
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -60,6 +72,12 @@
       "vars": {
         "ENVIRONMENT": "production",
       },
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {

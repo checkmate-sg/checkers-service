@@ -21,6 +21,9 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "setup-webhook": "node scripts/setup-webhook.js",
+    "upload-parameters:local": "node scripts/upload-parameters.js local",
+    "upload-parameters:staging": "node scripts/upload-parameters.js staging",
+    "upload-parameters:production": "node scripts/upload-parameters.js production",
     "gen:api-client": "npx @thangkieu/tools generate-api-client -p ./src/lib/request/external/openai.yaml -o ./src/lib/request/external/lib --axios --custom-axios-import \"../../axios\" -c",
     "prepare": "husky"
   },

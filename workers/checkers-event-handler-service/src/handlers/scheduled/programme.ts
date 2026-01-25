@@ -1,12 +1,10 @@
 import { Bot } from "grammy";
 
-import {
-  DAYS_MS,
-  MESSAGES,
-  PROGRAMME_EXTENSION_DAYS,
-  PROGRAMME_OFFBOARDING_DAYS,
-} from "../../constants";
+import { getParameters, PARAMETER_DEFAULTS } from "@/shared/helpers/parameters";
+import { MESSAGES } from "../../constants";
 import type { HandlerResult } from "../../types";
+
+const DAYS_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Process 60-day programme extension notices
@@ -15,6 +13,11 @@ import type { HandlerResult } from "../../types";
 async function processProgrammeExtensions(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
   let processed = 0;
+
+  // Get parameters from KV
+  const { PROGRAMME_EXTENSION_DAYS } = await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+    "PROGRAMME_EXTENSION_DAYS",
+  ]);
 
   const thresholdDate = new Date(Date.now() - PROGRAMME_EXTENSION_DAYS * DAYS_MS);
 
@@ -81,6 +84,11 @@ async function processProgrammeOffboarding(
 ): Promise<HandlerResult> {
   const errors: string[] = [];
   let processed = 0;
+
+  // Get parameters from KV
+  const { PROGRAMME_OFFBOARDING_DAYS } = await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+    "PROGRAMME_OFFBOARDING_DAYS",
+  ]);
 
   const thresholdDate = new Date(Date.now() - PROGRAMME_OFFBOARDING_DAYS * DAYS_MS);
 

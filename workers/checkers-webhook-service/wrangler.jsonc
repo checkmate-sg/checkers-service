@@ -15,6 +15,10 @@
       "binding": "OTP_KV",
       "id": "dd6c7922642349859ec36c978882ccc7",
     },
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
   ],
   "compatibility_flags": ["nodejs_compat"],
   "dev": {
@@ -63,9 +67,6 @@
     "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
     "TYPEFORM_URL": "https://better-sg.typeform.com/to/MlihTUDx",
     "WHATSAPP_BOT_LINK": "https://wa.me/15556491968",
-    "PROGRAMME_TARGET_VOTES": "1",
-    "PROGRAMME_TARGET_ACCURACY": "60",
-    "PROGRAMME_TARGET_REPORTS": "0",
   },
   "env": {
     "staging": {
@@ -81,14 +82,15 @@
         "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
-        "PROGRAMME_TARGET_VOTES": "1",
-        "PROGRAMME_TARGET_ACCURACY": "60",
-        "PROGRAMME_TARGET_REPORTS": "0",
       },
       "kv_namespaces": [
         {
           "binding": "OTP_KV",
           "id": "635524c1abc04822b856ae710b0b5d3f",
+        },
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
         },
       ],
       "queues": {
@@ -135,14 +137,15 @@
         "HOST_URL": "https://checkers.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/nH8xme9G",
         "WHATSAPP_BOT_LINK": "https://ref.checkmate.sg/add",
-        "PROGRAMME_TARGET_VOTES": "50",
-        "PROGRAMME_TARGET_ACCURACY": "60",
-        "PROGRAMME_TARGET_REPORTS": "5",
       },
       "kv_namespaces": [
         {
           "binding": "OTP_KV",
           "id": "dd6c7922642349859ec36c978882ccc7",
+        },
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
         },
       ],
       "queues": {

@@ -26,8 +26,7 @@ interface Env {
   BUCKET_HOST: string;
   CERTIFICATES_BUCKET: R2Bucket;
   LINKEDIN_ORG_ID: string;
-  ACCURACY_NUDGE_VOTE_THRESHOLD: string;
-  ACCURACY_NUDGE_THRESHOLD: string;
+  CHECKMATE_CHECKERS_PARAMETERS_KV: KVNamespace;
 }
 
 // Message payload for poll update queue (sent to CheckMate platform when assessment changes)

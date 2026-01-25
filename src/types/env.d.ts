@@ -106,6 +106,9 @@ declare global {
     POLL_UPDATE_QUEUE: Queue<PollUpdateMessage>;
     CHECKERS_EVENTS_QUEUE: Queue<CheckersEvent>;
 
+    // KV bindings
+    CHECKMATE_CHECKERS_PARAMETERS_KV: KVNamespace;
+
     // Environment variables (these extend the base CloudflareEnv)
     NEXTAUTH_URL?: string;
     TYPEFORM_URL?: string;

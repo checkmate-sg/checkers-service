@@ -48,6 +48,12 @@
       "binding": "CERTIFICATES_BUCKET",
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
   /**
    * Environment Variables (secrets set via wrangler secret put)
    * - TELEGRAM_BOT_TOKEN: Telegram bot token
@@ -120,6 +126,12 @@
           "binding": "CERTIFICATES_BUCKET",
         },
       ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
+      ],
       "queues": {
         "producers": [
           {
@@ -169,6 +181,12 @@
         {
           "bucket_name": "checkmate-certificates",
           "binding": "CERTIFICATES_BUCKET",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
         },
       ],
       "tail_consumers": [

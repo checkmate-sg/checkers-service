@@ -1,10 +1,10 @@
 import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
 import { Bot } from "grammy";
 
+import { getParameters, PARAMETER_DEFAULTS } from "@/shared/helpers/parameters";
+
 // Constants
 const DAYS_MS = 24 * 60 * 60 * 1000;
-const REMINDER_1_DAYS = 14; // 14 days after deactivation
-const REMINDER_2_DAYS = 28; // 28 days after reminder #1
 
 // Reminder state stored in DO storage
 interface ReminderState {
@@ -33,6 +33,7 @@ Looking forward to seeing you again 🤗`;
 interface Env {
   TELEGRAM_BOT_TOKEN: string;
   CHECKERS_REMINDER_DURABLE_OBJECT: DurableObjectNamespace<CheckersReminderDurableObject>;
+  CHECKMATE_CHECKERS_PARAMETERS_KV: KVNamespace;
 }
 
 /**
@@ -42,7 +43,7 @@ interface Env {
 export class CheckersReminderDurableObject extends DurableObject<Env> {
   /**
    * Schedule reactivation reminders for a deactivated checker.
-   * Sets an alarm for 14 days later (Reminder #1).
+   * Sets an alarm for REMINDER_1_DAYS later (Reminder #1).
    */
   async scheduleReminders(
     checkerId: string,
@@ -51,6 +52,11 @@ export class CheckersReminderDurableObject extends DurableObject<Env> {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const now = Date.now();
+
+      // Get reminder days from KV
+      const { REMINDER_1_DAYS } = await getParameters(this.env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+        "REMINDER_1_DAYS",
+      ]);
 
       // Store the reminder state
       const state: ReminderState = {
@@ -63,7 +69,7 @@ export class CheckersReminderDurableObject extends DurableObject<Env> {
 
       await this.ctx.storage.put("state", state);
 
-      // Schedule alarm for Reminder #1 (14 days from now)
+      // Schedule alarm for Reminder #1
       const reminder1Time = now + REMINDER_1_DAYS * DAYS_MS;
       await this.ctx.storage.setAlarm(reminder1Time);
 
@@ -112,6 +118,11 @@ export class CheckersReminderDurableObject extends DurableObject<Env> {
       return;
     }
 
+    // Get reminder days from KV
+    const { REMINDER_2_DAYS } = await getParameters(this.env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+      "REMINDER_2_DAYS",
+    ]);
+
     const bot = new Bot(this.env.TELEGRAM_BOT_TOKEN);
     const now = Date.now();
 
@@ -142,7 +153,7 @@ export class CheckersReminderDurableObject extends DurableObject<Env> {
 
         await this.ctx.storage.put("state", updatedState);
 
-        // Schedule Reminder #2 (28 days after Reminder #1)
+        // Schedule Reminder #2 (REMINDER_2_DAYS after Reminder #1)
         const reminder2Time = now + REMINDER_2_DAYS * DAYS_MS;
         await this.ctx.storage.setAlarm(reminder2Time);
 
