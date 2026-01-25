@@ -27,6 +27,7 @@ export function LeaderboardRows({ entries, currentUserId }: LeaderboardRowsProps
         const discontinuity = entry.rank - lastRank > 1;
         const isCurrentUser = entry._id === currentUserId;
         const isLast = index === entries.length - 1;
+        const displayName = entry.checkerName ?? "Anonymous";
 
         lastRank = entry.rank;
 
@@ -56,9 +57,7 @@ export function LeaderboardRows({ entries, currentUserId }: LeaderboardRowsProps
                 <span
                   className={`text-sm ${isCurrentUser ? "font-medium" : "text-muted-foreground"}`}
                 >
-                  {entry.checkerName.length > 10
-                    ? `${entry.checkerName.slice(0, 10)}..`
-                    : entry.checkerName}
+                  {displayName.length > 10 ? `${displayName.slice(0, 10)}..` : displayName}
                 </span>
               </TableCell>
 
