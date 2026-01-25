@@ -595,12 +595,13 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const aggregationPipeline = [
         {
-          // Step 1: Filter by currrent month
+          // Step 1: Filter by votes created in the current month (and actually voted on)
           $match: {
-            votedTimestamp: {
+            createdTimestamp: {
               $gte: startOfMonth,
               $lt: startOfNextMonth,
             },
+            votedTimestamp: { $ne: null }, // Only count submitted votes
           },
         },
         {
