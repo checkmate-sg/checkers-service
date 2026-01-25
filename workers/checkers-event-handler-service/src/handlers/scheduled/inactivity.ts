@@ -100,7 +100,12 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
         // Send warning message
         await bot.api.sendMessage(
           checker.telegramId,
-          MESSAGES.inactivityWarning(checker.name || "Checker", env.CHECKERS_GROUP_LINK),
+          MESSAGES.inactivityWarning(
+            checker.name || "Checker",
+            env.CHECKERS_GROUP_LINK,
+            params.INACTIVITY_WARNING_DAYS,
+            params.INACTIVITY_DEACTIVATION_DAYS
+          ),
           { parse_mode: "HTML" }
         );
 

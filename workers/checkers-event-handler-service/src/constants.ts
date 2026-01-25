@@ -7,9 +7,14 @@ export const DAYS_MS = 24 * 60 * 60 * 1000;
 
 // Message templates
 export const MESSAGES = {
-  inactivityWarning: (name: string, groupLink: string) => `📍 We Miss You! 👀
+  inactivityWarning: (
+    name: string,
+    groupLink: string,
+    warningDays: number,
+    deactivationDays: number
+  ) => `📍 We Miss You! 👀
 
-Hey ${name}, it looks like you've been inactive for the past 3 days. Just a friendly reminder: if we don't see any activity for 7 days, your access as a checker will be temporarily deactivated.
+Hey ${name}, it looks like you've been inactive for the past ${Math.round(warningDays) ?? 3} days. Just a friendly reminder: if we don't see any activity for ${Math.round(deactivationDays - warningDays) ?? 7} more days, your access as a checker will be temporarily deactivated.
 
 If you need any help or have any questions, feel free to ask in the Q&A channel of our <a href="${groupLink}">Checkers' Crew</a> - we're here to help! 😊`,
 
