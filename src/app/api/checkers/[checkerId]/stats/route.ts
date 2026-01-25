@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
-import { calculateProgrammeProgress } from "@/lib/helpers/programmeProgress";
+import { getReportCount } from "@/lib/helpers/getReportCount";
+import { computeAccuracyPercentage } from "@/shared/helpers/scoring";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
@@ -16,24 +17,37 @@ export async function GET(req: NextRequest, { params }) {
 
     if (!checkerId) return Err.badParams("Missing checkerId parameter");
 
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-
-    const votesStats = await calculateProgrammeProgress(env, checkerId, {
-      startDate: thirtyDaysAgo,
-      votesAtStart: 0,
-    });
-
-    if (!votesStats.success || !votesStats.data) {
+    // Get checker for whatsappId
+    const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
+    if (!checkerResult.success || !checkerResult.data) {
       return Err.notFound();
     }
 
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Query votes from the last 30 days
+    const votesResult = await env.CHECKERS_DB_SERVICE.findVotes({
+      checkerId,
+      votedTimestamp: { $gte: thirtyDaysAgo },
+    });
+
+    if (!votesResult.success) {
+      return Err.internal();
+    }
+
+    const votes = votesResult.data ?? [];
+    const voteCount = votes.length;
+    const accuracy = computeAccuracyPercentage(votes);
+
+    // Get report count from the last 30 days
+    const reportCount = await getReportCount(env, checkerResult.data.whatsappId, thirtyDaysAgo);
+
     return NextResponse.json(
       {
-        voteCount: votesStats.data.voteCount,
-        accuracy: votesStats.data.accuracy,
-        reports: votesStats.data.reportCount,
+        voteCount,
+        accuracy,
+        reports: reportCount.count,
       },
       { status: 200 }
     );
