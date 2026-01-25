@@ -40,7 +40,7 @@ export async function getParameter(kv: KVNamespace, key: ParameterKey): Promise<
   try {
     const value = await kv.get(key);
     if (value !== null) {
-      const parsed = parseInt(value, 10);
+      const parsed = parseFloat(value);
       if (!isNaN(parsed)) {
         return parsed;
       }
