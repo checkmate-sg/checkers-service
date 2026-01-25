@@ -13,9 +13,9 @@ import {
 } from "@heroicons/react/24/solid";
 
 import { Card } from "../ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Skeleton } from "../ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { LeaderboardRows } from "./leaderboard-rows";
 
 // Number of top positions to always show
@@ -98,57 +98,55 @@ export function LeaderboardTable({ currentUserId }: LeaderboardTableProps) {
   }, [leaderboardList?.data, currentUserId]);
   return (
     <Card className="h-full w-full overflow-auto mt-3">
-      <TooltipProvider delayDuration={0}>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              {COLUMNS.map(col => (
-                <TableHead key={col.title} className="p-4">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="cursor-help">{col.icon}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <p>{col.description}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-              ))}
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
+            {COLUMNS.map(col => (
+              <TableHead key={col.title} className="p-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <span className="cursor-help">{col.icon}</span>
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" className="max-w-xs text-sm p-2">
+                    <p>{col.description}</p>
+                  </PopoverContent>
+                </Popover>
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            // Loading skeletons rows
+            Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                {COLUMNS.map(col => (
+                  <TableCell key={col.title} className="p-4">
+                    <Skeleton className="h-4 w-12" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : error ? (
+            // Error state
+            <TableRow>
+              <TableCell colSpan={6} className="text-center p-4 text-destructive">
+                Failed to load leaderboard
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              // Loading skeletons rows
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`skeleton-${index}`}>
-                  {COLUMNS.map(col => (
-                    <TableCell key={col.title} className="p-4">
-                      <Skeleton className="h-4 w-12" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : error ? (
-              // Error state
-              <TableRow>
-                <TableCell colSpan={6} className="text-center p-4 text-destructive">
-                  Failed to load leaderboard
-                </TableCell>
-              </TableRow>
-            ) : abridgedLeaderboard.length === 0 ? (
-              // Empty state
-              <TableRow>
-                <TableCell colSpan={6} className="text-center p-4 text-muted-foreground">
-                  No data available
-                </TableCell>
-              </TableRow>
-            ) : (
-              // Data rows
-              <LeaderboardRows entries={abridgedLeaderboard} currentUserId={currentUserId} />
-            )}
-          </TableBody>
-        </Table>
-      </TooltipProvider>
+          ) : abridgedLeaderboard.length === 0 ? (
+            // Empty state
+            <TableRow>
+              <TableCell colSpan={6} className="text-center p-4 text-muted-foreground">
+                No data available
+              </TableCell>
+            </TableRow>
+          ) : (
+            // Data rows
+            <LeaderboardRows entries={abridgedLeaderboard} currentUserId={currentUserId} />
+          )}
+        </TableBody>
+      </Table>
     </Card>
   );
 }
