@@ -161,6 +161,7 @@ export function createBot(token: string, env: Env): Bot {
           `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
         );
         const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
+        // const checkResult = {exists: null}
         if (checkResult.exists) {
           await sendTGGroupPrompt(ctx, env, telegramId, true);
         } else {

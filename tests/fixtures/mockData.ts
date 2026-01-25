@@ -66,18 +66,41 @@ export function createVote(
   checkerId: string,
   pollId: string,
   category: string | null,
-  truthScore: number | null = null
+  options: {
+    truthScore?: number | null;
+    isCorrect?: boolean | null;
+    score?: number | null;
+    responseTime?: number | null;
+    responseCategory?: "great" | "acceptable" | "unacceptable" | null;
+    createdTimestamp?: Date;
+    votedTimestamp?: Date | null;
+  } = {}
 ) {
+  const {
+    truthScore = null,
+    isCorrect = null,
+    score = null,
+    responseTime = null,
+    responseCategory = category ? "acceptable" : null,
+    createdTimestamp = new Date(),
+    votedTimestamp = category ? new Date() : null,
+  } = options;
+
   return {
     _id: "vote-" + checkerId + "-" + pollId,
     pollId,
     checkerId,
-    createdTimestamp: new Date(),
-    votedTimestamp: category ? new Date() : null,
+    createdTimestamp,
+    votedTimestamp,
     category,
     truthScore,
-    responseCategory: category ? "acceptable" : null,
+    responseCategory,
     commentOnResponse: null,
+    responseTime,
+    score,
+    isCorrect,
+    showNoteAfterVote: false,
+    telegramMessageId: null,
   };
 }
 
@@ -98,7 +121,7 @@ export function createVoteDistribution(
           "checker-" + String(checkerIndex++).padStart(3, "0"),
           pollId,
           category === "null" ? null : category,
-          truthScore
+          { truthScore }
         )
       );
     }
