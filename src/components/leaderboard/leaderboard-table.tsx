@@ -19,7 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/
 import { LeaderboardRows } from "./leaderboard-rows";
 
 // Number of top positions to always show
-const TOP_N = 10;
+const TOP_N = 5;
+// Number of positions above/below current user to show
+const CONTEXT_SIZE = 2;
 
 interface LeaderboardTableProps {
   currentUserId: string;
@@ -77,18 +79,20 @@ export function LeaderboardTable({ currentUserId }: LeaderboardTableProps) {
       }));
 
     // Find current user's position
-    const currentUserIndex = sorted.findIndex(entry => entry.id === currentUserId);
+    const currentUserIndex = sorted.findIndex(entry => entry._id === currentUserId);
 
     // If user is in top N or not found, just show top N
     if (currentUserIndex === -1 || currentUserIndex < TOP_N) {
       return { abridgedLeaderboard: sorted.slice(0, TOP_N) };
     }
 
-    // Otherwise, show top N + current user ( and optionally neighbours)
+    // Otherwise, show top N + current user with context (±CONTEXT_SIZE)
     const topN = sorted.slice(0, TOP_N);
 
-    // Include one position above and below current user for context
-    const userSection = sorted.slice(Math.max(TOP_N, currentUserIndex - 1), currentUserIndex + 2);
+    // Include positions above and below current user for context
+    const userSectionStart = Math.max(TOP_N, currentUserIndex - CONTEXT_SIZE);
+    const userSectionEnd = Math.min(sorted.length, currentUserIndex + CONTEXT_SIZE + 1);
+    const userSection = sorted.slice(userSectionStart, userSectionEnd);
 
     return { abridgedLeaderboard: [...topN, ...userSection] };
   }, [leaderboardList?.data, currentUserId]);
