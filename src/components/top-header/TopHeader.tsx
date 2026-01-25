@@ -13,7 +13,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { IconMenu2 } from "@tabler/icons-react";
 import { useGetCheckersProgrammeById } from "@/hooks/checkers/useGetCheckersProgramme";
+import { useGetCheckersById } from "@/hooks/checkers/useGetCheckersDetails";
 
 import classes from "./TopHeader.module.css";
 
@@ -44,14 +45,17 @@ export default function TopHeader({
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { data: programmeData } = useGetCheckersProgrammeById(session?.user?.id ?? "");
+  const { data: checkerData } = useGetCheckersById(session?.user?.id ?? "");
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showBreakDialog, setShowBreakDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasActiveProgramme = !!programmeData?.programme;
+  const isActive = checkerData?.isActive ?? false;
 
-  const handleTakeBreak = () => {
-    console.log("Taking a break");
+  const handleToggleActive = () => {
+    setShowBreakDialog(true);
   };
 
   const handleStartNewProgramme = () => {
@@ -122,15 +126,15 @@ export default function TopHeader({
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    onClick={handleTakeBreak}
+                    onClick={handleToggleActive}
                   >
-                    Take a break
+                    {isActive ? "Take a break" : "Resume checking"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                     onClick={handleStartNewProgramme}
                   >
-                    Start New Programme
+                    Start new programme
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -178,6 +182,22 @@ export default function TopHeader({
             <AlertDialogAction onClick={startNewProgramme} disabled={isSubmitting}>
               {isSubmitting ? "Starting..." : "Start New Programme"}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showBreakDialog} onOpenChange={setShowBreakDialog}>
+        <AlertDialogContent className="max-w-[90vw] rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isActive ? "Take a break?" : "Resume checking?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isActive
+                ? "To stop receiving messages, type /deactivate in the bot chat."
+                : "To start receiving messages again, type /activate in the bot chat."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Got it</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
