@@ -137,3 +137,9 @@ cd workers/checkers-reminder-alarm-service && npm run dev
 - **Telegram**: Bot API + MiniApp SDK
 - **Typeform**: Quiz during onboarding
 - **NLB**: Educational partnership resources
+
+## Testing
+
+Run `pnpm test` to execute unit tests.
+
+**Important**: Before finishing a coding session or when the user asks to commit changes, run `pnpm test` to ensure all tests pass.
