@@ -17,8 +17,7 @@ async function hasOverduePendingVotes(
   checkerId: string,
   thresholdDays: number
 ): Promise<boolean> {
-  const thresholdDate = new Date();
-  thresholdDate.setDate(thresholdDate.getDate() - thresholdDays);
+  const thresholdDate = new Date(Date.now() - thresholdDays * 24 * 60 * 60 * 1000);
 
   // Find pending votes for this checker that are older than threshold
   const result = await env.CHECKERS_DB_SERVICE.findVotes({
@@ -80,6 +79,9 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
           checker.lastInactivityWarningSent &&
           daysSince(new Date(checker.lastInactivityWarningSent)) < 7
         ) {
+          console.log(
+            `[Inactivity Warning] Skipping ${checker._id}: warning already sent recently`
+          );
           continue;
         }
 
@@ -91,7 +93,7 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
         );
 
         if (!hasOverdue) {
-          // No overdue pending votes - skip warning
+          console.log(`[Inactivity Warning] Skipping ${checker._id}: no overdue pending votes`);
           continue;
         }
 
