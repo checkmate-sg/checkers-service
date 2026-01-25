@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "workers/**" # Run when worker code changes
+      - "shared/**" # Run when shared code changes (used by workers)
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -44,13 +45,21 @@ jobs:
             WORKER_DIRS="[\"${{ github.event.inputs.specific_worker }}\"]"
           else
             CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-            WORKER_CHANGES=$(echo "$CHANGED_FILES" | grep "^workers/" || true)
-            if [[ -z "$WORKER_CHANGES" ]]; then
-              echo "No worker changes detected"
-              echo "worker-dirs=[]" >> $GITHUB_OUTPUT
-              exit 0
+
+            # Check if shared code changed - if so, deploy all workers
+            SHARED_CHANGES=$(echo "$CHANGED_FILES" | grep "^shared/" || true)
+            if [[ -n "$SHARED_CHANGES" ]]; then
+              echo "Shared code changed, deploying all workers"
+              WORKER_DIRS="$ALL_WORKER_DIRS"
+            else
+              WORKER_CHANGES=$(echo "$CHANGED_FILES" | grep "^workers/" || true)
+              if [[ -z "$WORKER_CHANGES" ]]; then
+                echo "No worker changes detected"
+                echo "worker-dirs=[]" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+              WORKER_DIRS=$(echo "$WORKER_CHANGES" | grep -o "workers/[^/]*" | cut -d'/' -f2 | sort | uniq | jq -R -s -c 'split("\n") | map(select(length > 0))')
             fi
-            WORKER_DIRS=$(echo "$WORKER_CHANGES" | grep -o "workers/[^/]*" | cut -d'/' -f2 | sort | uniq | jq -R -s -c 'split("\n") | map(select(length > 0))')
           fi
 
           echo "worker-dirs=$WORKER_DIRS" >> $GITHUB_OUTPUT
