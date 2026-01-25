@@ -66,6 +66,10 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
 
       const daysSinceActive = daysSince(lastActive);
 
+      console.log(
+        `[Inactivity Warning Check] Checker ${checker._id}: daysSinceActive=${daysSinceActive.toFixed(6)} days (${Math.round(daysSinceActive * 24 * 60)} min), threshold=${params.INACTIVITY_WARNING_DAYS} days`
+      );
+
       // Check if inactive for threshold days but less than deactivation threshold
       if (
         daysSinceActive >= params.INACTIVITY_WARNING_DAYS &&
@@ -155,6 +159,10 @@ async function processDeactivations(env: Env, bot: Bot): Promise<HandlerResult> 
       if (!lastActive) continue;
 
       const daysSinceActive = daysSince(lastActive);
+
+      console.log(
+        `[Deactivation Check] Checker ${checker._id}: daysSinceActive=${daysSinceActive.toFixed(6)} days (${Math.round(daysSinceActive * 24 * 60)} min), threshold=${INACTIVITY_DEACTIVATION_DAYS} days`
+      );
 
       // Check if inactive for deactivation threshold days
       if (daysSinceActive >= INACTIVITY_DEACTIVATION_DAYS) {
