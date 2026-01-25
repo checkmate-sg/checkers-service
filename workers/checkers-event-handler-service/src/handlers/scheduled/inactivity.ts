@@ -6,7 +6,38 @@ import type { HandlerResult } from "../../types";
 import { daysSince, getLastActiveDate } from "../../utils";
 
 /**
+ * Check if a checker has overdue pending votes
+ *
+ * A checker is considered to have overdue votes if:
+ * - They have at least one pending vote (votedTimestamp === null)
+ * - At least one pending vote is older than the threshold (overdue)
+ */
+async function hasOverduePendingVotes(
+  env: Env,
+  checkerId: string,
+  thresholdDays: number
+): Promise<boolean> {
+  const thresholdDate = new Date();
+  thresholdDate.setDate(thresholdDate.getDate() - thresholdDays);
+
+  // Find pending votes for this checker that are older than threshold
+  const result = await env.CHECKERS_DB_SERVICE.findVotes({
+    checkerId,
+    votedTimestamp: null, // Pending (not yet voted)
+    createdTimestamp: { $lt: thresholdDate }, // Older than threshold (overdue)
+  });
+
+  return result.success && result.data && result.data.length > 0;
+}
+
+/**
  * Process 3-day inactivity warnings
+ *
+ * A checker receives a warning if ALL conditions are met:
+ * 1. Has pending vote requests with at least one overdue (older than threshold)
+ * 2. Last vote was more than threshold days ago (or never voted)
+ * 3. Onboarded more than threshold days ago
+ * 4. Last reactivation was more than threshold days ago (or never reactivated)
  */
 async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
@@ -35,7 +66,7 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
 
       const daysSinceActive = daysSince(lastActive);
 
-      // Check if inactive for 3+ days but less than 10 days
+      // Check if inactive for threshold days but less than deactivation threshold
       if (
         daysSinceActive >= params.INACTIVITY_WARNING_DAYS &&
         daysSinceActive < params.INACTIVITY_DEACTIVATION_DAYS
@@ -45,6 +76,18 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
           checker.lastInactivityWarningSent &&
           daysSince(new Date(checker.lastInactivityWarningSent)) < 7
         ) {
+          continue;
+        }
+
+        // Check if checker has overdue pending votes
+        const hasOverdue = await hasOverduePendingVotes(
+          env,
+          checker._id,
+          params.INACTIVITY_WARNING_DAYS
+        );
+
+        if (!hasOverdue) {
+          // No overdue pending votes - skip warning
           continue;
         }
 
@@ -76,6 +119,12 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
 
 /**
  * Process 10-day deactivations
+ *
+ * A checker is deactivated if ALL conditions are met:
+ * 1. Has pending vote requests with at least one overdue (older than threshold)
+ * 2. Last vote was more than threshold days ago (or never voted)
+ * 3. Onboarded more than threshold days ago
+ * 4. Last reactivation was more than threshold days ago (or never reactivated)
  */
 async function processDeactivations(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
@@ -104,8 +153,20 @@ async function processDeactivations(env: Env, bot: Bot): Promise<HandlerResult> 
 
       const daysSinceActive = daysSince(lastActive);
 
-      // Check if inactive for 10+ days
+      // Check if inactive for deactivation threshold days
       if (daysSinceActive >= INACTIVITY_DEACTIVATION_DAYS) {
+        // Check if checker has overdue pending votes
+        const hasOverdue = await hasOverduePendingVotes(
+          env,
+          checker._id,
+          INACTIVITY_DEACTIVATION_DAYS
+        );
+
+        if (!hasOverdue) {
+          // No overdue pending votes - skip deactivation
+          continue;
+        }
+
         // Send deactivation message with reactivate button
         await bot.api.sendMessage(
           checker.telegramId,
