@@ -47,9 +47,23 @@ Inactivity Setup,A,Send 2 more messages via WhatsApp (messages 4-5),All testers 
 Inactivity Setup,A,Vote on messages 4-5: align categories with B,All votes recorded as correct,
 Inactivity Setup,B,Vote on messages 4-5: set consensus category,All votes recorded and consensus reached,
 Inactivity Setup,C,DO NOT vote on messages 4-5 (ignore notifications),C has pending overdue votes,
+Inactivity Warning,dev,After ~14 min from B's last vote: GET /__scheduled?cron=11%2012%20*%20*%20* on event-handler-service,Cron executes successfully
+Inactivity Warning,B,Check Telegram after cron runs,Receives inactivity warning message via Telegram
+Inactivity Warning,B,Verify warning message content,Message warns of deactivation in 7 days with resources link
+Inactivity Deactivation,dev,After ~29 min from B's last vote: GET /__scheduled?cron=11%2012%20*%20*%20* on event-handler-service,Cron executes successfully
+Inactivity Deactivation,B,Check Telegram after cron runs,Receives deactivation notice via Telegram
+Inactivity Deactivation,B,Verify deactivation status in database,isActive = false
+Inactivity Deactivation,A,Send new test message via WhatsApp (message 6),A and C receive notification but B does NOT (deactivated)
+Inactivity Reminder 1,dev,Note: Reminders are Durable Object alarms (auto-triggered) - no manual cron needed,Alarms scheduled at deactivation time
+Inactivity Reminder 1,B,Wait ~14 min after deactivation (REMINDER_1_DAYS=0.01),Receives "We miss you" reminder with Reactivate button
+Inactivity Reminder 2,B,Wait ~29 min after deactivation (REMINDER_2_DAYS=0.02),Receives second reminder with Reactivate button
+Inactivity Reactivation,B,Click 'Reactivate Now' button in reminder message,Receives reactivation confirmation message
+Inactivity Reactivation,B,Verify reactivation status,isActive = true and reminder alarms cancelled
+Inactivity Reactivation,A,Send new test message via WhatsApp (message 7),B now receives vote notification (reactivated)
 Progress Check,A,Open dashboard,Progress shows 5/5 votes and 5/3 reports,
 Progress Check,A,Verify accuracy,Accuracy shows 100% (aligned with B),
-Graduation,A,Wait for graduation trigger (all targets met),Receives graduation congratulations message,
+Graduation,dev,GET /__scheduled?cron=41%2012%20*%20*%20* on event-handler-service,Cron executes successfully
+Graduation,A,Check Telegram after cron runs,Receives graduation congratulations message,
 Graduation,A,Verify graduation message content,Message includes: vote count and accuracy % and reports count,
 Graduation,A,Click 'View your certificate',Certificate PDF displayed,
 Graduation,A,Click 'Add certificate to LinkedIn',LinkedIn credential page opens,
@@ -67,8 +81,10 @@ Bot Commands,A,Send /start,Welcome message with Portal button (already onboarded
 Edge Cases,A,Try to vote on already-assessed message,Read-only view showing consensus result,
 Edge Cases,A,Open My Votes page and use search,Filters messages by text,
 Edge Cases,A,Use filter tabs (All/Pending/Voted),Correctly filters vote list,
-Programme Extension,C,Wait ~1 hour (PROGRAMME_EXTENSION_DAYS=0.04) without meeting targets,Receives extension notice message (+30 days extended),
+Programme Extension,dev,After ~1 hour from C's onboarding: GET /__scheduled?cron=41%2012%20*%20*%20* on event-handler-service,Cron executes successfully
+Programme Extension,C,Check Telegram after cron runs,Receives extension notice message (+30 days extended),
 Programme Extension,C,Open dashboard,Programme still active with extended time,
-Programme Offboarding,C,Wait ~2 hours total (PROGRAMME_OFFBOARDING_DAYS=0.08) without meeting targets,Receives offboarding notice with survey link,
+Programme Offboarding,dev,After ~2 hours from C's onboarding: GET /__scheduled?cron=41%2012%20*%20*%20* on event-handler-service,Cron executes successfully
+Programme Offboarding,C,Check Telegram after cron runs,Receives offboarding notice with survey link,
 Programme Offboarding,C,Verify removed from Telegram group,C is no longer in Checkers' Crew group,
 Programme Offboarding,C,Verify status,onboardingStatus = offboarded and isActive = false,

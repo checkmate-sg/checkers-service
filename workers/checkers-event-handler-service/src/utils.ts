@@ -20,7 +20,7 @@ export function getLastActiveDate(checker: CheckerAPI): Date | null {
  * Calculate days since a given date
  */
 export function daysSince(date: Date): number {
-  return Math.floor((Date.now() - new Date(date).getTime()) / DAYS_MS);
+  return (Date.now() - new Date(date).getTime()) / DAYS_MS;
 }
 
 /**
