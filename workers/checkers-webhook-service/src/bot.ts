@@ -1,5 +1,7 @@
 import { Bot, Context, InlineKeyboard, Keyboard } from "grammy";
 
+import { getParameters } from "@/shared/helpers/parameters";
+
 import {
   createNewChecker,
   NLB_SURE_IMAGE,
@@ -731,6 +733,14 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
     const checker = checkerResult.data;
     const now = new Date();
 
+    // Get programme targets from KV
+    const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
+      await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+        "PROGRAMME_TARGET_VOTES",
+        "PROGRAMME_TARGET_ACCURACY",
+        "PROGRAMME_TARGET_REPORTS",
+      ]);
+
     // Create programme for the checker
     const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
       checkerId: checker._id!,
@@ -738,9 +748,9 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
       endDate: null,
       status: "active",
       targets: {
-        votes: parseInt(env.PROGRAMME_TARGET_VOTES, 10),
-        accuracy: parseInt(env.PROGRAMME_TARGET_ACCURACY, 10),
-        reports: parseInt(env.PROGRAMME_TARGET_REPORTS, 10),
+        votes: PROGRAMME_TARGET_VOTES,
+        accuracy: PROGRAMME_TARGET_ACCURACY,
+        reports: PROGRAMME_TARGET_REPORTS,
       },
       votesAtStart: checker.numVoted,
       hasReceivedExtension: false,

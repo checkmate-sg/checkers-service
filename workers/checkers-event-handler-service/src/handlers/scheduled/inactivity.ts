@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 
-import { INACTIVITY_DEACTIVATION_DAYS, INACTIVITY_WARNING_DAYS, MESSAGES } from "../../constants";
+import { getParameters } from "@/shared/helpers/parameters";
+import { MESSAGES } from "../../constants";
 import type { HandlerResult } from "../../types";
 import { daysSince, getLastActiveDate } from "../../utils";
 
@@ -10,6 +11,12 @@ import { daysSince, getLastActiveDate } from "../../utils";
 async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
   let processed = 0;
+
+  // Get parameters from KV
+  const params = await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+    "INACTIVITY_WARNING_DAYS",
+    "INACTIVITY_DEACTIVATION_DAYS",
+  ]);
 
   // Find active checkers who might need a warning
   const result = await env.CHECKERS_DB_SERVICE.findCheckers({
@@ -30,8 +37,8 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
 
       // Check if inactive for 3+ days but less than 10 days
       if (
-        daysSinceActive >= INACTIVITY_WARNING_DAYS &&
-        daysSinceActive < INACTIVITY_DEACTIVATION_DAYS
+        daysSinceActive >= params.INACTIVITY_WARNING_DAYS &&
+        daysSinceActive < params.INACTIVITY_DEACTIVATION_DAYS
       ) {
         // Check if we already sent a warning recently (within last 7 days)
         if (
@@ -73,6 +80,12 @@ async function processInactivityWarnings(env: Env, bot: Bot): Promise<HandlerRes
 async function processDeactivations(env: Env, bot: Bot): Promise<HandlerResult> {
   const errors: string[] = [];
   let processed = 0;
+
+  // Get parameters from KV
+  const { INACTIVITY_DEACTIVATION_DAYS } = await getParameters(
+    env.CHECKMATE_CHECKERS_PARAMETERS_KV,
+    ["INACTIVITY_DEACTIVATION_DAYS"]
+  );
 
   // Find active checkers
   const result = await env.CHECKERS_DB_SERVICE.findCheckers({

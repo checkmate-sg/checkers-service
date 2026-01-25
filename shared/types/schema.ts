@@ -119,7 +119,7 @@ export interface Programme extends BaseDocument {
   checkerId: ObjectId; // Reference to the Checker
   startDate: Date; // When the checker enrolled (onboarding completion)
   endDate: Date | null; // When the programme ended (completion/offboarding), null if active
-  status: "active" | "completed" | "extended" | "offboarded"; // Current programme status
+  status: "active" | "completed" | "extended" | "offboarded" | "abandoned"; // Current programme status
   targets: {
     votes: number; // Target number of votes (e.g., 50)
     accuracy: number; // Target accuracy percentage (e.g., 60)

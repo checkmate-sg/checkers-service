@@ -33,6 +33,12 @@
       "service": "whatsapp-checker-event-handler",
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
   // R2 incremental cache
   "r2_buckets": [
     {
@@ -67,6 +73,9 @@
       "new_sqlite_classes": ["DOQueueHandler"],
     },
   ],
+  "vars": {
+    "ENVIRONMENT": "local",
+  },
   "env": {
     "staging": {
       "name": "checkmate-checkers-app-staging",
@@ -100,6 +109,12 @@
         {
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler-staging",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
         },
       ],
       "r2_buckets": [
@@ -166,6 +181,12 @@
         {
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
         },
       ],
       "r2_buckets": [

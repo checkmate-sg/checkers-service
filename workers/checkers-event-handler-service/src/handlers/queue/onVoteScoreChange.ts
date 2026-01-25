@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 
 import { calculateProgrammeProgress } from "@/lib/helpers/programmeProgress";
+import { getParameters } from "@/shared/helpers/parameters";
 
 import { MESSAGES } from "../../constants";
 import type { VoteScoreChangedData } from "../../types";
@@ -76,8 +77,13 @@ async function checkAccuracyNudge(
   programme: { _id: string; hasReceivedLowAccuracyWarning: boolean },
   progress: { voteCount: number; accuracy: number | null }
 ): Promise<void> {
-  const voteThreshold = parseInt(env.ACCURACY_NUDGE_VOTE_THRESHOLD) || 20;
-  const accuracyThreshold = parseInt(env.ACCURACY_NUDGE_THRESHOLD) || 50;
+  // Get parameters from KV
+  const params = await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+    "ACCURACY_NUDGE_VOTE_THRESHOLD",
+    "ACCURACY_NUDGE_THRESHOLD",
+  ]);
+  const voteThreshold = params.ACCURACY_NUDGE_VOTE_THRESHOLD;
+  const accuracyThreshold = params.ACCURACY_NUDGE_THRESHOLD;
 
   // Already received warning - skip
   if (programme.hasReceivedLowAccuracyWarning) {

@@ -1,9 +1,9 @@
 // Time constants
 export const DAYS_MS = 24 * 60 * 60 * 1000;
-export const INACTIVITY_WARNING_DAYS = 3;
-export const INACTIVITY_DEACTIVATION_DAYS = 10;
-export const PROGRAMME_EXTENSION_DAYS = 60;
-export const PROGRAMME_OFFBOARDING_DAYS = 90;
+
+// Parameters are now read from KV via shared/helpers/parameters.ts
+// INACTIVITY_WARNING_DAYS, INACTIVITY_DEACTIVATION_DAYS,
+// PROGRAMME_EXTENSION_DAYS, PROGRAMME_OFFBOARDING_DAYS
 
 // Message templates
 export const MESSAGES = {
