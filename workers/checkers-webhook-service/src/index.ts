@@ -37,7 +37,7 @@ app.post("/typeform", handleTypeformWebhook);
 // Poll webhook endpoint for receiving checks from CheckMate
 app.post("/polls/webhook", handlePollWebhook);
 
-// Checker stats endpoint for ops automation
-app.get("/checker-stats", handleCheckerStatsWebhook);
+// Checker stats endpoint for ops automation (batch)
+app.post("/checker-stats", handleCheckerStatsWebhook);
 
 export default app;
