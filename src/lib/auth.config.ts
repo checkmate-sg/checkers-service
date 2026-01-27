@@ -69,7 +69,7 @@ export const authConfig: NextAuthConfig = {
         console.log("[Auth Config] Environment check:", {
           hasBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
           hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-          hasMongoUri: !!process.env.MONGODB_URI,
+          hasMongoUri: !!process.env.MONGODB_CONNECTION_STRING,
         });
 
         console.log("[Auth Config] Received initData:", initData ? "present" : "missing");
