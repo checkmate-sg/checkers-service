@@ -14,6 +14,8 @@ tags:
     description: API for managing Polls
   - name: Votes 
     description: API for managing Votes 
+  - name: Leaderboard 
+    description: API for managing Leaderboard 
 
 paths:
   '/checkers/{checkerId}':
@@ -94,8 +96,78 @@ paths:
                           $ref: '#/components/schemas/VotesMessageBrief'
         '401':
           $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  
+  '/checkers/{checkerId}/programme':
+    get: 
+      summary: Get programme progress statistics 
+      description: |
+        Retrieves the programme details and current progress for a specific checker.
+        Return the programme information along with progress metrics compared to targets 
+      tags:
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path 
+          description: Checker ID
+          required: true 
+          schema:
+            type: string
+      responses:
+        '200': 
+          description: Programme and progress retrieved successfully 
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgrammeProgressResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  'checkers/{checkerId}/stats':
+    get: 
+      summary: Get checker statistics
+      description: Retrieves voting statistics for a specific checker over the last 30 days 
+      tags: 
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path 
+          description: Checker ID
+          required: true 
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieve checker statistics 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voteCount:
+                    type: integer
+                    description: Number of votes cast by the checker
+                  accuracy:
+                    type: number
+                    format: float
+                    description: Accuracy percentage of the checker's votes
+                  reports:
+                    type: integer
+                    description: Number of reports associated with the checker
+                required:
+                  - voteCount
+                  - accuracy
+                  - reports
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      
           
   '/polls/webhook':
     post:
@@ -352,6 +424,34 @@ paths:
                       description: The database identifier of the updated vote 
         '400':
           $ref: '#/components/responses/InvalidParametersError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  '/leaderboard':
+    get:
+      summary: Get leaderboard information 
+      description: Retrieves leaderboard data for the current month. 
+      tags:
+        - Leaderboard 
+      responses:
+        '200':
+          description: Successfully retrieved leaderboard information 
+          content: 
+            application/json:
+              schema:
+                type: object 
+                properties: 
+                  success: 
+                    type: boolean
+                    example: true 
+                  data:
+                    type: array
+                    items: 
+                      $ref: "#/components/schemas/Leaderboard"
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '404':
@@ -736,6 +836,203 @@ components:
                 URL of the image in the poll, if any 
             crowdSourcedCategory:
               $ref: '#/components/schemas/Category'
+    
+    ProgrammeBrief:
+      description: >-
+        Representation of individual programme statistics for each checker 
+      type: object 
+      required: 
+        - _id
+        - checkerId
+        - startDate
+        - endDate
+        - status
+        - targets
+        - votesAtStart
+        - hasReceivedExtension
+        - hasReceivedLowAccuracyWarning
+        - certificateUrl
+        - completedAt
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the programme
+          example: "507f1f77bcf86cd799439011"
+        checkerId:
+          type: string
+          description: Reference to the Checker (ObjectId)
+          example: "507f1f77bcf86cd799439012"
+        startDate:
+          type: string
+          format: date-time
+          description: When the checker enrolled (onboarding completion)
+          example: "2024-01-15T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the programme ended (completion/offboarding), null if active
+          example: null
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - extended
+            - offboarded
+          description: Current programme status
+          example: "active"
+        targets:
+          $ref: '#/components/schemas/Targets'
+        votesAtStart:
+          type: integer
+          minimum: 0
+          description: Snapshot of checker.numVoted at enrollment
+          example: 50
+        hasReceivedExtension:
+          type: boolean
+          description: Whether Day 60 extension notice was sent
+          example: false
+        hasReceivedLowAccuracyWarning:
+          type: boolean
+          description: Whether low accuracy warning was sent
+          example: false
+        certificateUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the generated certificate
+          example: null
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the checker graduated
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          description: Document creation timestamp
+          example: "2024-01-15T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Document last update timestamp
+          example: "2024-01-20T12:30:00Z"
+
+    Targets:
+      type: object
+      required:
+        - votes
+        - accuracy
+        - reports
+      properties:
+        votes:
+          type: integer
+          minimum: 0
+          description: Target number of votes (e.g., 50)
+          example: 50
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Target accuracy percentage (e.g., 60)
+          example: 60
+        reports:
+          type: integer
+          minimum: 0
+          description: Target number of reports (e.g., 10)
+          example: 10
+    ProgressMetric:
+      type: object
+      required:
+        - current
+        - target
+      properties:
+        current:
+          type: number
+          description: Current value of the metric
+          example: 35
+        target:
+          type: number
+          description: Target value of the metric
+          example: 50
+
+    Progress:
+      type: object
+      required:
+        - votes
+        - accuracy
+        - reports
+      properties:
+        votes:
+          allOf:
+            - $ref: '#/components/schemas/ProgressMetric'
+          example:
+            current: 35
+            target: 50
+        accuracy:
+          allOf:
+            - $ref: '#/components/schemas/ProgressMetric'
+          example:
+            current: 72.5
+            target: 60
+        reports:
+          allOf:
+            - $ref: '#/components/schemas/ProgressMetric'
+          example:
+            current: 8
+            target: 10
+
+    ProgrammeProgressResponse:
+      type: object
+      required:
+        - programme
+        - progress
+      properties:
+        programme:
+          $ref: '#/components/schemas/ProgrammeBrief'
+        progress:
+          $ref: '#/components/schemas/Progress'
+    
+    Leaderboard:
+      type: object
+      required:
+        - _id
+        - checkerName
+        - numberOfVotes 
+        - totalScore 
+        - averageResponseTime 
+        - accuracy 
+        - correctVotes
+      properties:
+        _id: 
+          type: string 
+          description: Checkers Ids 
+        checkerName:
+          type: string 
+          description: Name from the checkers collection 
+        numberOfVotes:
+          type: integer
+          description: Total count of votes 
+        totalScore:
+          type: number 
+          description: Sum of all scores 
+        averageResponseTime:
+          type: number 
+          format: float 
+          description: Average response time in hours 
+        accuracy:
+          type: number 
+          format: float 
+          description: Percentage (0-100), rounded to 2 d.p. 
+        correctVotes:
+          type: integer 
+          description: Count of votes where isCorrect = true 
+
               
     PaginationTotal:
       description: the count of the total number of records

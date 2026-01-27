@@ -66,18 +66,41 @@ export function createVote(
   checkerId: string,
   pollId: string,
   category: string | null,
-  truthScore: number | null = null
+  options: {
+    truthScore?: number | null;
+    isCorrect?: boolean | null;
+    score?: number | null;
+    responseTime?: number | null;
+    responseCategory?: "great" | "acceptable" | "unacceptable" | null;
+    createdTimestamp?: Date;
+    votedTimestamp?: Date | null;
+  } = {}
 ) {
+  const {
+    truthScore = null,
+    isCorrect = null,
+    score = null,
+    responseTime = null,
+    responseCategory = category ? "acceptable" : null,
+    createdTimestamp = new Date(),
+    votedTimestamp = category ? new Date() : null,
+  } = options;
+
   return {
     _id: "vote-" + checkerId + "-" + pollId,
     pollId,
     checkerId,
-    createdTimestamp: new Date(),
-    votedTimestamp: category ? new Date() : null,
+    createdTimestamp,
+    votedTimestamp,
     category,
     truthScore,
-    responseCategory: category ? "acceptable" : null,
+    responseCategory,
     commentOnResponse: null,
+    responseTime,
+    score,
+    isCorrect,
+    showNoteAfterVote: false,
+    telegramMessageId: null,
   };
 }
 
@@ -98,7 +121,7 @@ export function createVoteDistribution(
           "checker-" + String(checkerIndex++).padStart(3, "0"),
           pollId,
           category === "null" ? null : category,
-          truthScore
+          { truthScore }
         )
       );
     }
@@ -135,15 +158,15 @@ export const testScenarios = {
 
   // Big suspicious (>75%): only need >4 votes
   bigSuspicious: {
-    distribution: { scam: 10, illicit: 6, legitimate: 4 },
+    distribution: { scam: 16, legitimate: 4 },
     expectedCategory: "scam",
     expectedAssessed: true,
   },
 
-  // Clear illicit: illicit >= scam when both are sus
-  clearIllicit: {
-    distribution: { illicit: 7, scam: 5, legitimate: 8 },
-    expectedCategory: "illicit",
+  // Another scam scenario (previously tested illicit, now merged)
+  anotherScam: {
+    distribution: { scam: 12, legitimate: 8 },
+    expectedCategory: "scam",
     expectedAssessed: true,
   },
 

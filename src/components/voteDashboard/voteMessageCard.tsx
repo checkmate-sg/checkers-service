@@ -36,6 +36,7 @@ interface VoteMessageCardProps {
   truthScore: 0 | 1 | 2 | 3 | 4 | 5 | null;
   responseCategory: "great" | "acceptable" | "unacceptable" | null;
   commentOnResponse: string | null;
+  isCorrect: boolean | null;
 }
 
 type ColourMap = {
@@ -89,7 +90,11 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
   const dateString = dateToDateString(new Date(props.startedTimestamp));
   function renderStatusDot() {
     // Checking if the status is 'voted'
-    if (props.category !== null && props.crowdSourcedCategory !== null) {
+    if (
+      props.category !== null &&
+      props.crowdSourcedCategory !== null &&
+      props.isCorrect !== null
+    ) {
       // If Checker already vote
       if (props.crowdSourcedCategory === "unsure") {
         return (
@@ -100,7 +105,7 @@ export const VoteMessageCard = (props: VoteMessageCardProps) => {
         );
       } else {
         // Check if users is correct/wrong
-        if (props.category === props.crowdSourcedCategory && props.crowdSourcedCategory !== null) {
+        if (props.isCorrect) {
           // Checker is correct
           return (
             <div className="flex-shrink-0 w-12 flex items-center justify-center">

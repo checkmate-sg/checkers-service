@@ -133,6 +133,11 @@ export const authConfig: NextAuthConfig = {
             return null;
           }
 
+          if (!user.isOnboardingComplete) {
+            console.warn("[Auth Config] User has not completed onboarding:", telegramId);
+            return null;
+          }
+
           console.log("[Auth Config] Authorization successful, returning user data");
           return {
             id: user._id?.toString() || "",

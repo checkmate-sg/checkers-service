@@ -1,8 +1,10 @@
-import { useGetPollResultsById } from '@/hooks/polls/useGetPollResults';
+import { Loader2 } from "lucide-react";
 
-import VoteChart from './VoteChart';
-import VoteNoteChart from './VoteNoteChart';
-import VoteResult from './VoteResult';
+import { useGetPollResultsById } from "@/hooks/polls/useGetPollResults";
+
+import VoteChart from "./VoteChart";
+import VoteNoteChart from "./VoteNoteChart";
+import VoteResult from "./VoteResult";
 
 interface VoteResultsDisplayProps {
   pollId: string | null;
@@ -11,7 +13,7 @@ interface VoteResultsDisplayProps {
   pollCategory: string | null;
   pollTruthScore: number | null;
   communityNoteCategory?: "great" | "acceptable" | "unacceptable" | null;
-  hasCommunityNote: boolean; 
+  hasCommunityNote: boolean;
 }
 
 export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
@@ -19,7 +21,11 @@ export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
 
   // TODO: Create a loading component for all the pages
   if (isLoading) {
-    return <>Loading...</>;
+    return (
+      <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
   }
 
   return (
@@ -36,8 +42,11 @@ export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
       </div>
       <VoteChart assessedInfo={pollStats} />
       {Props.hasCommunityNote ? (
-        <VoteNoteChart assessedInfo={pollStats} communityNoteCategory={Props.communityNoteCategory} />
-      ): null}
+        <VoteNoteChart
+          assessedInfo={pollStats}
+          communityNoteCategory={Props.communityNoteCategory}
+        />
+      ) : null}
     </>
   );
 }

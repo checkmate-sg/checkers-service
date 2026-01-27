@@ -15,16 +15,24 @@
       "binding": "OTP_KV",
       "id": "dd6c7922642349859ec36c978882ccc7",
     },
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
   ],
   "compatibility_flags": ["nodejs_compat"],
   "dev": {
-    "port": 8791,
+    "port": 9083,
   },
   "queues": {
     "producers": [
       {
         "queue": "whatsapp-adhoc-message-queue",
         "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+      },
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
       },
     ],
   },
@@ -71,7 +79,7 @@
       ],
       "vars": {
         "ENVIRONMENT": "staging",
-        "HOST_URL": "https://checkers-staging.checkmate.sg",
+        "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
       },
@@ -80,12 +88,20 @@
           "binding": "OTP_KV",
           "id": "635524c1abc04822b856ae710b0b5d3f",
         },
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
       ],
       "queues": {
         "producers": [
           {
             "queue": "whatsapp-adhoc-message-queue-staging",
             "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },
@@ -127,12 +143,20 @@
           "binding": "OTP_KV",
           "id": "dd6c7922642349859ec36c978882ccc7",
         },
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
+        },
       ],
       "queues": {
         "producers": [
           {
             "queue": "whatsapp-adhoc-message-queue",
             "binding": "WHATSAPP_ADHOC_MESSAGE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },

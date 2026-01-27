@@ -23,7 +23,7 @@ export default function RootLayout({ children }: LayoutProps) {
         <SessionProviders>
           <UserProvider>
             <UseQueryProvider>
-              <div className="min-h-screen flex flex-col">
+              <div className="min-h-screen flex flex-col w-full max-w-full overflow-x-hidden">
                 {/* Add Nav bar at the top*/}
                 <div>
                   <TopHeaderShell />

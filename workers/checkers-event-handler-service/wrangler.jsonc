@@ -1,0 +1,216 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "checkers-event-handler-service",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  /**
+   * Cron Triggers
+   * Run inactivity checks at 8:11 PM SGT (12:11 UTC)
+   * Run programme checks at 8:41 PM SGT (12:41 UTC)
+   */
+  "triggers": {
+    "crons": ["11 12 * * *", "41 12 * * *"],
+  },
+  /**
+   * Dev configuration
+   */
+  "dev": {
+    "port": 9082,
+  },
+  /**
+   * Service Bindings
+   */
+  "services": [
+    {
+      "binding": "CHECKERS_DB_SERVICE",
+      "service": "checkers-db-service",
+    },
+    {
+      "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+      "service": "checkers-reminder-alarm-service",
+    },
+    {
+      "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+      "service": "whatsapp-checker-event-handler",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "checkmate-certificates",
+      "binding": "CERTIFICATES_BUCKET",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
+  /**
+   * Environment Variables (secrets set via wrangler secret put)
+   * - TELEGRAM_BOT_TOKEN: Telegram bot token
+   * - CHECKERS_GROUP_CHAT_ID: Telegram group chat ID for offboarding
+   * - HOST_URL: Base URL for the app
+   * - REVISION_QUIZ_LINK: Link to revision quiz for extension notice
+   * - SURVEY_LINK: Link to feedback survey for offboarding
+   */
+  "vars": {
+    "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
+    "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
+    "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
+    "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+    "BUCKET_HOST": "https://certificates.checkmate.sg",
+    "LINKEDIN_ORG_ID": "103003347",
+    "ACCURACY_NUDGE_VOTE_THRESHOLD": "1",
+    "ACCURACY_NUDGE_THRESHOLD": "50",
+  },
+  "queues": {
+    "producers": [
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
+      },
+      {
+        "queue": "checkers-poll-update-queue",
+        "binding": "POLL_UPDATE_QUEUE",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "checkers-events-queue",
+      },
+    ],
+  },
+  /**
+   * Environment-specific configurations
+   */
+  "env": {
+    "staging": {
+      "name": "checkers-event-handler-service-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "HOST_URL": "https://checkers.staging.checkmate.sg",
+        "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
+        "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
+        "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+        "BUCKET_HOST": "https://certificates.staging.checkmate.sg",
+        "LINKEDIN_ORG_ID": "103003347",
+        "ACCURACY_NUDGE_VOTE_THRESHOLD": "1",
+        "ACCURACY_NUDGE_THRESHOLD": "50",
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service-staging",
+        },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service-staging",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler-staging",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "bucket_name": "checkmate-certificates-staging",
+          "binding": "CERTIFICATES_BUCKET",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
+          {
+            "queue": "checkers-poll-update-queue-staging",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "checkers-events-queue-staging",
+          },
+        ],
+      },
+    },
+    "production": {
+      "name": "checkers-event-handler-service",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "HOST_URL": "https://checkers.checkmate.sg",
+        "QUIZ_LINK": "https://better-sg.typeform.com/to/nH8xme9G",
+        "OFFBOARDED_SURVEY_LINK": "https://forms.gle/jF9pYJ3gocqUnPdR8",
+        "COMPLETED_SURVEY_LINK": "https://forms.gle/heUZbCpTbE3xGWbK9",
+        "BUCKET_HOST": "https://certificates.checkmate.sg",
+        "LINKEDIN_ORG_ID": "103003347",
+        "ACCURACY_NUDGE_VOTE_THRESHOLD": "20",
+        "ACCURACY_NUDGE_THRESHOLD": "50",
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service",
+        },
+        {
+          "binding": "CHECKER_REMINDER_ALARM_SERVICE",
+          "service": "checkers-reminder-alarm-service",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "bucket_name": "checkmate-certificates",
+          "binding": "CERTIFICATES_BUCKET",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
+        },
+      ],
+      "tail_consumers": [
+        {
+          "service": "tail-consumer-service",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
+          {
+            "queue": "checkers-poll-update-queue",
+            "binding": "POLL_UPDATE_QUEUE",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "checkers-events-queue",
+          },
+        ],
+      },
+    },
+  },
+}

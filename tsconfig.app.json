@@ -27,5 +27,5 @@
       "@/shared/*": ["./shared/*"]
     }
   },
-  "include": ["src", "shared", "../pages", "scripts", "test-db.cjs"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "shared/**/*.ts", "shared/**/*.tsx", "scripts/**/*.ts", "test-db.cjs"]
 }

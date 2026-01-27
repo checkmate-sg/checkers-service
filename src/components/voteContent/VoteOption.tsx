@@ -20,7 +20,6 @@ export const VoteOption: React.FC<VoteOptionProps> = ({ label, percentage, votes
 
   // Default background color
   const bgShade = selected ? `bg-${color}-50` : "";
-  const barColor = `bg-${color}-500`;
 
   return (
     <div
@@ -35,8 +34,8 @@ export const VoteOption: React.FC<VoteOptionProps> = ({ label, percentage, votes
         {/* Animated bar */}
         <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
           <div
-            className={`h-full ${
-              selected ? barColor : "bg-gray-500"
+            className={`h-full barColor ${
+              selected ? "bg-orange-500" : "bg-gray-500"
             } rounded-full transition-all duration-1000 ease-out`}
             style={{ width: `${fill}%` }}
           />

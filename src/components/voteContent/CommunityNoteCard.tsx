@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-import { LinkIcon, UserIcon } from '@heroicons/react/20/solid';
+import { LinkIcon, UserIcon } from "@heroicons/react/20/solid";
 
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 
 interface CommunityNoteCardProps {
   responseEN: string | null;
@@ -64,7 +64,7 @@ export default function CommunityNoteCard(props: CommunityNoteCardProps) {
   const textParts = splitTextByUrls(textToShow);
 
   return (
-    <Card className="bg-blue-100 p-3 mx-3 my-3">
+    <Card className="bg-blue-100 p-3 my-3 w-full overflow-hidden">
       <CardContent className="-m-2">
         <div className="flex items-center my-3">
           <UserIcon className="h-6 w-6 text-[#ff8932] mr-2 flex-shrink-0" />
@@ -85,7 +85,7 @@ export default function CommunityNoteCard(props: CommunityNoteCardProps) {
                         href={line}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
+                        className="text-blue-500 hover:underline break-all"
                       >
                         {line}
                       </a>

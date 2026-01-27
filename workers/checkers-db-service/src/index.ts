@@ -1,15 +1,26 @@
-import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
 /**
  * Database Service Worker with Durable Objects for Connection Pooling
  *
  * This worker handles database operations for the Checkmate application.
  * Uses Durable Objects to maintain persistent MongoDB connections for improved performance.
  */
-import { Filter, MongoClient, ObjectId, UpdateFilter } from 'mongodb';
+import { Filter, MongoClient, ObjectId, UpdateFilter } from "mongodb";
 
-import { Checker, CheckerAPI, Poll, PollAPI, Vote, VoteAPI } from '@/shared/types/schema';
+import {
+  Checker,
+  CheckerAPI,
+  Leaderboard,
+  LeaderboardAPI,
+  Poll,
+  PollAPI,
+  Programme,
+  ProgrammeAPI,
+  Vote,
+  VoteAPI,
+} from "@/shared/types/schema";
 
-import { VoteFilter } from './types';
+import { VoteFilter } from "./types";
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -48,6 +59,9 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
     if (typeof convertedFilter.checkerId === "string") {
       convertedFilter.checkerId = new ObjectId(convertedFilter.checkerId);
+    }
+    if (typeof convertedFilter.currentProgrammeId === "string") {
+      convertedFilter.currentProgrammeId = new ObjectId(convertedFilter.currentProgrammeId);
     }
     // checkId is kept as string (external system ID, not MongoDB ObjectId)
 
@@ -154,6 +168,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const db = this.client.db(DB_NAME);
       const votesCollection = db.collection<Vote>("votes");
 
+      // Validate checkerId before creating ObjectId
+      if (!baseFilter?.checkerId || !ObjectId.isValid(baseFilter.checkerId)) {
+        return { success: false, error: `Invalid checkerId: ${baseFilter?.checkerId}` };
+      }
+
       const baseMatch: any = { checkerId: new ObjectId(baseFilter.checkerId) };
       if (baseFilter?.voteCheckerStatus === true) {
         // Means voted
@@ -202,6 +221,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             truthScore: 1,
             responseCategory: 1,
             commentOnResponse: 1,
+            isCorrect: 1,
             poll: {
               _id: { $toString: "$poll._id" },
               checkId: {
@@ -230,7 +250,6 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
       const voteChecker = await votesCollection.aggregate(basePipeline).toArray();
       const voteCheckerCount = voteChecker.length;
-
 
       const pipeline = [...basePipeline, ...aggregationPipeline];
 
@@ -356,7 +375,12 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   async updateOneVote(
     filter: Filter<Vote>,
     update: UpdateFilter<Vote>
-  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    modifiedCount?: number;
+    previousDocument?: VoteAPI;
+    error?: string;
+  }> {
     try {
       await this.connectPromise;
       const db = this.client.db(DB_NAME);
@@ -366,11 +390,25 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const processedFilter = this.convertStringIdsToObjectIds(filter);
       const processedUpdate = this.convertStringIdsToObjectIds(update);
 
-      const result = await votesCollection.updateOne(processedFilter, processedUpdate);
+      // Use findOneAndUpdate to get the previous document for change detection
+      const result = await votesCollection.findOneAndUpdate(processedFilter, processedUpdate, {
+        returnDocument: "before",
+      });
+
+      // Convert ObjectIds to strings if document was found
+      const previousDocument = result
+        ? {
+            ...result,
+            _id: result._id?.toString(),
+            pollId: result.pollId?.toString(),
+            checkerId: result.checkerId?.toString(),
+          }
+        : undefined;
 
       return {
         success: true,
-        modifiedCount: result.modifiedCount,
+        modifiedCount: result ? 1 : 0,
+        previousDocument: previousDocument as VoteAPI | undefined,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
@@ -400,6 +438,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const checkerWithStringId = {
         ...checker,
         _id: checker._id?.toString(),
+        currentProgrammeId: checker.currentProgrammeId?.toString() ?? null,
       };
 
       return { success: true, data: checkerWithStringId as CheckerAPI };
@@ -441,6 +480,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const checkersWithStringId = checkers.map(checker => ({
         ...checker,
         _id: checker._id?.toString(),
+        currentProgrammeId: checker.currentProgrammeId?.toString() ?? null,
       }));
 
       const totalCheckers = checkersWithStringId.length;
@@ -514,6 +554,256 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       console.error({ error, errorMessage, filter }, "Failed to find vote");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findVotes(
+    filter: Filter<Vote>
+  ): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const votes = await votesCollection.find(processedFilter).toArray();
+
+      const votesWithStringIds = votes.map(vote => ({
+        ...vote,
+        _id: vote._id?.toString(),
+        pollId: vote.pollId?.toString(),
+        checkerId: vote.checkerId?.toString(),
+      }));
+
+      return { success: true, data: votesWithStringIds as VoteAPI[] };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find votes");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async getLeaderboardInfo(
+    startOfMonth: Date,
+    startOfNextMonth: Date
+  ): Promise<{ success: boolean; data?: LeaderboardAPI[]; total?: number; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      const aggregationPipeline = [
+        {
+          // Step 1: Filter by votes created in the current month (and actually voted on)
+          $match: {
+            createdTimestamp: {
+              $gte: startOfMonth,
+              $lt: startOfNextMonth,
+            },
+            votedTimestamp: { $ne: null }, // Only count submitted votes
+          },
+        },
+        {
+          // Step 2: Group by checkerId and calculate metrics
+          $group: {
+            _id: "$checkerId",
+            numberOfVotes: { $sum: 1 },
+            totalScore: { $sum: "$score" },
+            averageResponseTime: { $avg: "$responseTime" },
+            correctVotes: {
+              $sum: {
+                $cond: [{ $eq: ["$isCorrect", true] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          // Step 3: Calculate accuracy percentage
+          $addFields: {
+            accuracy: {
+              $multiply: [{ $divide: ["$correctVotes", "$numberOfVotes"] }, 100],
+            },
+          },
+        },
+        {
+          // Step 4: Lookup checker details from checkers collection
+          $lookup: {
+            from: "checkers",
+            localField: "_id",
+            foreignField: "_id",
+            as: "checkerInfo",
+          },
+        },
+        {
+          // Step 5: Unwind the checkerInfo array
+          $unwind: {
+            path: "$checkerInfo",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          // Step 6: Project final output with desired fields
+          $project: {
+            _id: 1,
+            checkerName: "$checkerInfo.name",
+            numberOfVotes: 1,
+            totalScore: 1,
+            averageResponseTime: 1,
+            accuracy: { $round: ["$accuracy", 2] }, // Round to 2d.p
+            correctVotes: 1,
+          },
+        },
+        {
+          // Step 7: sort by total scores (descending)
+          $sort: { totalScore: -1 },
+        },
+      ];
+
+      const results = await votesCollection.aggregate<Leaderboard>(aggregationPipeline).toArray();
+
+      if (!results) {
+        return { success: true, data: undefined, total: results.length };
+      }
+
+      // Convert ObjectId to string before returning
+      const resultsWithStringId = results.map(result => ({
+        ...result,
+        _id: result._id?.toString(),
+      }));
+
+      return { success: true, data: resultsWithStringId, total: results.length };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage }, "Failed to fetch leaderboard statistics");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async insertProgramme(
+    programme: Omit<Programme, "_id">,
+    customId?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection("programmes");
+
+      const objectId = customId ? new ObjectId(customId) : new ObjectId();
+      const idString = objectId.toString();
+
+      // Convert string checkerId to ObjectId
+      const programmeData = {
+        ...programme,
+        _id: objectId,
+        checkerId:
+          typeof programme.checkerId === "string"
+            ? new ObjectId(programme.checkerId)
+            : programme.checkerId,
+      };
+
+      await programmesCollection.insertOne(programmeData);
+
+      return { success: true, id: idString };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, programme }, "Failed to insert programme");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findOneProgramme(
+    filter: Filter<Programme>
+  ): Promise<{ success: boolean; data?: ProgrammeAPI; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const programme = await programmesCollection.findOne(processedFilter);
+
+      if (!programme) {
+        return { success: true, data: undefined };
+      }
+
+      const programmeWithStringIds = {
+        ...programme,
+        _id: programme._id?.toString(),
+        checkerId: programme.checkerId?.toString(),
+      };
+
+      return { success: true, data: programmeWithStringIds as ProgrammeAPI };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find programme");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async findProgrammes(
+    filter: Filter<Programme>,
+    options?: {
+      sort?: Record<string, 1 | -1>;
+    }
+  ): Promise<{ success: boolean; data?: ProgrammeAPI[]; error?: string; total?: number }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      let findProgrammes = programmesCollection.find(processedFilter);
+
+      if (options?.sort) {
+        findProgrammes = findProgrammes.sort(options.sort);
+      }
+
+      const programmes = await findProgrammes.toArray();
+
+      if (!programmes) {
+        return { success: true, data: undefined };
+      }
+
+      const programmesWithStringIds = programmes.map(programme => ({
+        ...programme,
+        _id: programme._id?.toString(),
+        checkerId: programme.checkerId?.toString(),
+      }));
+
+      return {
+        success: true,
+        data: programmesWithStringIds as ProgrammeAPI[],
+        total: programmesWithStringIds.length,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter }, "Failed to find programmes");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async updateOneProgramme(
+    filter: Filter<Programme>,
+    update: UpdateFilter<Programme>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const programmesCollection = db.collection<Programme>("programmes");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const processedUpdate = this.convertStringIdsToObjectIds(update);
+
+      const result = await programmesCollection.updateOne(processedFilter, processedUpdate);
+
+      return {
+        success: true,
+        modifiedCount: result.modifiedCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, filter, update }, "Failed to update programme");
       return { success: false, error: errorMessage };
     }
   }
@@ -606,5 +896,40 @@ export default class extends WorkerEntrypoint<Env> {
   async findOneVote(filter: Filter<Vote>) {
     const durableObject = this.getDurableObject();
     return durableObject.findOneVote(filter);
+  }
+
+  async findVotes(filter: Filter<Vote>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findVotes(filter);
+  }
+
+  async getLeaderboardInfo(startOfMonth: Date, startOfNextMonth: Date) {
+    const durableObject = this.getDurableObject();
+    return durableObject.getLeaderboardInfo(startOfMonth, startOfNextMonth);
+  }
+
+  async insertProgramme(programme: Omit<Programme, "_id">, customId?: string) {
+    const durableObject = this.getDurableObject();
+    return durableObject.insertProgramme(programme, customId);
+  }
+
+  async findOneProgramme(filter: Filter<Programme>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findOneProgramme(filter);
+  }
+
+  async findProgrammes(
+    filter: Filter<Programme>,
+    options?: {
+      sort?: Record<string, 1 | -1>;
+    }
+  ) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findProgrammes(filter, options);
+  }
+
+  async updateOneProgramme(filter: Filter<Programme>, update: UpdateFilter<Programme>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.updateOneProgramme(filter, update);
   }
 }

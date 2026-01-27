@@ -1,11 +1,14 @@
-import { Filter, UpdateFilter } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { Filter, UpdateFilter } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from '@/auth';
-import { Err } from '@/lib/api/error';
-import { voteAssessment } from '@/lib/helpers/voteAssessment/voteAssessment';
-import { Vote } from '@/lib/request/external/lib/data-contracts';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { auth } from "@/auth";
+import { Err } from "@/lib/api/error";
+import {
+  createVoteSubmittedEvent,
+  publishCheckersEvent,
+} from "@/lib/helpers/events/publishCheckersEvent";
+import { Vote } from "@/lib/request/external/lib/data-contracts";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -42,30 +45,16 @@ export async function POST(req: NextRequest, { params }) {
     const { voteId } = await params;
     if (!voteId) return Err.badParams("Missing voteId parameter");
 
-    // Parse request body to get update fields
     const body = await req.json();
 
-    // Validate that we have fields to update
     if (!body || Object.keys(body).length === 0) {
       return Err.badParams();
     }
 
-    // Extract update fields (Based on Vote Schema)
     const { category, truthScore, responseCategory, commentOnResponse, ...otherFields } = body;
 
-    // Create Filter to find the vote by ID
-    const filter: Filter<Vote> = {
-      _id: voteId,
-    };
+    const filter: Filter<Vote> = { _id: voteId };
 
-    // Get the Vote
-    const voteResult = await env.CHECKERS_DB_SERVICE.findOneVote(filter);
-
-    if (!voteResult.success) {
-      return Err.notFound();
-    }
-
-    // Create update object with $set operator
     const update: UpdateFilter<Vote> = {
       $set: {
         ...(category !== undefined && { category }),
@@ -77,7 +66,6 @@ export async function POST(req: NextRequest, { params }) {
       },
     };
 
-    // Update the Vote
     const result = await env.CHECKERS_DB_SERVICE.updateOneVote(filter, update);
 
     if (!result.success) {
@@ -88,59 +76,11 @@ export async function POST(req: NextRequest, { params }) {
       return Err.notFound("Vote not found or no changes made");
     }
 
-    // Vote Service to calculate whether the votes are correct/wrong
-    const pollId = voteResult.data.pollId;
-    const crowdSourcedCategoryResults = await voteAssessment(pollId);
-    if (!crowdSourcedCategoryResults.success) {
-      console.error("Error in vote assessment: ", crowdSourcedCategoryResults.error);
-      return Err.internal("Error in Vote assessment");
-    } else if (crowdSourcedCategoryResults.data === null) {
-      // console.log("Poll not yet assessed");
-    } else {
-      const { primaryCategory, truthScore, isDownvoted } = crowdSourcedCategoryResults.data;
+    // Publish event for async processing (assessment + scoring)
+    const eventResult = await publishCheckersEvent(env, createVoteSubmittedEvent({ voteId }));
 
-      // Update Poll with the assessed crowdSourcedCategory - use _id (pollId)
-      // Returns previousDocument for change detection
-      const pollUpdateResult = await env.CHECKERS_DB_SERVICE.updateOnePoll(
-        { _id: pollId },
-        {
-          $set: {
-            crowdSourcedCategory: primaryCategory,
-            crowdSourcedTruthScore: truthScore,
-            assessedTimestamp: new Date(),
-            "shortformResponse.downvoted": isDownvoted,
-          },
-        }
-      );
-
-      if (!pollUpdateResult.success) {
-        console.error(
-          "Error updating the poll with crowdSourcedCategory: ",
-          pollUpdateResult.error
-        );
-        return Err.internal("Error updating the poll with crowdSourcedCategory");
-      }
-
-      // Queue message if category or downvoted status changed
-      const prev = pollUpdateResult.previousDocument;
-      if (prev) {
-        const categoryChanged = prev.crowdSourcedCategory !== primaryCategory;
-        const downvotedChanged = (prev.shortformResponse?.downvoted ?? false) !== isDownvoted;
-
-        if (categoryChanged || downvotedChanged) {
-          try {
-            await env.POLL_UPDATE_QUEUE.send({
-              id: prev.checkId,
-              isHumanAssessed: true,
-              crowdsourcedCategory: primaryCategory,
-              isCommunityNoteDownvoted: isDownvoted,
-            });
-          } catch (queueError) {
-            console.error("Failed to queue poll update message:", queueError);
-            // Don't fail the request - just log
-          }
-        }
-      }
+    if (!eventResult.success) {
+      console.error("Failed to publish vote.submitted event:", eventResult.error);
     }
 
     return NextResponse.json(
@@ -151,7 +91,7 @@ export async function POST(req: NextRequest, { params }) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error updating the vote: ", error);
+    console.error("Error updating the vote:", error);
     return Err.internal("Internal Server Error");
   }
 }

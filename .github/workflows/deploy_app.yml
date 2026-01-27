@@ -10,7 +10,6 @@ on:
       - "shared/**"
       - "public/**"
       - "package.json"
-      - "pnpm-lock.yaml"
       - "next.config.ts"
       - "wrangler.jsonc"
       - "open-next.config.ts"

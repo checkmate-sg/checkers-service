@@ -219,6 +219,8 @@ export type Vote = BaseDocument & {
   /** Evaluation for an AI response quality (nullable) */
   responseCategory?: ResponseCategory;
   commentOnResponse?: string | null;
+  /** A/B test flag: true = show community note after voting, false = show before */
+  showNoteAfterVote?: boolean;
 };
 
 /** POST reqeust body to update the Vote Content of user  */
@@ -239,6 +241,152 @@ export type VotesMessageBrief = Vote & {
   /** crowed source message category */
   crowdSourcedCategory?: Category;
 };
+
+/** Representation of individual programme statistics for each checker  */
+export interface ProgrammeBrief {
+  /**
+   * Unique identifier for the programme
+   * @example "507f1f77bcf86cd799439011"
+   */
+  _id: string;
+  /**
+   * Reference to the Checker (ObjectId)
+   * @example "507f1f77bcf86cd799439012"
+   */
+  checkerId: string;
+  /**
+   * When the checker enrolled (onboarding completion)
+   * @format date-time
+   * @example "2024-01-15T00:00:00Z"
+   */
+  startDate: string;
+  /**
+   * When the programme ended (completion/offboarding), null if active
+   * @format date-time
+   * @example null
+   */
+  endDate: string | null;
+  /**
+   * Current programme status
+   * @example "active"
+   */
+  status: ProgrammeBriefStatusEnum;
+  targets: Targets;
+  /**
+   * Snapshot of checker.numVoted at enrollment
+   * @min 0
+   * @example 50
+   */
+  votesAtStart: number;
+  /**
+   * Whether Day 60 extension notice was sent
+   * @example false
+   */
+  hasReceivedExtension: boolean;
+  /**
+   * Whether low accuracy warning was sent
+   * @example false
+   */
+  hasReceivedLowAccuracyWarning: boolean;
+  /**
+   * URL to the generated certificate
+   * @format uri
+   * @example null
+   */
+  certificateUrl: string | null;
+  /**
+   * When the checker graduated
+   * @format date-time
+   * @example null
+   */
+  completedAt: string | null;
+  /**
+   * Document creation timestamp
+   * @format date-time
+   * @example "2024-01-15T00:00:00Z"
+   */
+  createdAt: string;
+  /**
+   * Document last update timestamp
+   * @format date-time
+   * @example "2024-01-20T12:30:00Z"
+   */
+  updatedAt: string;
+}
+
+export interface Targets {
+  /**
+   * Target number of votes (e.g., 50)
+   * @min 0
+   * @example 50
+   */
+  votes: number;
+  /**
+   * Target accuracy percentage (e.g., 60)
+   * @format float
+   * @min 0
+   * @max 100
+   * @example 60
+   */
+  accuracy: number;
+  /**
+   * Target number of reports (e.g., 10)
+   * @min 0
+   * @example 10
+   */
+  reports: number;
+}
+
+export interface ProgressMetric {
+  /**
+   * Current value of the metric
+   * @example 35
+   */
+  current: number;
+  /**
+   * Target value of the metric
+   * @example 50
+   */
+  target: number;
+}
+
+export interface Progress {
+  /** @example {"current":35,"target":50} */
+  votes: ProgressMetric;
+  /** @example {"current":72.5,"target":60} */
+  accuracy: ProgressMetric;
+  /** @example {"current":8,"target":10} */
+  reports: ProgressMetric;
+}
+
+export interface ProgrammeProgressResponse {
+  /** Representation of individual programme statistics for each checker  */
+  programme: ProgrammeBrief;
+  progress: Progress;
+}
+
+export interface Leaderboard {
+  /** Checkers Ids */
+  _id: string;
+  /** Name from the checkers collection */
+  checkerName: string;
+  /** Total count of votes */
+  numberOfVotes: number;
+  /** Sum of all scores */
+  totalScore: number;
+  /**
+   * Average response time in hours
+   * @format float
+   */
+  averageResponseTime: number;
+  /**
+   * Percentage (0-100), rounded to 2 d.p.
+   * @format float
+   */
+  accuracy: number;
+  /** Count of votes where isCorrect = true */
+  correctVotes: number;
+}
 
 /**
  * the count of the total number of records
@@ -290,4 +438,15 @@ export interface APIPagination {
    * @min 0
    */
   offset?: number;
+}
+
+/**
+ * Current programme status
+ * @example "active"
+ */
+export enum ProgrammeBriefStatusEnum {
+  Active = "active",
+  Completed = "completed",
+  Extended = "extended",
+  Offboarded = "offboarded",
 }

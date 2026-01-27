@@ -24,6 +24,20 @@
       "binding": "CHECKER_REMINDER_ALARM_SERVICE",
       "service": "checkers-reminder-alarm-service",
     },
+    {
+      "binding": "CHECKERS_EVENT_HANDLER_SERVICE",
+      "service": "checkers-event-handler-service",
+    },
+    {
+      "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+      "service": "whatsapp-checker-event-handler",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
   ],
   // R2 incremental cache
   "r2_buckets": [
@@ -47,6 +61,10 @@
         "queue": "checkers-poll-update-queue",
         "binding": "POLL_UPDATE_QUEUE",
       },
+      {
+        "queue": "checkers-events-queue",
+        "binding": "CHECKERS_EVENTS_QUEUE",
+      },
     ],
   },
   "migrations": [
@@ -55,6 +73,9 @@
       "new_sqlite_classes": ["DOQueueHandler"],
     },
   ],
+  "vars": {
+    "ENVIRONMENT": "local",
+  },
   "env": {
     "staging": {
       "name": "checkmate-checkers-app-staging",
@@ -62,6 +83,12 @@
         "ENVIRONMENT": "staging",
         "NEXTAUTH_URL": "https://checkers.staging.checkmate.sg",
       },
+      "routes": [
+        {
+          "pattern": "checkers.staging.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
@@ -78,6 +105,16 @@
         {
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service-staging",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler-staging",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
         },
       ],
       "r2_buckets": [
@@ -100,6 +137,10 @@
             "queue": "checkers-poll-update-queue-staging",
             "binding": "POLL_UPDATE_QUEUE",
           },
+          {
+            "queue": "checkers-events-queue-staging",
+            "binding": "CHECKERS_EVENTS_QUEUE",
+          },
         ],
       },
       "observability": {
@@ -114,6 +155,12 @@
         "ENVIRONMENT": "production",
         "NEXTAUTH_URL": "https://checkers.checkmate.sg",
       },
+      "routes": [
+        {
+          "pattern": "checkersv2.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
       "services": [
         {
           "binding": "WORKER_SELF_REFERENCE",
@@ -130,6 +177,16 @@
         {
           "binding": "CHECKER_REMINDER_ALARM_SERVICE",
           "service": "checkers-reminder-alarm-service",
+        },
+        {
+          "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
+          "service": "whatsapp-checker-event-handler",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
         },
       ],
       "r2_buckets": [
@@ -151,6 +208,10 @@
           {
             "queue": "checkers-poll-update-queue",
             "binding": "POLL_UPDATE_QUEUE",
+          },
+          {
+            "queue": "checkers-events-queue",
+            "binding": "CHECKERS_EVENTS_QUEUE",
           },
         ],
       },

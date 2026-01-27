@@ -18,7 +18,7 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "CHKECERS_REMINDER_DURABLE_OBJECT",
+        "name": "CHECKERS_REMINDER_DURABLE_OBJECT",
         "class_name": "CheckersReminderDurableObject",
       },
     ],
@@ -29,12 +29,18 @@
       "new_classes": ["CheckersReminderDurableObject"],
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
   /**
    * Dev configuration
    * Configuration for local development environment
    */
   "dev": {
-    "port": 8789,
+    "port": 9081,
   },
 
   /**
@@ -46,10 +52,16 @@
       "vars": {
         "ENVIRONMENT": "staging",
       },
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
-            "name": "CHKECERS_REMINDER_DURABLE_OBJECT",
+            "name": "CHECKERS_REMINDER_DURABLE_OBJECT",
             "class_name": "CheckersReminderDurableObject",
           },
         ],
@@ -60,10 +72,16 @@
       "vars": {
         "ENVIRONMENT": "production",
       },
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
-            "name": "CHKECERS_REMINDER_DURABLE_OBJECT",
+            "name": "CHECKERS_REMINDER_DURABLE_OBJECT",
             "class_name": "CheckersReminderDurableObject",
           },
         ],

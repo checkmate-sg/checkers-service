@@ -22,6 +22,7 @@ interface WhatsAppAdhocMessage {
 interface Env {
   // KV Namespaces
   OTP_KV: KVNamespace;
+  CHECKMATE_CHECKERS_PARAMETERS_KV: KVNamespace;
 
   // Service Bindings
   CHECKERS_DB_SERVICE: CheckersDbService;
@@ -41,4 +42,6 @@ interface Env {
   WHATSAPP_MESSAGE_SERVICE: WhatsAppMessageService;
   TYPEFORM_SECRET_TOKEN: string;
   WHATSAPP_CHECKER_HANDLER_SERVICE: WhatsAppCheckerHandlerService;
+  API_KEY: string;
+  CHECKERS_EVENTS_QUEUE: Queue<unknown>;
 }

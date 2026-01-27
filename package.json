@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3002",
-    "dev:db": "cd workers/checkers-db-service && wrangler dev",
+    "dev:workers": "pnpm --parallel --filter './workers/*' run dev",
     "build": "next build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
@@ -21,7 +21,11 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "setup-webhook": "node scripts/setup-webhook.js",
-    "gen:api-client": "npx @thangkieu/tools generate-api-client -p ./src/lib/request/external/openai.yaml -o ./src/lib/request/external/lib --axios --custom-axios-import \"../../axios\" -c"
+    "upload-parameters:local": "node scripts/upload-parameters.js local",
+    "upload-parameters:staging": "node scripts/upload-parameters.js staging",
+    "upload-parameters:production": "node scripts/upload-parameters.js production",
+    "gen:api-client": "npx @thangkieu/tools generate-api-client -p ./src/lib/request/external/openai.yaml -o ./src/lib/request/external/lib --axios --custom-axios-import \"../../axios\" -c",
+    "prepare": "husky"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -68,7 +72,7 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "mongodb": "^6.17.0",
-    "next": "^15.4.8",
+    "next": "^15.5.9",
     "next-auth": "^5.0.0-beta.29",
     "next-themes": "^0.3.0",
     "normalize-url": "^8.1.0",
@@ -90,18 +94,19 @@
     "@cloudflare/workers-types": "^4.20250826.0",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
-    "@types/mongodb": "^4.0.7",
     "@types/node": "^22.19.3",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitest/coverage-v8": "^4.0.15",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
-    "eslint-config-next": "^15.4.6",
+    "eslint-config-next": "^15.5.9",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.4.47",
     "prettier": "^3.7.4",
     "tailwindcss": "^3.4.11",
@@ -109,6 +114,9 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vitest": "^4.0.15",
-    "wrangler": "^4.33.2"
+    "wrangler": "4.54.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,md}": "prettier --write"
   }
 }

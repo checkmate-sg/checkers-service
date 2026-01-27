@@ -1,10 +1,10 @@
-import { CheckCircleIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { CheckCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { useUpdateVotesById } from '@/hooks/votes/useUpdateVotesById';
-import { Category, ResponseCategory } from '@/lib/request/external/lib/data-contracts';
+import { useUpdateVotesById } from "@/hooks/votes/useUpdateVotesById";
+import { Category, ResponseCategory } from "@/lib/request/external/lib/data-contracts";
 
-import { Button } from '../ui/button';
+import { Button } from "../ui/button";
 
 interface DoneButtonProps {
   voteRequestId: string | null;

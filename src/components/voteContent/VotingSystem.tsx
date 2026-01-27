@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Category, Response, ResponseCategory } from '@/lib/request/external/lib/data-contracts';
-import { AccordionContent } from '@radix-ui/react-accordion';
+import { Category, Response, ResponseCategory } from "@/lib/request/external/lib/data-contracts";
+import { AccordionContent } from "@radix-ui/react-accordion";
 
-import { Accordion, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import CommunityNoteCard from './CommunityNoteCard';
-import CommunityNoteCategories from './CommunityNoteCategories';
-import DoneButton from './DoneButton';
-import VoteCategories from './VoteCategories';
+import { Accordion, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import CommunityNoteCard from "./CommunityNoteCard";
+import CommunityNoteCategories from "./CommunityNoteCategories";
+import DoneButton from "./DoneButton";
+import VoteCategories from "./VoteCategories";
 
 interface VotingSystemProps {
   voteRequestId: string;
@@ -26,13 +26,15 @@ interface IconProps {
 
 export default function VotingSystem(props: VotingSystemProps) {
   // local state mirrors the original behaviour
-  const [openItems, setOpenItems] = useState<string>('1');
+  const [openItems, setOpenItems] = useState<string[]>(["1"]);
   const [voteCategory, setVoteCategory] = useState<Category | null>(props.category);
   const [truthScore, setTruthScore] = useState<number | null>(props.truthScore);
   const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<ResponseCategory | null>(
     props.responseCategory
   );
-  const [commentOnResponse, setCommentOnResponse] = useState<string | null>(props.commentOnResponse);
+  const [commentOnResponse, setCommentOnResponse] = useState<string | null>(
+    props.commentOnResponse
+  );
 
   // Check if community note exists
   const hasCommunityNote = props.shortformResponse.en !== null;
@@ -40,17 +42,23 @@ export default function VotingSystem(props: VotingSystemProps) {
   // Check if step 1 is completed
   const isStep1Completed = () => {
     if (voteCategory === null) return false;
-    if (voteCategory === 'info') return truthScore !== null;
+    if (voteCategory === "info") return truthScore !== null;
     return true;
   };
 
-  const handleNextStep = (value: number) => {
-    // Enable the next accordion and open it automatically
-    setOpenItems(String(value));
-  };
-
   const onNextStep = (value: number) => {
-    handleNextStep(value);
+    const stepStr = String(value);
+    if (props.showNoteAfterVote) {
+      // A/B test mode: collapse previous sections, only show current
+      setOpenItems([stepStr]);
+    } else {
+      // Default: keep section 1 open and also open section 2, then scroll
+      setOpenItems(prev => (prev.includes(stepStr) ? prev : [...prev, stepStr]));
+      // Scroll to the next section after a short delay for accordion to expand
+      setTimeout(() => {
+        document.getElementById(`step-${value}`)?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
   };
 
   const handleVoteCategorySelection = (value: Category) => {
@@ -67,7 +75,7 @@ export default function VotingSystem(props: VotingSystemProps) {
 
   const handleCommentOnResponse = (value: string) => {
     setCommentOnResponse(value);
-  }
+  };
 
   const StepBadge = ({ n }: { n: number }) => (
     <span
@@ -80,17 +88,14 @@ export default function VotingSystem(props: VotingSystemProps) {
 
   return (
     <div>
-      <Accordion
-        type="single"
-        collapsible
-        value={openItems}
-        onValueChange={setOpenItems}
-      >
+      <Accordion type="multiple" value={openItems} onValueChange={setOpenItems}>
         <AccordionItem
           value="1"
-          className={`mb-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('1') ? 
-                    "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" 
-                    : "border-blue-gray-200"}`}
+          className={`mb-6 mx-2 rounded-lg border px-2 relative ${
+            openItems.includes("1")
+              ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50"
+              : "border-blue-gray-200"
+          }`}
         >
           <div className="pl-3">
             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
@@ -111,54 +116,55 @@ export default function VotingSystem(props: VotingSystemProps) {
             />
 
             {isStep1Completed() && !hasCommunityNote ? (
-               <DoneButton
-                 voteRequestId={props.voteRequestId}
-                 voteCategory={voteCategory}
-                 truthScore={truthScore}
-               />
-             ) : null}
+              <DoneButton
+                voteRequestId={props.voteRequestId}
+                voteCategory={voteCategory}
+                truthScore={truthScore}
+              />
+            ) : null}
           </AccordionContent>
         </AccordionItem>
-        
-        {(props.showNoteAfterVote && isStep1Completed() && hasCommunityNote) ? (
-            <CommunityNoteCard
+
+        {props.showNoteAfterVote && isStep1Completed() && hasCommunityNote ? (
+          <CommunityNoteCard
             responseEN={props.shortformResponse.en}
             responseCN={props.shortformResponse.cn}
             responseLinks={props.shortformResponse.links}
           />
-        ): null}
-        {hasCommunityNote? (
-           <AccordionItem
-           value="2"
-           className={`mb-2 mt-6 mx-2 rounded-lg border px-2 relative ${openItems.includes('2') ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
-         >
-           <div className="pl-3">
-             <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
-               Rate Community Note:
-             </AccordionTrigger>
-             <StepBadge n={2} />
-           </div>
- 
-           <AccordionContent className="px-4 text-base font-normal">
-             <CommunityNoteCategories
-               crowdSourcedCategory={crowdSourcedCategory}
-               onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
-               commentOnResponse={commentOnResponse}
-               onCommentOnResponseChanged={handleCommentOnResponse}
-             />
- 
-             {isStep1Completed() && crowdSourcedCategory ? (
-               <DoneButton
-                 voteRequestId={props.voteRequestId}
-                 voteCategory={voteCategory}
-                 truthScore={truthScore}
-                 crowdSourcedCategory={crowdSourcedCategory}
-                 commentOnResponse={commentOnResponse}
-               />
-             ) : null}
-           </AccordionContent>
-         </AccordionItem>
-        ): null}
+        ) : null}
+        {hasCommunityNote ? (
+          <AccordionItem
+            id="step-2"
+            value="2"
+            className={`mb-2 mt-6 mx-2 rounded-lg border px-2 relative ${openItems.includes("2") ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-50" : "border-blue-gray-200"}`}
+          >
+            <div className="pl-3">
+              <AccordionTrigger className="text-primary font-bold border-b-0 after:hidden focus:outline-none focus:ring-0">
+                Rate Community Note:
+              </AccordionTrigger>
+              <StepBadge n={2} />
+            </div>
+
+            <AccordionContent className="px-4 text-base font-normal">
+              <CommunityNoteCategories
+                crowdSourcedCategory={crowdSourcedCategory}
+                onCrowdSourcedCategorySelection={handleCrowdSourcedCategory}
+                commentOnResponse={commentOnResponse}
+                onCommentOnResponseChanged={handleCommentOnResponse}
+              />
+
+              {isStep1Completed() && crowdSourcedCategory ? (
+                <DoneButton
+                  voteRequestId={props.voteRequestId}
+                  voteCategory={voteCategory}
+                  truthScore={truthScore}
+                  crowdSourcedCategory={crowdSourcedCategory}
+                  commentOnResponse={commentOnResponse}
+                />
+              ) : null}
+            </AccordionContent>
+          </AccordionItem>
+        ) : null}
       </Accordion>
     </div>
   );

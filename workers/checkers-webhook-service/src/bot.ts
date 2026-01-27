@@ -1,13 +1,26 @@
 import { Bot, Context, InlineKeyboard, Keyboard } from "grammy";
-import type { CheckerAPI } from "./types";
+
+import { getParameters } from "@/shared/helpers/parameters";
+
 import {
-  NLB_SURE_IMAGE,
-  RESOURCES_MESSAGE,
-  progressBar,
-  normalizePhoneNumber,
   createNewChecker,
+  NLB_SURE_IMAGE,
+  normalizePhoneNumber,
+  progressBar,
+  RESOURCES_MESSAGE,
 } from "./constants";
-import { sendOTP, checkOTP } from "./otp";
+import { checkOTP, sendOTP } from "./otp";
+
+import type { CheckerAPI } from "./types";
+// Safely answer callback query - don't let failures block the handler
+async function safeAnswerCallbackQuery(ctx: Context): Promise<void> {
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (err) {
+    // Ignore "query is too old" errors - the button click is still valid
+    console.warn("Failed to answer callback query (likely expired):", err);
+  }
+}
 
 // Create bot instance with env available via closure
 export function createBot(token: string, env: Env): Bot {
@@ -135,32 +148,46 @@ export function createBot(token: string, env: Env): Bot {
   // ============================================
 
   bot.callbackQuery("QUIZ_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    console.log("Received QUIZ_COMPLETED callback");
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
-    // Verify quiz was actually completed via Typeform webhook
-    const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
-    const user = result.success ? result.data : null;
+    try {
+      // Verify quiz was actually completed via Typeform webhook
+      const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+      console.log("QUIZ_COMPLETED: DB lookup result", JSON.stringify(result));
+      const user = result.success ? result.data : null;
 
-    if (user?.isQuizComplete) {
-      await ctx.reply(
-        `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
-      );
-      const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
-      if (checkResult.exists) {
-        await sendTGGroupPrompt(ctx, env, telegramId, true);
+      if (user?.isQuizComplete) {
+        await ctx.reply(
+          `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
+        );
+        const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
+        // const checkResult = {exists: null}
+        if (checkResult.exists) {
+          await sendTGGroupPrompt(ctx, env, telegramId, true);
+        } else {
+          await sendWAServicePrompt(ctx, env, telegramId, false);
+        }
       } else {
-        // User hasn't used the WhatsApp service yet
-        await sendWAServicePrompt(ctx, env, telegramId, false);
+        console.log("QUIZ_COMPLETED: Quiz not complete, showing prompt again");
+        await sendQuizPrompt(
+          ctx,
+          env,
+          telegramId,
+          user?.name || "",
+          user?.whatsappId || null,
+          false
+        );
       }
-    } else {
-      // Quiz not completed yet - prompt them to complete it
-      await sendQuizPrompt(ctx, env, telegramId, user?.name || "", user?.whatsappId || null, false);
+    } catch (error) {
+      console.error("Error in QUIZ_COMPLETED callback:", error);
+      await ctx.reply("An error occurred. Please try again or contact support.");
     }
   });
 
   bot.callbackQuery("WA_SERVICE_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     // Verify user has actually used the WhatsApp service
@@ -189,7 +216,7 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("TG_COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
     const userId = ctx.from!.id;
 
@@ -213,14 +240,14 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("COMPLETED", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     await sendCompletionPrompt(ctx, env, telegramId);
   });
 
   bot.callbackQuery("ONBOARD_AGAIN", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
@@ -237,17 +264,17 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("RESOURCES", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     await ctx.reply(RESOURCES_MESSAGE, { parse_mode: "HTML" });
   });
 
   bot.callbackQuery("REQUEST_NUMBER", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     await sendNumberPrompt(ctx);
   });
 
   bot.callbackQuery("SEND_OTP", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
@@ -263,7 +290,7 @@ export function createBot(token: string, env: Env): Bot {
   });
 
   bot.callbackQuery("reactivate", async ctx => {
-    await ctx.answerCallbackQuery();
+    await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
@@ -397,7 +424,7 @@ async function handleNameInput(
   telegramId: string,
   text: string
 ): Promise<void> {
-  if (!text || text.trim().length < 2) {
+  if (!text || text.trim().length < 1) {
     await ctx.reply("Name cannot be just spaces. Please enter a valid name.");
     await sendNamePrompt(ctx);
     return;
@@ -698,16 +725,56 @@ async function sendNLBPrompt(ctx: Context, env: Env, telegramId: string): Promis
 
 async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
   try {
+    // Fetch checker to get _id and numVoted
+    const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+    if (!checkerResult.success || !checkerResult.data) {
+      throw new Error("Checker not found");
+    }
+    const checker = checkerResult.data;
+    const now = new Date();
+
+    // Get programme targets from KV
+    const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
+      await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+        "PROGRAMME_TARGET_VOTES",
+        "PROGRAMME_TARGET_ACCURACY",
+        "PROGRAMME_TARGET_REPORTS",
+      ]);
+
+    // Create programme for the checker
+    const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
+      checkerId: checker._id!,
+      startDate: now,
+      endDate: null,
+      status: "active",
+      targets: {
+        votes: PROGRAMME_TARGET_VOTES,
+        accuracy: PROGRAMME_TARGET_ACCURACY,
+        reports: PROGRAMME_TARGET_REPORTS,
+      },
+      votesAtStart: checker.numVoted,
+      hasReceivedExtension: false,
+      hasReceivedLowAccuracyWarning: false,
+      certificateUrl: null,
+      completedAt: null,
+    });
+
+    if (!programmeResult.success) {
+      console.error(`Failed to create programme: ${programmeResult.error}`);
+    }
+
+    // Update checker with onboarding completion and programme ID
     await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { telegramId },
       {
         $set: {
           onboardingStatus: "completed",
           isOnboardingComplete: true,
-          onboardingTime: new Date(),
+          onboardingTime: now,
           isActive: true,
-          lastActivatedDate: new Date(),
-          updatedAt: new Date(),
+          lastActivatedDate: now,
+          updatedAt: now,
+          currentProgrammeId: programmeResult.id || null,
         },
       }
     );

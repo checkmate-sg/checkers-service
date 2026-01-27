@@ -1,0 +1,18 @@
+{
+	"name": "checkers-event-handler-service",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev --inspector-port 9331 --test-scheduled",
+		"start": "wrangler dev --test-scheduled",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"typescript": "^5.5.2",
+		"wrangler": "4.54.0"
+	},
+	"dependencies": {
+		"grammy": "^1.38.4"
+	}
+}

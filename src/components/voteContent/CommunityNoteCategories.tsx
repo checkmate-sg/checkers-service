@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { TrophyIcon } from '@heroicons/react/20/solid';
-import { XCircleIcon } from '@heroicons/react/24/outline';
-import { CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { TrophyIcon } from "@heroicons/react/20/solid";
+import { XCircleIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
-import TooltipWithHelperIcon from '../common/TooltipwithHelperIcon';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
+import TooltipWithHelperIcon from "../common/TooltipwithHelperIcon";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
 
 interface CommunityNoteCategoriesProps {
   crowdSourcedCategory: string | null;
@@ -55,7 +55,7 @@ export default function CommunityNoteCategories(props: CommunityNoteCategoriesPr
   const handleCommentOnResponse = (value: string) => {
     setCommentOnResponse(value);
     props.onCommentOnResponseChanged(value);
-  }
+  };
 
   return (
     <div className="grid grid-flow-row gap-y-4 items-center mb-4">
@@ -77,7 +77,8 @@ export default function CommunityNoteCategories(props: CommunityNoteCategoriesPr
       <Textarea
         placeholder="[Optional] Comments, if any"
         value={commentOnResponse ?? ""}
-        onChange={(e) => handleCommentOnResponse(e.target.value)}/>
+        onChange={e => handleCommentOnResponse(e.target.value)}
+      />
     </div>
   );
 }
