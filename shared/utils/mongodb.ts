@@ -1,15 +1,15 @@
 // lib/mongodb.ts
 import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI || "";
+const uri = process.env.MONGODB_CONNECTION_STRING || "";
 const dbName = "checkmate-checkers-app";
 
 export async function connectToDB(): Promise<Db> {
   console.log("[MongoDB] Starting connection...");
 
   if (!uri) {
-    console.error("[MongoDB] MONGODB_URI is not defined");
-    throw new Error("MONGODB_URI is not defined");
+    console.error("[MongoDB] MONGODB_CONNECTION_STRING is not defined");
+    throw new Error("MONGODB_CONNECTION_STRING is not defined");
   }
 
   console.log("[MongoDB] Creating new connection...");

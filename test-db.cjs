@@ -4,10 +4,10 @@ require("dotenv").config({ path: ".env.local" });
 async function testDatabase() {
   console.log("🚀 Starting MongoDB test...\n");
 
-  const mongoUri = process.env.MONGODB_URI;
+  const mongoUri = process.env.MONGODB_CONNECTION_STRING;
 
   if (!mongoUri) {
-    console.error("❌ MONGODB_URI is not set in .env.local");
+    console.error("❌ MONGODB_CONNECTION_STRING is not set in .env.local");
     return;
   }
 
