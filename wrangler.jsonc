@@ -157,7 +157,7 @@
       },
       "routes": [
         {
-          "pattern": "checkersv2.checkmate.sg",
+          "pattern": "checkers.checkmate.sg",
           "custom_domain": true,
         },
       ],
