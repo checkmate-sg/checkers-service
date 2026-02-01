@@ -2,10 +2,10 @@
 
 import { useTelegramAuth } from "@/hooks/useTelegramAuth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function HomePage() {
+function HomePageContent() {
   const { isLoading, error, session } = useTelegramAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,4 +86,21 @@ export default function HomePage() {
   }
 
   return null;
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="animate-spin mx-auto mb-4" size={32} />
+            <p>Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <HomePageContent />
+    </Suspense>
+  );
 }
