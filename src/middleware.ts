@@ -49,11 +49,12 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    // If no valid token, redirect
+    // If no valid token, redirect to home page for Telegram auth with callback
     if (!token) {
-      console.log(`[Middleware] No valid token, redirecting to unauthorized`);
+      console.log(`[Middleware] No valid token, redirecting to home for auth`);
 
-      const response = NextResponse.redirect(new URL("/unauthorized", request.url));
+      const callbackUrl = encodeURIComponent(pathname + request.nextUrl.search);
+      const response = NextResponse.redirect(new URL(`/?callbackUrl=${callbackUrl}`, request.url));
 
       // Clean up invalid cookies
       response.cookies.delete("__Secure-next-auth.session-token");
