@@ -117,6 +117,10 @@ declare global {
     CHECKERS_CHAT_ID?: string;
     ENVIRONMENT?: string;
     CHECKER_REMINDER_ALARM_SERVICE?: any;
+    PRESIGNED_URL_SERVICE?: {
+      generate(objectKey: string): Promise<string>;
+      getPresignedUrl(url: string): Promise<string>;
+    };
   }
 }
 

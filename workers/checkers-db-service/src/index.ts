@@ -228,7 +228,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
                 $toString: "$poll.checkId",
               },
               text: "$poll.text",
-              imageUrl: "$poll.imageURl",
+              imageUrl: "$poll.imageUrl",
               caption: "$poll.caption",
               longformResponse: "$poll.longformResponse",
               crowdSourcedCategory: "$poll.crowdSourcedCategory",

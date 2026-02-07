@@ -171,7 +171,7 @@ export type Poll = BaseDocument & {
   /** Text of the poll, if any */
   text?: string | null;
   /** URL of the image in the poll, if any  */
-  imageURL?: string | null;
+  imageUrl?: string | null;
   /** Caption of the poll, if any  */
   caption?: string | null;
   /** Format of the AI generated responses passed from CheckMate AI platform */
@@ -195,7 +195,7 @@ export type PollRequest = BaseDocument & {
   /** Text of the poll, if any */
   text?: string | null;
   /** URL of the image in the poll, if any  */
-  imageURL?: string | null;
+  imageUrl?: string | null;
   /** Caption of the poll, if any  */
   caption?: string | null;
   /** Format of the AI generated responses passed from CheckMate AI platform */
@@ -237,7 +237,7 @@ export type VotesMessageBrief = Vote & {
   /** Text of the poll, if any */
   text?: string | null;
   /** URL of the image in the poll, if any  */
-  imageURL?: string | null;
+  imageUrl?: string | null;
   /** crowed source message category */
   crowdSourcedCategory?: Category;
 };
