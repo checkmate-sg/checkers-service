@@ -63,6 +63,9 @@ export default function VotingSystem(props: VotingSystemProps) {
 
   const handleVoteCategorySelection = (value: Category) => {
     setVoteCategory(value);
+    if (value !== "info") {
+      setTruthScore(null);
+    }
   };
 
   const handleTruthScoreChange = (value: number | null) => {

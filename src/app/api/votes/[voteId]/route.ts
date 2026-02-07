@@ -55,10 +55,14 @@ export async function POST(req: NextRequest, { params }) {
 
     const filter: Filter<Vote> = { _id: voteId };
 
+    // Only persist truthScore when category is "info"; clear it for other categories
+    const effectiveTruthScore =
+      category === undefined ? truthScore : category === "info" ? truthScore : null;
+
     const update: UpdateFilter<Vote> = {
       $set: {
         ...(category !== undefined && { category }),
-        ...(truthScore !== undefined && { truthScore }),
+        ...(effectiveTruthScore !== undefined && { truthScore: effectiveTruthScore }),
         ...(responseCategory !== undefined && { responseCategory }),
         ...(commentOnResponse !== undefined && { commentOnResponse }),
         ...otherFields,
