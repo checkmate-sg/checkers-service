@@ -32,6 +32,10 @@
       "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
       "service": "whatsapp-checker-event-handler",
     },
+    {
+      "binding": "PRESIGNED_URL_SERVICE",
+      "service": "presigned-url-generator",
+    },
   ],
   "kv_namespaces": [
     {
@@ -110,6 +114,10 @@
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler-staging",
         },
+        {
+          "binding": "PRESIGNED_URL_SERVICE",
+          "service": "presigned-url-generator-staging",
+        },
       ],
       "kv_namespaces": [
         {
@@ -181,6 +189,10 @@
         {
           "binding": "WHATSAPP_CHECKER_HANDLER_SERVICE",
           "service": "whatsapp-checker-event-handler",
+        },
+        {
+          "binding": "PRESIGNED_URL_SERVICE",
+          "service": "presigned-url-generator",
         },
       ],
       "kv_namespaces": [

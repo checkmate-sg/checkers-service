@@ -42,7 +42,7 @@ export const VoteContent = ({ voteId }: VoteContentProps) => {
   return (
     <>
       <div className="grid grid-flow-row items-center gap-2 p-3 w-full max-w-full overflow-hidden">
-        <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageURL} />
+        <MessageCard text={poll.text} caption={poll.caption} imageUrl={poll.imageUrl} />
 
         {showNoteAfterVote && poll.shortformResponse.links && (
           <ReferenceLinksCard links={poll.shortformResponse.links} />

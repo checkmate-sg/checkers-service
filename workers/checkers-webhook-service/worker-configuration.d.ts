@@ -44,4 +44,8 @@ interface Env {
   WHATSAPP_CHECKER_HANDLER_SERVICE: WhatsAppCheckerHandlerService;
   API_KEY: string;
   CHECKERS_EVENTS_QUEUE: Queue<unknown>;
+  PRESIGNED_URL_SERVICE: {
+    generate(objectKey: string): Promise<string>;
+    getPresignedUrl(url: string): Promise<string>;
+  };
 }

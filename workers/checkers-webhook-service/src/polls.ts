@@ -45,11 +45,18 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
       );
     }
 
+    // Download image to R2 and store the object key (staging/prod only)
+    let storedImageURL = imageUrl || null;
+    if (imageUrl && env.ENVIRONMENT !== "local") {
+      const presignedUrl = await env.PRESIGNED_URL_SERVICE.getPresignedUrl(imageUrl);
+      storedImageURL = new URL(presignedUrl).pathname.slice(1);
+    }
+
     // Create new poll
     const newPoll: Omit<PollAPI, "_id"> = {
       checkId: checkId,
       text: text || null,
-      imageURL: imageUrl || null,
+      imageUrl: storedImageURL,
       caption: caption || null,
       longformResponse: longformResponse
         ? {
