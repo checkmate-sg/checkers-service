@@ -711,7 +711,7 @@ components:
               nullable: true
               description: >-
                 Text of the poll, if any
-            imageURL: 
+            imageUrl: 
               type: string
               nullable: true
               description: >-
@@ -752,7 +752,7 @@ components:
               nullable: true
               description: >-
                 Text of the poll, if any
-            imageURL: 
+            imageUrl: 
               type: string
               nullable: true
               description: >-
@@ -829,7 +829,7 @@ components:
               nullable: true
               description: >-
                 Text of the poll, if any
-            imageURL: 
+            imageUrl: 
               type: string
               nullable: true
               description: >-

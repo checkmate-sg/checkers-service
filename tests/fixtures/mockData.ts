@@ -33,7 +33,7 @@ export const mockPoll = {
   _id: "poll-001",
   checkId: "check-001",
   text: "Is this claim true: the government is giving free money?",
-  imageURL: null,
+  imageUrl: null,
   caption: null,
   longformResponse: {
     en: null,

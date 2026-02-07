@@ -114,7 +114,7 @@ export interface PollAPI {
   _id?: string;
   checkId: string;
   text: string | null;
-  imageURL: string | null;
+  imageUrl: string | null;
   caption: string | null;
   longformResponse: Response;
   shortformResponse: ShortformResponse;
