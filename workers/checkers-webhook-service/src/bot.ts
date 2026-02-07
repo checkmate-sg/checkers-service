@@ -289,7 +289,7 @@ export function createBot(token: string, env: Env): Bot {
     await sendOTPPrompt(ctx, env, telegramId, user.whatsappId, user._id!);
   });
 
-  bot.callbackQuery("reactivate", async ctx => {
+  bot.callbackQuery(/^reactivate$/i, async ctx => {
     await safeAnswerCallbackQuery(ctx);
     const telegramId = ctx.from!.id.toString();
 
