@@ -1,7 +1,3 @@
-// Static assets
-export const NLB_SURE_IMAGE =
-  "https://storage.googleapis.com/checkmate-static-assets/SURE%20Learning%20Community%20Logo%202024.png";
-
 // Resources message
 export const RESOURCES_MESSAGE = `Here are some resources you might find useful:
 1) <a href="https://checkmate.sg">Our official CheckMate website</a>
@@ -14,7 +10,7 @@ export const RESOURCES_MESSAGE = `Here are some resources you might find useful:
 
 // Progress bar helper
 export function progressBar(currentStep: number): string {
-  const totalSteps = 6;
+  const totalSteps = 5;
   let progress = "Onboarding Progress: ";
   for (let i = 0; i < totalSteps; i++) {
     progress += i < currentStep ? "🟩" : "⬜";

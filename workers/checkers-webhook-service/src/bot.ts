@@ -4,7 +4,6 @@ import { getParameters } from "@/shared/helpers/parameters";
 
 import {
   createNewChecker,
-  NLB_SURE_IMAGE,
   normalizePhoneNumber,
   progressBar,
   RESOURCES_MESSAGE,
@@ -226,8 +225,8 @@ export function createBot(token: string, env: Env): Bot {
       const member = await adminBot.api.getChatMember(env.CHECKERS_CHAT_ID, userId);
 
       if (member.status !== "left" && member.status !== "kicked") {
-        // User is in the group
-        await sendNLBPrompt(ctx, env, telegramId);
+        // User is in the group - complete onboarding
+        await sendCompletionPrompt(ctx, env, telegramId);
       } else {
         // User hasn't joined the group yet
         await sendTGGroupPrompt(ctx, env, telegramId, false);
@@ -237,13 +236,6 @@ export function createBot(token: string, env: Env): Bot {
       // On error, show the prompt again (user likely not in group)
       await sendTGGroupPrompt(ctx, env, telegramId, false);
     }
-  });
-
-  bot.callbackQuery("COMPLETED", async ctx => {
-    await safeAnswerCallbackQuery(ctx);
-    const telegramId = ctx.from!.id.toString();
-
-    await sendCompletionPrompt(ctx, env, telegramId);
   });
 
   bot.callbackQuery("ONBOARD_AGAIN", async ctx => {
@@ -409,9 +401,6 @@ async function resumeOnboarding(ctx: Context, env: Env, user: CheckerAPI): Promi
       break;
     case "joinGroupChat":
       await sendTGGroupPrompt(ctx, env, telegramId, true);
-      break;
-    case "nlb":
-      await sendNLBPrompt(ctx, env, telegramId);
       break;
     default:
       await sendNamePrompt(ctx);
@@ -708,19 +697,6 @@ async function sendTGGroupPrompt(
       ),
     }
   );
-}
-
-async function sendNLBPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
-  await env.CHECKERS_DB_SERVICE.updateOneChecker(
-    { telegramId },
-    { $set: { onboardingStatus: "nlb", updatedAt: new Date() } }
-  );
-
-  await ctx.replyWithPhoto(NLB_SURE_IMAGE, {
-    caption: `One last thing - CheckMate is partnering with the National Library Board to grow a vibrant learning community aimed at safeguarding the community from scams and misinformation.\n\nIf you'd like to get better at fact-checking, or if you're keen to meet fellow checkers in person, do check out and join the <a href="https://www.nlb.gov.sg/main/site/learnx/explore-communities/explore-communities-content/sure-learning-community">SURE Learning Community</a>. It'll be fun!\n\n${progressBar(6)}`,
-    parse_mode: "HTML",
-    reply_markup: new InlineKeyboard().text("Complete Onboarding", "COMPLETED"),
-  });
 }
 
 async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
