@@ -36,6 +36,8 @@ const CategoryTooltip = ({ category }: CategoryTooltipProps) => {
           type="button"
           className="text-gray-400 hover:text-checkmate-primary cursor-pointer ml-1 inline-flex items-center"
           aria-label={`Help for ${category}`}
+          onClick={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
         >
           <HelpCircle size={14} />
         </button>
