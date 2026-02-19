@@ -65,6 +65,7 @@ export enum Category {
   Legitimate = "legitimate",
   Irrelevant = "irrelevant",
   Unsure = "unsure",
+  Pass = "pass",
 }
 
 /** Category including 'pass' and allowing null */
@@ -77,7 +78,6 @@ export enum CategoryWithPassNullable {
   Legitimate = "legitimate",
   Irrelevant = "irrelevant",
   Unsure = "unsure",
-  Pass = "pass",
 }
 
 /** Onboarding status of the Checker */

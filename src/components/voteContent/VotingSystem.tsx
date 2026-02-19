@@ -118,7 +118,7 @@ export default function VotingSystem(props: VotingSystemProps) {
               hasCommunityNote={hasCommunityNote}
             />
 
-            {isStep1Completed() && !hasCommunityNote ? (
+            {isStep1Completed() && (!hasCommunityNote || voteCategory === "pass") ? (
               <DoneButton
                 voteRequestId={props.voteRequestId}
                 voteCategory={voteCategory}
@@ -128,14 +128,17 @@ export default function VotingSystem(props: VotingSystemProps) {
           </AccordionContent>
         </AccordionItem>
 
-        {props.showNoteAfterVote && isStep1Completed() && hasCommunityNote ? (
+        {props.showNoteAfterVote &&
+        isStep1Completed() &&
+        hasCommunityNote &&
+        voteCategory !== "pass" ? (
           <CommunityNoteCard
             responseEN={props.shortformResponse.en}
             responseCN={props.shortformResponse.cn}
             responseLinks={props.shortformResponse.links}
           />
         ) : null}
-        {hasCommunityNote ? (
+        {hasCommunityNote && voteCategory !== "pass" ? (
           <AccordionItem
             id="step-2"
             value="2"
