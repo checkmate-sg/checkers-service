@@ -45,21 +45,15 @@ export default function VoteChart(Props: VoteChartProps) {
     return null;
   }
 
-  const infoObj =
-    "total" in assessedInfo.info
-      ? {
-          name: "Info",
-          count: assessedInfo.info.total,
-        }
-      : {
-          name: "Info",
-          0: assessedInfo.info["0"],
-          1: assessedInfo.info["1"],
-          2: assessedInfo.info["2"],
-          3: assessedInfo.info["3"],
-          4: assessedInfo.info["4"],
-          5: assessedInfo.info["5"],
-        };
+  const infoObj = {
+    name: "Info",
+    0: assessedInfo.info["0"],
+    1: assessedInfo.info["1"],
+    2: assessedInfo.info["2"],
+    3: assessedInfo.info["3"],
+    4: assessedInfo.info["4"],
+    5: assessedInfo.info["5"],
+  };
 
   const irrelevantCount = assessedInfo.irrelevant;
 

@@ -18,8 +18,8 @@ interface VoteResultsDisplayProps {
 
 export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
   const { data: pollStats, isLoading, error } = useGetPollResultsById(Props.pollId);
+  console.log(pollStats);
 
-  // TODO: Create a loading component for all the pages
   if (isLoading) {
     return (
       <div className="p-4 max-w-md mx-auto flex items-center justify-center min-h-[200px]">
