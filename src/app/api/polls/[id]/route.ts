@@ -27,6 +27,8 @@ export async function GET(req: NextRequest, { params }) {
       poll.imageUrl = await env.PRESIGNED_URL_SERVICE!.generate(poll.imageUrl);
     }
 
+    console.log(`[polls/${id}] imageUrl:`, poll.imageUrl);
+
     return NextResponse.json(poll, { status: 200 });
   } catch (error) {
     return Err.internal();
