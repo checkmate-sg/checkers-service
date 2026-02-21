@@ -15,5 +15,6 @@ export function useGetCheckersById(checkerId: string) {
       const resp = await checkersAPI.checkersDetail(checkerId);
       return resp?.data;
     },
+    enabled: !!checkerId,
   });
 }

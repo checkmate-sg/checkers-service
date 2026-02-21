@@ -2,7 +2,7 @@
 
 import { Info } from "lucide-react";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface TooltipProps {
   header: string;
@@ -11,25 +11,31 @@ interface TooltipProps {
 
 export default function TooltipWithHelperIcon({ header, text }: TooltipProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <span
           role="button"
           tabIndex={0}
           aria-label={`${header} help`}
           className="inline-flex items-center rounded-md p-1 text-blue-gray-500 cursor-pointer"
           onClick={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
         >
           <Info />
         </span>
-      </TooltipTrigger>
+      </PopoverTrigger>
 
-      <TooltipContent side="top" align="center" className="p-3">
+      <PopoverContent
+        side="top"
+        align="center"
+        collisionPadding={16}
+        className="max-w-[calc(100vw-32px)] w-64 p-3"
+      >
         <div>
           <h3 className="text-sm font-medium leading-snug text-black">{header}</h3>
           <p className="mt-1 text-sm font-normal text-black/80">{text}</p>
         </div>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
