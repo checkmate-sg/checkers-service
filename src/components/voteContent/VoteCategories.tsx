@@ -104,6 +104,9 @@ export default function VoteCategories(props: VotingCategoriesProps) {
         props.onVoteCategorySelection(value);
         // Don't move to next step yet - wait for truth score selection
         break;
+      case "pass":
+        props.onVoteCategorySelection(value);
+        break;
       default:
         props.onVoteCategorySelection(value);
         if (props.hasCommunityNote === true) {
