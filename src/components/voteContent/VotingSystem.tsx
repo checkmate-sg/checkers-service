@@ -3,7 +3,10 @@ import { useState } from "react";
 import { Category, Response, ResponseCategory } from "@/lib/request/external/lib/data-contracts";
 import { AccordionContent } from "@radix-ui/react-accordion";
 
+import { CheckCircleIcon } from "lucide-react";
+
 import { Accordion, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { Button } from "../ui/button";
 import CommunityNoteCard from "./CommunityNoteCard";
 import CommunityNoteCategories from "./CommunityNoteCategories";
 import DoneButton from "./DoneButton";
@@ -27,6 +30,7 @@ interface IconProps {
 export default function VotingSystem(props: VotingSystemProps) {
   // local state mirrors the original behaviour
   const [openItems, setOpenItems] = useState<string[]>(["1"]);
+  const [isStep1Locked, setIsStep1Locked] = useState(false);
   const [voteCategory, setVoteCategory] = useState<Category | null>(props.category);
   const [truthScore, setTruthScore] = useState<number | null>(props.truthScore);
   const [crowdSourcedCategory, setCrowdSourcedCategory] = useState<ResponseCategory | null>(
@@ -111,7 +115,7 @@ export default function VotingSystem(props: VotingSystemProps) {
             <VoteCategories
               category={voteCategory}
               truthScore={truthScore}
-              disabled={props.showNoteAfterVote}
+              disabled={isStep1Locked}
               onNextStep={onNextStep}
               onVoteCategorySelection={handleVoteCategorySelection}
               onTruthScoreChange={handleTruthScoreChange}
@@ -125,11 +129,30 @@ export default function VotingSystem(props: VotingSystemProps) {
                 truthScore={truthScore}
               />
             ) : null}
+
+            {props.showNoteAfterVote &&
+            isStep1Completed() &&
+            hasCommunityNote &&
+            voteCategory !== Category.Pass &&
+            !isStep1Locked ? (
+              <Button
+                variant="doneButton"
+                className="my-5 flex items-center justify-center gap-3 w-full"
+                size="sm"
+                onClick={() => {
+                  setIsStep1Locked(true);
+                  onNextStep(2);
+                }}
+              >
+                <CheckCircleIcon className="h-5 w-5" />
+                Done!
+              </Button>
+            ) : null}
           </AccordionContent>
         </AccordionItem>
 
         {props.showNoteAfterVote &&
-        isStep1Completed() &&
+        isStep1Locked &&
         hasCommunityNote &&
         voteCategory !== Category.Pass ? (
           <CommunityNoteCard
@@ -138,7 +161,9 @@ export default function VotingSystem(props: VotingSystemProps) {
             responseLinks={props.shortformResponse.links}
           />
         ) : null}
-        {hasCommunityNote && voteCategory !== Category.Pass ? (
+        {hasCommunityNote &&
+        voteCategory !== Category.Pass &&
+        (!props.showNoteAfterVote || isStep1Locked) ? (
           <AccordionItem
             id="step-2"
             value="2"
