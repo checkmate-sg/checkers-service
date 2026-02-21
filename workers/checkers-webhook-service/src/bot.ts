@@ -36,7 +36,10 @@ export function createBot(token: string, env: Env): Bot {
 
     if (!existingUser) {
       await ctx.reply(
-        `Welcome to your personal CheckMate Checker's bot! This is where you'll review messages, view your statistics etc. Type /onboard to begin your journey as a CheckMate Checker.`
+        `Welcome to your personal CheckMate Checker's bot! 🎉\nThis is where you'll review messages, view your statistics etc.`,
+        {
+          reply_markup: new InlineKeyboard().text("Let's go!", "START_ONBOARD"),
+        }
       );
     } else if (existingUser.isOnboardingComplete) {
       await ctx.reply(
@@ -251,6 +254,37 @@ export function createBot(token: string, env: Env): Bot {
         },
       }
     );
+
+    await sendNamePrompt(ctx);
+  });
+
+  bot.callbackQuery("START_ONBOARD", async ctx => {
+    await safeAnswerCallbackQuery(ctx);
+    const telegramId = ctx.from!.id.toString();
+
+    const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+    const existingUser = result.success ? result.data : null;
+
+    if (existingUser) {
+      if (existingUser.isOnboardingComplete) {
+        await ctx.reply(
+          `Hi there! You have already onboarded as a CheckMate Checker. Do explore the Checker's Portal to check out what you can do. Otherwise if you would like to go through onboarding again, click on the respective button below.`,
+          {
+            reply_markup: new InlineKeyboard()
+              .webApp("Checker's Portal", `${env.HOST_URL}/`)
+              .text("Go through onboarding again", "ONBOARD_AGAIN"),
+          }
+        );
+        return;
+      }
+      // Resume from current step
+      await resumeOnboarding(ctx, env, existingUser);
+      return;
+    }
+
+    // Create new user and start onboarding
+    const newChecker = createNewChecker(telegramId);
+    await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     await sendNamePrompt(ctx);
   });
