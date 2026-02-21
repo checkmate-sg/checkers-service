@@ -116,7 +116,7 @@ export default function VotingSystem(props: VotingSystemProps) {
               category={voteCategory}
               truthScore={truthScore}
               disabled={isStep1Locked}
-              onNextStep={onNextStep}
+              onNextStep={props.showNoteAfterVote && !isStep1Locked ? () => {} : onNextStep}
               onVoteCategorySelection={handleVoteCategorySelection}
               onTruthScoreChange={handleTruthScoreChange}
               hasCommunityNote={hasCommunityNote}
