@@ -18,7 +18,6 @@ interface VoteResultsDisplayProps {
 
 export default function VoteResultsDisplay(Props: VoteResultsDisplayProps) {
   const { data: pollStats, isLoading, error } = useGetPollResultsById(Props.pollId);
-  console.log(pollStats);
 
   if (isLoading) {
     return (

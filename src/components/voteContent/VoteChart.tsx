@@ -45,15 +45,30 @@ export default function VoteChart(Props: VoteChartProps) {
     return null;
   }
 
-  const infoObj = {
-    name: "Info",
-    0: assessedInfo.info["0"],
-    1: assessedInfo.info["1"],
-    2: assessedInfo.info["2"],
-    3: assessedInfo.info["3"],
-    4: assessedInfo.info["4"],
-    5: assessedInfo.info["5"],
-  };
+  const infoData = assessedInfo.info;
+  const hasBreakdown =
+    infoData &&
+    (infoData["0"] != null ||
+      infoData["1"] != null ||
+      infoData["2"] != null ||
+      infoData["3"] != null ||
+      infoData["4"] != null ||
+      infoData["5"] != null);
+
+  const infoObj = hasBreakdown
+    ? {
+        name: "Info",
+        0: infoData["0"],
+        1: infoData["1"],
+        2: infoData["2"],
+        3: infoData["3"],
+        4: infoData["4"],
+        5: infoData["5"],
+      }
+    : {
+        name: "Info",
+        count: infoData?.total,
+      };
 
   const irrelevantCount = assessedInfo.irrelevant;
 

@@ -78,6 +78,7 @@ export enum CategoryWithPassNullable {
   Legitimate = "legitimate",
   Irrelevant = "irrelevant",
   Unsure = "unsure",
+  Pass = "pass",
 }
 
 /** Onboarding status of the Checker */
