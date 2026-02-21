@@ -709,34 +709,41 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
     const checker = checkerResult.data;
     const now = new Date();
 
-    // Get programme targets from KV
-    const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
-      await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
-        "PROGRAMME_TARGET_VOTES",
-        "PROGRAMME_TARGET_ACCURACY",
-        "PROGRAMME_TARGET_REPORTS",
-      ]);
+    const shouldCreateProgramme = !checker.currentProgrammeId && !checker.hasCompletedProgramme;
 
-    // Create programme for the checker
-    const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
-      checkerId: checker._id!,
-      startDate: now,
-      endDate: null,
-      status: "active",
-      targets: {
-        votes: PROGRAMME_TARGET_VOTES,
-        accuracy: PROGRAMME_TARGET_ACCURACY,
-        reports: PROGRAMME_TARGET_REPORTS,
-      },
-      votesAtStart: checker.numVoted,
-      hasReceivedExtension: false,
-      hasReceivedLowAccuracyWarning: false,
-      certificateUrl: null,
-      completedAt: null,
-    });
+    let newProgrammeId: string | null = checker.currentProgrammeId || null;
 
-    if (!programmeResult.success) {
-      console.error(`Failed to create programme: ${programmeResult.error}`);
+    if (shouldCreateProgramme) {
+      // Get programme targets from KV
+      const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
+        await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+          "PROGRAMME_TARGET_VOTES",
+          "PROGRAMME_TARGET_ACCURACY",
+          "PROGRAMME_TARGET_REPORTS",
+        ]);
+
+      const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
+        checkerId: checker._id!,
+        startDate: now,
+        endDate: null,
+        status: "active",
+        targets: {
+          votes: PROGRAMME_TARGET_VOTES,
+          accuracy: PROGRAMME_TARGET_ACCURACY,
+          reports: PROGRAMME_TARGET_REPORTS,
+        },
+        votesAtStart: checker.numVoted,
+        hasReceivedExtension: false,
+        hasReceivedLowAccuracyWarning: false,
+        certificateUrl: null,
+        completedAt: null,
+      });
+
+      if (!programmeResult.success) {
+        console.error(`Failed to create programme: ${programmeResult.error}`);
+      } else {
+        newProgrammeId = programmeResult.id || null;
+      }
     }
 
     // Update checker with onboarding completion and programme ID
@@ -750,7 +757,7 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
           isActive: true,
           lastActivatedDate: now,
           updatedAt: now,
-          currentProgrammeId: programmeResult.id || null,
+          currentProgrammeId: newProgrammeId,
         },
       }
     );
