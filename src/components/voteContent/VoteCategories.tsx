@@ -137,8 +137,16 @@ export default function VoteCategories(props: VotingCategoriesProps) {
       {CATEGORIES.map((cat, index) => (
         <div key={index} className="w-full">
           <Button
-            variant={selectedCategory === cat.name ? "voteCategories" : "default"}
-            className="flex flex-row items-center justify-start gap-2 space-x-3 text-sm w-full"
+            variant={
+              !props.disabled && selectedCategory === cat.name ? "voteCategories" : "default"
+            }
+            className={`flex flex-row items-center justify-start gap-2 space-x-3 text-sm w-full ${
+              props.disabled
+                ? selectedCategory === cat.name
+                  ? "bg-gray-500 text-white hover:bg-gray-500 pointer-events-none"
+                  : "opacity-40 pointer-events-none"
+                : ""
+            }`}
             key={index}
             onClick={() => handleSelection(cat.name)}
           >
@@ -148,14 +156,14 @@ export default function VoteCategories(props: VotingCategoriesProps) {
           </Button>
 
           {/* Conditionally render InfoOptions right after the "info" button if it has been selected */}
-          {selectedCategory === "info" && cat.name === "info" && (
+          {!props.disabled && selectedCategory === "info" && cat.name === "info" && (
             <InfoOptions
               selectedTruthScore={truthScore}
               numberPointScale={6}
               handleTruthScoreChange={handleTruthScoreChange}
             />
           )}
-          {selectedCategory === "nvc" && cat.name === "nvc" && (
+          {!props.disabled && selectedCategory === "nvc" && cat.name === "nvc" && (
             <NvcOptions selectedNVCCategory={NVCCategory} onChange={handleNVCSelection} />
           )}
         </div>
