@@ -1,5 +1,5 @@
 import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CategoryTooltipProps {
   category: string;
@@ -30,20 +30,27 @@ const CategoryTooltip = ({ category }: CategoryTooltipProps) => {
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <HelpCircle
-          size={14}
-          className="text-gray-400 hover:text-checkmate-primary cursor-help ml-1"
-        />
-      </TooltipTrigger>
-      <TooltipContent
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="text-gray-400 hover:text-checkmate-primary cursor-pointer ml-1 inline-flex items-center"
+          aria-label={`Help for ${category}`}
+          onClick={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
+        >
+          <HelpCircle size={14} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
         side="top"
-        className="max-w-48 text-xs bg-white border border-gray-200 shadow-lg z-50"
+        align="start"
+        collisionPadding={16}
+        className="max-w-[calc(100vw-32px)] w-64 text-xs bg-white border border-gray-200 shadow-lg z-50 p-3"
       >
         <p>{getTooltipContent(category)}</p>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 };
 

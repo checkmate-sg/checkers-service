@@ -65,6 +65,7 @@ export enum Category {
   Legitimate = "legitimate",
   Irrelevant = "irrelevant",
   Unsure = "unsure",
+  Pass = "pass",
 }
 
 /** Category including 'pass' and allowing null */

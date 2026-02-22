@@ -4,7 +4,6 @@ import { getParameters } from "@/shared/helpers/parameters";
 
 import {
   createNewChecker,
-  NLB_SURE_IMAGE,
   normalizePhoneNumber,
   progressBar,
   RESOURCES_MESSAGE,
@@ -37,7 +36,10 @@ export function createBot(token: string, env: Env): Bot {
 
     if (!existingUser) {
       await ctx.reply(
-        `Welcome to your personal CheckMate Checker's bot! This is where you'll review messages, view your statistics etc. Type /onboard to begin your journey as a CheckMate Checker.`
+        `Welcome to your personal CheckMate Checker's bot! 🎉\nThis is where you'll review messages, view your statistics etc.`,
+        {
+          reply_markup: new InlineKeyboard().text("Let's go!", "START_ONBOARD"),
+        }
       );
     } else if (existingUser.isOnboardingComplete) {
       await ctx.reply(
@@ -226,8 +228,8 @@ export function createBot(token: string, env: Env): Bot {
       const member = await adminBot.api.getChatMember(env.CHECKERS_CHAT_ID, userId);
 
       if (member.status !== "left" && member.status !== "kicked") {
-        // User is in the group
-        await sendNLBPrompt(ctx, env, telegramId);
+        // User is in the group - complete onboarding
+        await sendCompletionPrompt(ctx, env, telegramId);
       } else {
         // User hasn't joined the group yet
         await sendTGGroupPrompt(ctx, env, telegramId, false);
@@ -237,13 +239,6 @@ export function createBot(token: string, env: Env): Bot {
       // On error, show the prompt again (user likely not in group)
       await sendTGGroupPrompt(ctx, env, telegramId, false);
     }
-  });
-
-  bot.callbackQuery("COMPLETED", async ctx => {
-    await safeAnswerCallbackQuery(ctx);
-    const telegramId = ctx.from!.id.toString();
-
-    await sendCompletionPrompt(ctx, env, telegramId);
   });
 
   bot.callbackQuery("ONBOARD_AGAIN", async ctx => {
@@ -259,6 +254,37 @@ export function createBot(token: string, env: Env): Bot {
         },
       }
     );
+
+    await sendNamePrompt(ctx);
+  });
+
+  bot.callbackQuery("START_ONBOARD", async ctx => {
+    await safeAnswerCallbackQuery(ctx);
+    const telegramId = ctx.from!.id.toString();
+
+    const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ telegramId });
+    const existingUser = result.success ? result.data : null;
+
+    if (existingUser) {
+      if (existingUser.isOnboardingComplete) {
+        await ctx.reply(
+          `Hi there! You have already onboarded as a CheckMate Checker. Do explore the Checker's Portal to check out what you can do. Otherwise if you would like to go through onboarding again, click on the respective button below.`,
+          {
+            reply_markup: new InlineKeyboard()
+              .webApp("Checker's Portal", `${env.HOST_URL}/`)
+              .text("Go through onboarding again", "ONBOARD_AGAIN"),
+          }
+        );
+        return;
+      }
+      // Resume from current step
+      await resumeOnboarding(ctx, env, existingUser);
+      return;
+    }
+
+    // Create new user and start onboarding
+    const newChecker = createNewChecker(telegramId);
+    await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     await sendNamePrompt(ctx);
   });
@@ -409,9 +435,6 @@ async function resumeOnboarding(ctx: Context, env: Env, user: CheckerAPI): Promi
       break;
     case "joinGroupChat":
       await sendTGGroupPrompt(ctx, env, telegramId, true);
-      break;
-    case "nlb":
-      await sendNLBPrompt(ctx, env, telegramId);
       break;
     default:
       await sendNamePrompt(ctx);
@@ -710,19 +733,6 @@ async function sendTGGroupPrompt(
   );
 }
 
-async function sendNLBPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
-  await env.CHECKERS_DB_SERVICE.updateOneChecker(
-    { telegramId },
-    { $set: { onboardingStatus: "nlb", updatedAt: new Date() } }
-  );
-
-  await ctx.replyWithPhoto(NLB_SURE_IMAGE, {
-    caption: `One last thing - CheckMate is partnering with the National Library Board to grow a vibrant learning community aimed at safeguarding the community from scams and misinformation.\n\nIf you'd like to get better at fact-checking, or if you're keen to meet fellow checkers in person, do check out and join the <a href="https://www.nlb.gov.sg/main/site/learnx/explore-communities/explore-communities-content/sure-learning-community">SURE Learning Community</a>. It'll be fun!\n\n${progressBar(6)}`,
-    parse_mode: "HTML",
-    reply_markup: new InlineKeyboard().text("Complete Onboarding", "COMPLETED"),
-  });
-}
-
 async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
   try {
     // Fetch checker to get _id and numVoted
@@ -733,34 +743,41 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
     const checker = checkerResult.data;
     const now = new Date();
 
-    // Get programme targets from KV
-    const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
-      await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
-        "PROGRAMME_TARGET_VOTES",
-        "PROGRAMME_TARGET_ACCURACY",
-        "PROGRAMME_TARGET_REPORTS",
-      ]);
+    const shouldCreateProgramme = !checker.currentProgrammeId && !checker.hasCompletedProgramme;
 
-    // Create programme for the checker
-    const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
-      checkerId: checker._id!,
-      startDate: now,
-      endDate: null,
-      status: "active",
-      targets: {
-        votes: PROGRAMME_TARGET_VOTES,
-        accuracy: PROGRAMME_TARGET_ACCURACY,
-        reports: PROGRAMME_TARGET_REPORTS,
-      },
-      votesAtStart: checker.numVoted,
-      hasReceivedExtension: false,
-      hasReceivedLowAccuracyWarning: false,
-      certificateUrl: null,
-      completedAt: null,
-    });
+    let newProgrammeId: string | null = checker.currentProgrammeId || null;
 
-    if (!programmeResult.success) {
-      console.error(`Failed to create programme: ${programmeResult.error}`);
+    if (shouldCreateProgramme) {
+      // Get programme targets from KV
+      const { PROGRAMME_TARGET_VOTES, PROGRAMME_TARGET_ACCURACY, PROGRAMME_TARGET_REPORTS } =
+        await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+          "PROGRAMME_TARGET_VOTES",
+          "PROGRAMME_TARGET_ACCURACY",
+          "PROGRAMME_TARGET_REPORTS",
+        ]);
+
+      const programmeResult = await env.CHECKERS_DB_SERVICE.insertProgramme({
+        checkerId: checker._id!,
+        startDate: now,
+        endDate: null,
+        status: "active",
+        targets: {
+          votes: PROGRAMME_TARGET_VOTES,
+          accuracy: PROGRAMME_TARGET_ACCURACY,
+          reports: PROGRAMME_TARGET_REPORTS,
+        },
+        votesAtStart: checker.numVoted,
+        hasReceivedExtension: false,
+        hasReceivedLowAccuracyWarning: false,
+        certificateUrl: null,
+        completedAt: null,
+      });
+
+      if (!programmeResult.success) {
+        console.error(`Failed to create programme: ${programmeResult.error}`);
+      } else {
+        newProgrammeId = programmeResult.id || null;
+      }
     }
 
     // Update checker with onboarding completion and programme ID
@@ -774,7 +791,7 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
           isActive: true,
           lastActivatedDate: now,
           updatedAt: now,
-          currentProgrammeId: programmeResult.id || null,
+          currentProgrammeId: newProgrammeId,
         },
       }
     );

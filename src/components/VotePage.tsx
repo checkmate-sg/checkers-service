@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   ArrowLeft,
   ThumbsUp,
@@ -313,313 +312,309 @@ const VotePage = () => {
   }
 
   return (
-    <TooltipProvider>
-      <div className="p-4 max-w-md mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <Button variant="ghost" size="sm" onClick={() => router.back()} className="p-2">
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="text-xl font-bold">Review Message</h1>
-          {/* Status indicator */}
-          <div className="ml-auto">
-            {isVoteCompleted ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                <CheckCircle size={12} className="mr-1" />
-                Completed
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                <Clock size={12} className="mr-1" />
-                Pending
-              </Badge>
-            )}
-          </div>
+    <div className="p-4 max-w-md mx-auto space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="p-2">
+          <ArrowLeft size={20} />
+        </Button>
+        <h1 className="text-xl font-bold">Review Message</h1>
+        {/* Status indicator */}
+        <div className="ml-auto">
+          {isVoteCompleted ? (
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <CheckCircle size={12} className="mr-1" />
+              Completed
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+              <Clock size={12} className="mr-1" />
+              Pending
+            </Badge>
+          )}
         </div>
+      </div>
 
-        {/* Message Content */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Suspicious Message</CardTitle>
-            <p className="text-xs text-gray-500">Received: {messageData.timestamp || "Unknown"}</p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm">{messageData.content}</p>
+      {/* Message Content */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Suspicious Message</CardTitle>
+          <p className="text-xs text-gray-500">Received: {messageData.timestamp || "Unknown"}</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-sm">{messageData.content}</p>
+          </div>
+
+          {/* Screenshot preview */}
+          {messageData.screenshot && (
+            <div>
+              <p className="text-sm font-medium mb-2">Screenshot Preview:</p>
+              <img
+                src={messageData.screenshot}
+                alt="Message screenshot"
+                className="w-full h-32 object-cover rounded-lg border"
+              />
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Screenshot preview */}
-            {messageData.screenshot && (
+      {/* AI Community Note */}
+      {messageData.aiNote && (
+        <Card className="border-checkmate-info">
+          <CardHeader className="pb-3 bg-checkmate-info rounded-t-lg">
+            <CardTitle className="text-base">AI Community Note</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-3">
+            <p className="text-sm mb-3">{messageData.aiNote.summary}</p>
+            {messageData.aiNote.references && messageData.aiNote.references.length > 0 && (
               <div>
-                <p className="text-sm font-medium mb-2">Screenshot Preview:</p>
-                <img
-                  src={messageData.screenshot}
-                  alt="Message screenshot"
-                  className="w-full h-32 object-cover rounded-lg border"
-                />
+                <p className="text-xs font-medium mb-1">References:</p>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  {messageData.aiNote.references.map((ref, index) => (
+                    <li key={index}>• {ref}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </CardContent>
         </Card>
+      )}
 
-        {/* AI Community Note */}
-        {messageData.aiNote && (
-          <Card className="border-checkmate-info">
-            <CardHeader className="pb-3 bg-checkmate-info rounded-t-lg">
-              <CardTitle className="text-base">AI Community Note</CardTitle>
+      {/* Show final result if vote is completed */}
+      {isVoteCompleted && messageData.finalResult && (
+        <Card className="border-blue-200">
+          <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
+            <CardTitle className="text-base text-blue-800">Final Result</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-3">
+            <p className="text-sm font-medium text-blue-800">{messageData.finalResult}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Only show voting form if vote is not completed */}
+      {!isVoteCompleted && (
+        <>
+          {/* Category Selection - Fixed Layout */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
+                Message Category *
+                {hasUserVoted && (
+                  <span className="text-sm font-normal text-gray-600 ml-2">
+                    (Update your selection)
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-3">
-              <p className="text-sm mb-3">{messageData.aiNote.summary}</p>
-              {messageData.aiNote.references && messageData.aiNote.references.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium mb-1">References:</p>
-                  <ul className="text-xs text-gray-600 space-y-1">
-                    {messageData.aiNote.references.map((ref, index) => (
-                      <li key={index}>• {ref}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Show final result if vote is completed */}
-        {isVoteCompleted && messageData.finalResult && (
-          <Card className="border-blue-200">
-            <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
-              <CardTitle className="text-base text-blue-800">Final Result</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-3">
-              <p className="text-sm font-medium text-blue-800">{messageData.finalResult}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Only show voting form if vote is not completed */}
-        {!isVoteCompleted && (
-          <>
-            {/* Category Selection - Fixed Layout */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Message Category *
-                  {hasUserVoted && (
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      (Update your selection)
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup value={selectedCategory} onValueChange={handleCategoryChange}>
-                  <div className="space-y-3">
-                    {categories.map(category => (
-                      <div key={category} className="flex items-center space-x-2">
-                        <RadioGroupItem value={category} id={category} />
-                        <Label htmlFor={category} className="text-sm flex items-center flex-1">
-                          {category}
-                          <CategoryTooltip category={category} />
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
-
-            {/* Veracity Assessment for News/Info/Opinion */}
-            {selectedCategory === "News/Info/Opinion" && (
-              <Card className="border-blue-200">
-                <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
-                  <CardTitle className="text-base">Veracity Assessment *</CardTitle>
-                  <p className="text-xs text-gray-600">
-                    Please assess the veracity of the claim(s) in the message on a scale from 0
-                    (entirely false) to 5 (entirely true).
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={veracityScore} onValueChange={setVeracityScore}>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[0, 1, 2, 3, 4, 5].map(score => (
-                        <div key={score} className="flex items-center space-x-2">
-                          <RadioGroupItem value={score.toString()} id={`veracity-${score}`} />
-                          <Label htmlFor={`veracity-${score}`} className="text-sm">
-                            {score}{" "}
-                          </Label>
-                        </div>
-                      ))}
+            <CardContent>
+              <RadioGroup value={selectedCategory} onValueChange={handleCategoryChange}>
+                <div className="space-y-3">
+                  {categories.map(category => (
+                    <div key={category} className="flex items-center space-x-2">
+                      <RadioGroupItem value={category} id={category} />
+                      <Label htmlFor={category} className="text-sm flex items-center flex-1">
+                        {category}
+                        <CategoryTooltip category={category} />
+                      </Label>
                     </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Source Credibility for No Verifiable Content */}
-            {selectedCategory === "No Verifiable Content" && (
-              <Card className="border-orange-200">
-                <CardHeader className="pb-3 bg-orange-50 rounded-t-lg">
-                  <CardTitle className="text-base">Source Credibility *</CardTitle>
-                  <p className="text-xs text-gray-600">
-                    Is this source a credible/reputable entity?
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={sourceCredibility} onValueChange={setSourceCredibility}>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="Yes" id="credible-yes" />
-                        <Label htmlFor="credible-yes" className="text-sm">
-                          Yes
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="Cannot tell" id="credible-cannot-tell" />
-                        <Label htmlFor="credible-cannot-tell" className="text-sm">
-                          Cannot tell
-                        </Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tags */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Tags (Optional)</CardTitle>
-                <p className="text-xs text-gray-500">
-                  Select relevant tags to categorize this message
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map(tag => (
-                    <Badge
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      className={`cursor-pointer ${
-                        selectedTags.includes(tag)
-                          ? "bg-checkmate-primary text-white"
-                          : "hover:bg-checkmate-primary hover:text-white"
-                      }`}
-                      onClick={() => handleTagToggle(tag)}
-                    >
-                      {tag}
-                    </Badge>
                   ))}
                 </div>
-                {selectedTags.length > 0 && (
-                  <div className="mt-3 text-xs text-gray-600">
-                    Selected: {selectedTags.join(", ")}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              </RadioGroup>
+            </CardContent>
+          </Card>
 
-            {/* AI Note Rating */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Rate AI Note *</CardTitle>
-                <p className="text-xs text-gray-500">How helpful was the AI community note?</p>
+          {/* Veracity Assessment for News/Info/Opinion */}
+          {selectedCategory === "News/Info/Opinion" && (
+            <Card className="border-blue-200">
+              <CardHeader className="pb-3 bg-blue-50 rounded-t-lg">
+                <CardTitle className="text-base">Veracity Assessment *</CardTitle>
+                <p className="text-xs text-gray-600">
+                  Please assess the veracity of the claim(s) in the message on a scale from 0
+                  (entirely false) to 5 (entirely true).
+                </p>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={aiRating} onValueChange={setAiRating}>
+                <RadioGroup value={veracityScore} onValueChange={setVeracityScore}>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[0, 1, 2, 3, 4, 5].map(score => (
+                      <div key={score} className="flex items-center space-x-2">
+                        <RadioGroupItem value={score.toString()} id={`veracity-${score}`} />
+                        <Label htmlFor={`veracity-${score}`} className="text-sm">
+                          {score}{" "}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Source Credibility for No Verifiable Content */}
+          {selectedCategory === "No Verifiable Content" && (
+            <Card className="border-orange-200">
+              <CardHeader className="pb-3 bg-orange-50 rounded-t-lg">
+                <CardTitle className="text-base">Source Credibility *</CardTitle>
+                <p className="text-xs text-gray-600">Is this source a credible/reputable entity?</p>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={sourceCredibility} onValueChange={setSourceCredibility}>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="great" id="great" />
-                      <Label htmlFor="great" className="flex items-center gap-2">
-                        <ThumbsUp size={16} className="text-green-600" />
-                        Great
+                      <RadioGroupItem value="Yes" id="credible-yes" />
+                      <Label htmlFor="credible-yes" className="text-sm">
+                        Yes
                       </Label>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="acceptable" id="acceptable" />
-                      <Label htmlFor="acceptable" className="flex items-center gap-2">
-                        <Meh size={16} className="text-yellow-600" />
-                        Acceptable
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="unacceptable" id="unacceptable" />
-                      <Label htmlFor="unacceptable" className="flex items-center gap-2">
-                        <ThumbsDown size={16} className="text-red-600" />
-                        Unacceptable
+                      <RadioGroupItem value="Cannot tell" id="credible-cannot-tell" />
+                      <Label htmlFor="credible-cannot-tell" className="text-sm">
+                        Cannot tell
                       </Label>
                     </div>
                   </div>
                 </RadioGroup>
               </CardContent>
             </Card>
+          )}
 
-            {/* Optional Comment */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Additional Comment (Optional)</CardTitle>
-                <p className="text-xs text-gray-500">
-                  Share your reasoning or additional observations
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add any additional context or observations..."
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  className="min-h-[80px]"
-                  maxLength={500}
-                />
-                <div className="text-xs text-gray-500 mt-1">{comment.length}/500 characters</div>
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              className="w-full bg-checkmate-primary hover:bg-checkmate-primary/90 text-white py-3 text-base font-medium rounded-lg"
-            >
-              {hasUserVoted ? "Update Vote" : "Submit Vote"}
-            </Button>
-          </>
-        )}
-
-        {/* Show read-only message if vote is completed */}
-        {isVoteCompleted && (
-          <Card className="border-gray-200">
-            <CardContent className="p-6 text-center">
-              <CheckCircle size={48} className="mx-auto text-green-600 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Voting Completed</h3>
-              <p className="text-gray-600 mb-4">
-                This message has been reviewed and the voting period has ended.
+          {/* Tags */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Tags (Optional)</CardTitle>
+              <p className="text-xs text-gray-500">
+                Select relevant tags to categorize this message
               </p>
-              {hasUserVoted && (
-                <div className="text-sm text-gray-500 space-y-1">
-                  <p>
-                    Your vote: <span className="font-medium">{selectedCategory}</span>
-                  </p>
-                  {selectedCategory === "News/Info/Opinion" && veracityScore && (
-                    <p>
-                      Veracity Score: <span className="font-medium">{veracityScore}/5</span>
-                    </p>
-                  )}
-                  {selectedCategory === "No Verifiable Content" && sourceCredibility && (
-                    <p>
-                      Source Credibility: <span className="font-medium">{sourceCredibility}</span>
-                    </p>
-                  )}
-                  {userPreviousVote?.aiRating && (
-                    <p>
-                      AI Rating:{" "}
-                      <span className="font-medium capitalize">{userPreviousVote.aiRating}</span>
-                    </p>
-                  )}
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {availableTags.map(tag => (
+                  <Badge
+                    key={tag}
+                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                    className={`cursor-pointer ${
+                      selectedTags.includes(tag)
+                        ? "bg-checkmate-primary text-white"
+                        : "hover:bg-checkmate-primary hover:text-white"
+                    }`}
+                    onClick={() => handleTagToggle(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              {selectedTags.length > 0 && (
+                <div className="mt-3 text-xs text-gray-600">
+                  Selected: {selectedTags.join(", ")}
                 </div>
               )}
             </CardContent>
           </Card>
-        )}
-      </div>
-    </TooltipProvider>
+
+          {/* AI Note Rating */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Rate AI Note *</CardTitle>
+              <p className="text-xs text-gray-500">How helpful was the AI community note?</p>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={aiRating} onValueChange={setAiRating}>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="great" id="great" />
+                    <Label htmlFor="great" className="flex items-center gap-2">
+                      <ThumbsUp size={16} className="text-green-600" />
+                      Great
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="acceptable" id="acceptable" />
+                    <Label htmlFor="acceptable" className="flex items-center gap-2">
+                      <Meh size={16} className="text-yellow-600" />
+                      Acceptable
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="unacceptable" id="unacceptable" />
+                    <Label htmlFor="unacceptable" className="flex items-center gap-2">
+                      <ThumbsDown size={16} className="text-red-600" />
+                      Unacceptable
+                    </Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* Optional Comment */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Additional Comment (Optional)</CardTitle>
+              <p className="text-xs text-gray-500">
+                Share your reasoning or additional observations
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Add any additional context or observations..."
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                className="min-h-[80px]"
+                maxLength={500}
+              />
+              <div className="text-xs text-gray-500 mt-1">{comment.length}/500 characters</div>
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <Button
+            onClick={handleSubmit}
+            className="w-full bg-checkmate-primary hover:bg-checkmate-primary/90 text-white py-3 text-base font-medium rounded-lg"
+          >
+            {hasUserVoted ? "Update Vote" : "Submit Vote"}
+          </Button>
+        </>
+      )}
+
+      {/* Show read-only message if vote is completed */}
+      {isVoteCompleted && (
+        <Card className="border-gray-200">
+          <CardContent className="p-6 text-center">
+            <CheckCircle size={48} className="mx-auto text-green-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Voting Completed</h3>
+            <p className="text-gray-600 mb-4">
+              This message has been reviewed and the voting period has ended.
+            </p>
+            {hasUserVoted && (
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>
+                  Your vote: <span className="font-medium">{selectedCategory}</span>
+                </p>
+                {selectedCategory === "News/Info/Opinion" && veracityScore && (
+                  <p>
+                    Veracity Score: <span className="font-medium">{veracityScore}/5</span>
+                  </p>
+                )}
+                {selectedCategory === "No Verifiable Content" && sourceCredibility && (
+                  <p>
+                    Source Credibility: <span className="font-medium">{sourceCredibility}</span>
+                  </p>
+                )}
+                {userPreviousVote?.aiRating && (
+                  <p>
+                    AI Rating:{" "}
+                    <span className="font-medium capitalize">{userPreviousVote.aiRating}</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

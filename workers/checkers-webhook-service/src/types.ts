@@ -93,7 +93,6 @@ export interface CheckerAPI {
     | "quiz"
     | "onboardWhatsapp"
     | "joinGroupChat"
-    | "nlb"
     | "completed"
     | "offboarded";
   hasReceivedExtension: boolean;

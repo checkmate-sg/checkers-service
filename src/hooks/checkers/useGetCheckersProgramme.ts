@@ -8,5 +8,6 @@ export function useGetCheckersProgrammeById(checkerId: string) {
       const resp = await checkersAPI.programmeDetail(checkerId);
       return resp?.data;
     },
+    enabled: !!checkerId,
   });
 }
