@@ -691,15 +691,13 @@ async function sendWAServicePrompt(
   const waLink = `${env.WHATSAPP_BOT_LINK}?utm_source=checkersonboarding&utm_medium=telegram&utm_campaign=${chatId}`;
 
   await ctx.reply(
-    `${
-      isFirstPrompt
-        ? "Next, let's introduce you to our CheckMate WhatsApp service"
-        : "Please take a moment to learn about our WhatsApp service"
-    }! 📱\n\nOur WhatsApp service is where the public sends in messages they want fact-checked. You can check it out <a href="${waLink}">here</a>.\n\nThis is important because:\n\n1️⃣ This is where users submit messages for you to check\n2️⃣ You'll also use this service to report suspicious messages you encounter\n3️⃣ It helps you understand the user experience\n\nFeel free to explore it, but you don't need to complete any verification. Just familiarize yourself with how it works!`,
+    isFirstPrompt
+      ? `Welcome back! As a volunteer, your main role is to vote on submitted messages. If you come across anything suspicious while doing so, you can also report it via WhatsApp to help us identify harmful content.\n\nAdd our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`
+      : `Please add our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`,
     {
       parse_mode: "HTML",
       reply_markup: new InlineKeyboard().text(
-        "I've explored the WhatsApp service",
+        "I've added the WhatsApp service",
         "WA_SERVICE_COMPLETED"
       ),
     }
