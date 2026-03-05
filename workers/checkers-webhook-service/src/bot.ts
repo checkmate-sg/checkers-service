@@ -36,7 +36,13 @@ export function createBot(token: string, env: Env): Bot {
 
     if (!existingUser) {
       await ctx.reply(
-        `Welcome to your personal CheckMate Checker's bot! 🎉\nThis is where you'll review messages, view your statistics etc.`,
+        `Hello!! 🥳
+
+You're about to become part of a team fighting misinformation.
+
+We'll walk you through a simple onboarding process to help you become a skilled fact-seeker.
+
+By the end, you'll be ready to make your first check and join CheckMate in action.`,
         {
           reply_markup: new InlineKeyboard().text("Let's go!", "START_ONBOARD"),
         }
@@ -717,18 +723,16 @@ async function sendTGGroupPrompt(
     );
   }
 
-  await ctx.reply(
-    `${
-      isFirstPrompt ? "Next, p" : "We noticed you have not joined the groupchat yet. P"
-    }lease join the <a href="${env.CHECKERS_GROUP_LINK}">CheckMate Checker's groupchat</a>. This group chat is important as it will be used to:\n\n1) Inform checkers of any downtime in the system, updates/improvements being deployed to the bots\n\n2) Share relevant links from reputable news sources to aid fact-checking. Do note that beyond this, checkers should not discuss what to vote, as this may make the collective outcome biased.\n\n${progressBar(5)}`,
-    {
-      parse_mode: "HTML",
-      reply_markup: new InlineKeyboard().text(
-        "Yes, I have joined the Telegram Chat Group",
-        "TG_COMPLETED"
-      ),
-    }
-  );
+  const firstPromptMessage = `You're now part of the CheckMate Checker community, a network fighting misinformation together!\n\nJoin our <a href="${env.CHECKERS_GROUP_LINK}">group chat</a> to connect with fellow checkers here.\n\nIn this group chat, you'll get system updates, shared fact-checking resources, and see our collective impact.\n\nImportant: Keep your votes independent, but lean on the community for support and resources.\n\nWelcome to the team 😀!\n\n${progressBar(5)}`;
+  const retryMessage = `We noticed you have not joined the group chat yet. Join our <a href="${env.CHECKERS_GROUP_LINK}">group chat</a> to connect with fellow checkers and be part of our mission to fight misinformation together!\n\n${progressBar(5)}`;
+
+  await ctx.reply(isFirstPrompt ? firstPromptMessage : retryMessage, {
+    parse_mode: "HTML",
+    reply_markup: new InlineKeyboard().text(
+      "Yes, I have joined the Telegram Chat Group",
+      "TG_COMPLETED"
+    ),
+  });
 }
 
 async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
