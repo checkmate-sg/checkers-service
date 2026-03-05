@@ -143,7 +143,7 @@
       "vars": {
         "ENVIRONMENT": "production",
         "HOST_URL": "https://checkers.checkmate.sg",
-        "TYPEFORM_URL": "https://better-sg.typeform.com/to/nH8xme9G",
+        "TYPEFORM_URL": "https://better-sg.typeform.com/to/ySRoY4Ms",
         "WHATSAPP_BOT_LINK": "https://ref.checkmate.sg/add",
       },
       "kv_namespaces": [
