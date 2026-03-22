@@ -698,8 +698,8 @@ async function sendWAServicePrompt(
 
   await ctx.reply(
     isFirstPrompt
-      ? `Welcome back! As a volunteer, your main role is to vote on submitted messages. If you come across anything suspicious while doing so, you can also report it via WhatsApp to help us identify harmful content.\n\nAdd our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`
-      : `Please add our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`,
+      ? `Welcome back! As a volunteer, your main role is to vote on submitted messages. If you come across anything suspicious while doing so, you can also report it via WhatsApp to help us identify harmful content.\n\nAdd our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.\n\nDo note that by using the WhatsApp service, you are agreeing to these <a href="https://checkmate.sg/terms-of-service">terms of use</a>.`
+      : `Please add our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.\n\nDo note that by using the WhatsApp service, you are agreeing to these <a href="https://checkmate.sg/terms-of-service">terms of use</a>.`,
     {
       parse_mode: "HTML",
       reply_markup: new InlineKeyboard().text(

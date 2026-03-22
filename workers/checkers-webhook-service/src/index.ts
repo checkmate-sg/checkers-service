@@ -1,3 +1,4 @@
+import { WorkerEntrypoint } from "cloudflare:workers";
 import { Hono } from "hono";
 import { webhookCallback } from "grammy";
 import { createBot } from "./bot";
@@ -40,4 +41,20 @@ app.post("/polls/webhook", handlePollWebhook);
 // Checker stats endpoint for ops automation (batch)
 app.post("/checker-stats", handleCheckerStatsWebhook);
 
-export default app;
+export default class extends WorkerEntrypoint<Env> {
+  async fetch(request: Request) {
+    return app.fetch(request, this.env, this.ctx);
+  }
+
+  async getOnboardingStatus(whatsappId: string): Promise<string | null> {
+    const result = await this.env.CHECKERS_DB_SERVICE.findOneChecker({
+      whatsappId,
+    });
+
+    if (!result.success || !result.data) {
+      return null;
+    }
+
+    return result.data.onboardingStatus;
+  }
+}
