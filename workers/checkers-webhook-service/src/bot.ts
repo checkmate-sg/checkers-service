@@ -175,7 +175,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
         if (checkResult.exists) {
           await sendTGGroupPrompt(ctx, env, telegramId, true);
         } else {
-          await sendWAServicePrompt(ctx, env, telegramId, false);
+          await sendWAServicePrompt(ctx, env, telegramId, true);
         }
       } else {
         console.log("QUIZ_COMPLETED: Quiz not complete, showing prompt again");
