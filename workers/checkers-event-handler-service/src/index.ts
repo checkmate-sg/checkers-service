@@ -8,6 +8,7 @@ import { handleVoteScoreChange } from "./handlers/queue/onVoteScoreChange";
 import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
+import { runWeeklyWelcomeMessage } from "./handlers/scheduled/welcomeMessage";
 import type {
   AssessmentCompleteData,
   CheckersEvent,
@@ -124,6 +125,11 @@ export default class extends WorkerEntrypoint<Env> {
     // 8:41 PM SGT (12:41 UTC) - Programme checks
     if (cron === "41 12 * * *") {
       await runProgrammeChecks(this.env, bot, adminBot);
+    }
+
+    // 12:00 PM SGT (4:00 UTC) every Tuesday - Weekly welcome message
+    if (cron === "0 4 * * 2") {
+      await runWeeklyWelcomeMessage(this.env, bot);
     }
 
     console.log("Batch job completed");

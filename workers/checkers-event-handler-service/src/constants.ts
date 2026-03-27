@@ -93,4 +93,14 @@ It looks like you've had some challenges with your first ${params.numMessages} m
 We recommend revisiting the resources which you can access by pressing the button below. If you're still unsure about categorization, feel free to ask any questions in the <a href='${params.groupLink}'>Checker's Telegram group</a>. We're here to help you improve and succeed!
 
 Keep going, you've got this 💪`,
+
+  weeklyWelcome: (
+    name: string
+  ) => `👋 Happy Tuesday, ${name}!
+
+Hope you're having a great week. Just dropping by to remind you that there may be new messages waiting for your review on the Checker's Portal.
+
+Your contributions help keep our community safe from scams and misinformation — every vote counts! 💪
+
+Open the portal below to get started.`,
 };

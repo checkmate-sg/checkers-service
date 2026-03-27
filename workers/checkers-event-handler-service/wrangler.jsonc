@@ -15,9 +15,10 @@
    * Cron Triggers
    * Run inactivity checks at 8:11 PM SGT (12:11 UTC)
    * Run programme checks at 8:41 PM SGT (12:41 UTC)
+   * Send weekly welcome message every Tuesday at 12:00 PM SGT (4:00 UTC)
    */
   "triggers": {
-    "crons": ["11 12 * * *", "41 12 * * *"],
+    "crons": ["11 12 * * *", "41 12 * * *", "0 4 * * 2"],
   },
   /**
    * Dev configuration
