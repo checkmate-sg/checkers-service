@@ -179,6 +179,8 @@ export type Poll = BaseDocument & {
   longformResponse?: Response;
   /** Format of the AI generated responses passed from CheckMate AI platform */
   shortformResponse?: Response;
+  /** Whether the submission is a user-filed report rather than a regular check */
+  isReport?: boolean;
   /** crowed source message category */
   crowdSourcedCategory?: Category;
   /** Truth score if the category is info/untrue/misleading/accurate */
@@ -203,6 +205,8 @@ export type PollRequest = BaseDocument & {
   longformResponse?: Response;
   /** Format of the AI generated responses passed from CheckMate AI platform */
   shortformResponse?: Response;
+  /** Whether the submission is a user-filed report rather than a regular check */
+  isReport?: boolean;
 };
 
 /** Representation of individual vote on a message  */
