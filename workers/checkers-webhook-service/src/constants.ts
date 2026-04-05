@@ -40,9 +40,13 @@ export function normalizePhoneNumber(phone: string): string | null {
 }
 
 // New checker template
-export function createNewChecker(telegramId: string): {
+export function createNewChecker(
+  telegramId: string,
+  telegramUsername: string | null
+): {
   name: null;
   telegramId: string;
+  telegramUsername: string | null;
   whatsappId: null;
   singpassId: null;
   isActive: false;
@@ -66,6 +70,7 @@ export function createNewChecker(telegramId: string): {
   return {
     name: null,
     telegramId,
+    telegramUsername: telegramUsername ?? null,
     whatsappId: null,
     singpassId: null,
     isActive: false,

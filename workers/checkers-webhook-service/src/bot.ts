@@ -85,7 +85,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
     }
 
     // Create new user
-    const newChecker = createNewChecker(telegramId);
+    const newChecker = createNewChecker(telegramId, ctx.from?.username ?? null);
     await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     // Start with name prompt
@@ -289,7 +289,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
     }
 
     // Create new user and start onboarding
-    const newChecker = createNewChecker(telegramId);
+    const newChecker = createNewChecker(telegramId, ctx.from?.username ?? null);
     await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     await sendNamePrompt(ctx);

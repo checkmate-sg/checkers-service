@@ -30,6 +30,7 @@ export type LeaderboardAPI = ObjectIdToString<Leaderboard>; // _id is the checke
 export interface Checker extends BaseDocument {
   name: string | null; // The name of the Checker, set by them on onboarding
   telegramId: string; // The Telegram ID of the Checker
+  telegramUsername: string | null; // The Telegram username of the Checker (without @)
   whatsappId: string | null; // The WhatsApp ID of the Checker
   singpassId: null; // The SingPass ID of the Checker (not used yet)
   isActive: boolean; // Whether the Checker is active and will be triggered
