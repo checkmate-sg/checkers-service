@@ -8,6 +8,7 @@ import { handleVoteScoreChange } from "./handlers/queue/onVoteScoreChange";
 import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
+import { runWeeklyWelcomeMessage } from "./handlers/scheduled/welcomeMessage";
 import type {
   AssessmentCompleteData,
   CheckersEvent,
