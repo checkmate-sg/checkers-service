@@ -118,6 +118,7 @@ export interface PollAPI {
   longformResponse: Response;
   shortformResponse: ShortformResponse;
   humanResponse: HumanResponse;
+  isReport: boolean;
   crowdSourcedCategory:
     | "scam"
     | "illicit"
@@ -191,4 +192,5 @@ export interface PollRequest {
   longformResponse: Response | null;
   shortformResponse: ShortformResponse | null;
   humanResponse: HumanResponse | null;
+  isReport?: boolean;
 }
