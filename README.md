@@ -1,6 +1,141 @@
 # CheckMate Checkers Service
 
-A Telegram miniapp for crowd-sourcing fact-checking of messages.
+A Telegram miniapp for crowd-sourcing fact-checking of messages. Trained checkers vote on messages forwarded from the CheckMate platform to determine if they're scams, misinformation, spam, or legitimate.
+
+## Tech Stack
+
+- **Frontend**: NextJS 15 (App Router), React 18, TypeScript, Tailwind CSS, shadcn-ui
+- **Auth**: NextAuthV5 with Telegram credentials
+- **Database**: MongoDB via Cloudflare Worker service
+- **Telegram**: Bot (Grammy) + MiniApp (@twa-dev/sdk)
+- **Deployment**: OpenNextJS/Cloudflare Workers
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/                    # API routes
+│   │   ├── auth/               # NextAuth endpoints
+│   │   ├── polls/[id]          # Poll details + results
+│   │   ├── votes/[voteId]      # Vote fetch/submission
+│   │   ├── checkers/           # Checker profiles
+│   │   └── telegram/webhook    # Bot commands + reactivation callback
+│   ├── dashboard/              # Progress tracking page
+│   ├── leaderboard/            # Rankings page
+│   └── votes/                  # Voting interface
+├── components/                 # React components
+├── hooks/                      # React Query hooks
+├── lib/
+│   ├── auth.config.ts          # NextAuth config
+│   └── helpers/voteAssessment/ # Consensus calculation
+└── contexts/                   # UserContext
+shared/types/schema.ts          # DB schemas (Checker, Poll, Vote)
+workers/
+├── checkers-db-service/        # Cloudflare Worker for MongoDB
+├── checkers-event-handler-service/  # Queue consumer + daily cron jobs for lifecycle
+├── checkers-reminder-alarm-service/ # Durable Object alarms for reminders
+└── checkers-webhook-service/   # Telegram, poll, Typeform & stats webhooks (WorkerEntrypoint with RPC)
+```
+
+## Core Features
+
+### Authentication
+
+- Telegram WebApp `initData` verified via HMAC-SHA256
+- JWT sessions (30-day), secure cookies
+- Protected routes: `/dashboard`, `/leaderboard`, `/votes`
+
+### Voting System
+
+- **Categories**: scam, illicit, info, satire, spam, legitimate, irrelevant, unsure, pass
+- **Truth Score**: 0-5 scale for info-categorized messages
+- **Response Rating**: great, acceptable, unacceptable (for AI responses)
+- **Consensus**: Auto-calculated based on vote thresholds (varies by category)
+- **Report indicator**: Polls created from user-filed reports display a "Report" pill in the voting UI
+
+### Bot Commands
+
+`/start`, `/onboard`, `/stop`, `/activate`, `/deactivate`, `/resources`
+
+The `/start` command presents a "Let's go!" button that begins onboarding inline, without requiring `/onboard`.
+
+### Onboarding Flow (5 steps)
+
+Name → Phone → Quiz → WhatsApp → Group Chat
+
+### Checker Lifecycle Management
+
+Automated via `checkers-event-handler-service` (queue consumer + daily crons) and `checkers-reminder-alarm-service` (Durable Object alarms):
+
+**Inactivity Flow:**
+
+- Day 3: Warning message ("you'll be deactivated in 7 days")
+- Day 10: Deactivation (`isActive=false`) + schedule reminder alarms
+- Day 24: Reminder #1 ("We miss you" + Reactivate button)
+- Day 52: Reminder #2 (final reminder)
+
+**Programme Flow:**
+
+- Day 60: Extension notice (if `hasCompletedProgramme=false`)
+- Day 90: Offboarding (remove from group, `onboardingStatus="offboarded"`)
+
+## Key API Routes
+
+| Route                               | Purpose                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `POST /polls/webhook`               | Receive new checks from CheckMate (on webhook service) |
+| `GET /api/polls/[id]`               | Poll details                                           |
+| `GET /api/polls/[id]/results`       | Poll vote statistics                                   |
+| `GET/POST /api/votes/[voteId]`      | Fetch/submit votes                                     |
+| `GET /api/checkers/[id]/votes`      | Paginated votes for checker                            |
+| `POST /telegram` (webhook svc)      | Bot message handling                                   |
+| `POST /typeform` (webhook svc)      | Quiz completion callback                               |
+| `POST /checker-stats` (webhook svc) | Batch stats for ops automation                         |
+
+## Database Models
+
+- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`)
+- **Poll**: Message content (`text`/`imageUrl`/`caption`), AI responses (longform, shortform, human), `isReport` flag, crowd-sourced category/truth score
+- **Vote**: Individual vote with category, truth score, response rating, A/B test flag (`showNoteAfterVote`)
+- **Programme**: Checker enrollment with targets (votes, accuracy, reports), status tracking
+
+## Architecture Notes
+
+### Database Service
+
+Instead of direct MongoDB connections from NextJS, this project uses a dedicated database service (`workers/checkers-db-service/`) implemented as a Cloudflare Worker with Durable Objects for connection pooling. This architecture decision was made due to challenges with MongoDB direct connections in Cloudflare Workers environments.
+
+### Webhook Service
+
+`workers/checkers-webhook-service/` is a Cloudflare WorkerEntrypoint with RPC support. It handles:
+
+- **Telegram webhook** (`POST /telegram`): Bot commands and callback queries via Grammy
+- **Poll webhook** (`POST /polls/webhook`): Receives checks from CheckMate, creates polls, fans out vote requests to all active checkers via Telegram
+- **Typeform webhook** (`POST /typeform`): Quiz completion during onboarding
+- **Checker stats** (`POST /checker-stats`): Batch stats endpoint for ops automation
+- **RPC method** `getOnboardingStatus(whatsappId)`: Called by other services to check onboarding state
+
+### Vote Assessment Logic
+
+Located in `src/lib/helpers/voteAssessment/`. Determines consensus based on:
+
+- \> 50% agreement for primary category
+- Different vote thresholds for different category types (e.g., 4 votes for clear scams, 10+ for borderline cases)
+- Truth scores mapped: <1.5 = untrue, 1.5-3.75 = misleading, >3.75 = accurate
+
+### Event Handler Service
+
+`workers/checkers-event-handler-service/` handles:
+
+- **Queue events**: Processes `vote.submitted` events for background vote assessment
+- **Daily crons**:
+  - 8:11 PM SGT: Inactivity checks (3-day warning, 10-day deactivation)
+  - 8:41 PM SGT: Programme checks (60-day extension, 90-day offboarding)
+
+### Alarm Service
+
+`workers/checkers-reminder-alarm-service/` uses Durable Objects to schedule per-checker reminders after deactivation. Alarms are cancelled when checker reactivates via the "Reactivate Now" button.
 
 ## Local Development
 
@@ -50,71 +185,23 @@ pnpm dev
 
 ### Worker Ports
 
-| Worker | HTTP Port | Description |
-|--------|-----------|-------------|
-| checkers-db-service | 9080 | MongoDB database service |
-| checkers-reminder-alarm-service | 9081 | Durable Object alarms for reminders |
-| checkers-event-handler-service | 9082 | Queue consumer + daily cron jobs for lifecycle |
-| checkers-webhook-service | 9083 | Telegram & poll webhooks |
+| Worker                          | HTTP Port | Description                         |
+| ------------------------------- | --------- | ----------------------------------- |
+| checkers-db-service             | 9080      | MongoDB database service            |
+| checkers-reminder-alarm-service | 9081      | Durable Object alarms for reminders |
+| checkers-event-handler-service  | 9082      | Queue consumer + daily cron jobs    |
+| checkers-webhook-service        | 9083      | Telegram, poll & stats webhooks     |
 
-## Checker Lifecycle Management
-
-The system automatically manages checker engagement through scheduled batch jobs:
-
-**Inactivity Management** (runs daily at 8:11 PM SGT):
-- 3-day warning: Reminder that deactivation will occur in 7 more days
-- 10-day deactivation: Sets `isActive=false`, schedules reminder alarms
-- 14 days after deactivation: Reminder #1 with "Reactivate Now" button
-- 28 days after Reminder #1: Reminder #2 (final)
-
-**Programme Management** (runs daily at 8:41 PM SGT):
-- 60-day extension: Notice for checkers who haven't completed the programme
-- 90-day offboarding: Removes from group, marks as offboarded (only if extension was received)
-
-## Deployment Setup
-
-Follow these steps:
-
-1. Execute quickstart above
-2. Get tunnel and mongoDB connection string from BW
-   - BW will map a https url to http://localhost:3002
-   - mongoDB connection string from BW
-3. Create Telegram Bot via BotFather - create a new bot - Set bot menu button (/mybots -> click the created bot -> Bot Settings -> Menu Button -> Edit menu Button URL -> paste https url from step 2) - Save the bot token (in bot father type /mybots -> click the bot you created -> API token)
-   4 Set up telegram webhook - create your own webhook secret string by using the following command: openssl rand -base64 32 - go to postman and set webhook like so:
-   `bash
- curl --location --globoff 'https://api.telegram.org/bot{{TELEGRAM_CHECKERS_BOT_TOKEN}}/setWebhook' \
- --form 'url="{{TELEGRAM_WEBHOOK_URL}}"' \
- --form 'secret_token="{{TELEGRAM_WEBHOOK_SECRET}}"'
- `
-4. Start by doing /start in the telegram bot
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- NextJS
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- MongoDB
-- NextAuthV5
-- Telegram miniapp/bot
-
-## Testing the Poll Webhook
-
-The poll webhook is handled by `checkers-webhook-service`. See [workers/checkers-webhook-service/README.md](workers/checkers-webhook-service/README.md) for full API documentation.
-
-### Quick Test
+### Testing the Poll Webhook
 
 ```bash
-# Local development
 curl -X POST http://localhost:9083/polls/webhook \
   -H "Content-Type: application/json" \
   -H "x-api-key: <your-api-key>" \
   -d '{
     "checkId": "check_123456",
     "text": "This is the main text content to be fact-checked",
+    "isReport": false,
     "shortformResponse": {
       "en": "Brief summary in English",
       "cn": null,
@@ -125,26 +212,42 @@ curl -X POST http://localhost:9083/polls/webhook \
   }'
 ```
 
-Expected response:
-
-```json
-{
-  "message": "Poll created successfully",
-  "id": "66abcdef123..."
-}
-```
+See [workers/checkers-webhook-service/README.md](workers/checkers-webhook-service/README.md) for full API documentation.
 
 **Note:** `text` and `imageUrl` are mutually exclusive - you can provide both fields but one must be null.
 
-## Moving Forward
+## Deployment
 
-- Dashboard messages sent is using checkers num referred, may not be the actual number of whatsapp messages sent (check with big boss BW to know which variable to look at)
-- Voting logic. As of now, there is no conclusive time or way that voting ends. The seed file checks evry 24hrs and concludes voting based on majority vote but seed only works when you manually deploy it on VS terminal. Hence there is no conclusive voting period. Any new postings will not conclude.
-- Voting page also shows all pass and present votes, it does not remove votes that have been concluded or completed. Pagination.
-- ~~Telegram bot does not alert user that there is new query~~ (Addressed: Polls webhook now sends notifications)
-- Onboarding whatsapp bot link is not an actual link.
-- Onboarding does not check if user has completed quiz, does not verify otp, if user has joined telegram or whatsapp. In the code file, everything the current bot does for onboarding that this new bot cannot do, is being commented out.
-- ~~Most of the variables stored for a checker is not being used in current logic~~ (Addressed: Lifecycle fields now used for inactivity/programme management)
-- Leaderboard score calculation does not follow current checkers webapp rules. It also does not show current placement of checker.
-- Integration with AI responses, whatsapp messages. Api to receive this messages is exposed via the postman link
-- Another improvement would be to relook at the API calls. Currently the API calls use JWT token to pull relevent user data. A higher level, improvement would be to do a simple fetch to retrieve session data, similar to what the middleware is doing. The current direct JWT approach can fail in Telegram Webapp hence the 4 ways of retrieving the token was used.
+```bash
+pnpm deploy     # Deploy to Cloudflare
+```
+
+### Telegram Bot Setup
+
+1. Create Telegram Bot via BotFather
+2. Set bot menu button: `/mybots` -> Bot Settings -> Menu Button -> Edit Menu Button URL -> paste your deployed URL
+3. Set up webhook:
+   ```bash
+   curl --location --globoff 'https://api.telegram.org/bot{{TELEGRAM_CHECKERS_BOT_TOKEN}}/setWebhook' \
+     --form 'url="{{TELEGRAM_WEBHOOK_URL}}"' \
+     --form 'secret_token="{{TELEGRAM_WEBHOOK_SECRET}}"'
+   ```
+4. Test by sending `/start` in the Telegram bot
+
+## External Integrations
+
+- **CheckMate Platform**: Sends polls via webhook, receives consensus results
+- **Telegram**: Bot API + MiniApp SDK
+- **Typeform**: Quiz during onboarding
+
+## Testing
+
+Run `pnpm test` to execute unit tests.
+
+## Known Issues / TODOs
+
+- Dashboard messages sent uses checkers num referred, may not be the actual number of WhatsApp messages sent
+- Voting page shows all past and present votes without filtering completed ones. Needs pagination.
+- Onboarding does not verify OTP or check if user has actually joined Telegram/WhatsApp
+- Leaderboard score calculation does not follow current checkers webapp rules; does not show current placement of checker
+- API calls use JWT token to pull user data; a higher-level improvement would be to do a simple fetch to retrieve session data similar to middleware

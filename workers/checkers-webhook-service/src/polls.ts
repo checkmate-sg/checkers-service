@@ -14,8 +14,16 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
 
   try {
     const body = (await c.req.json()) as PollRequest;
-    const { checkId, imageUrl, caption, text, longformResponse, shortformResponse, humanResponse } =
-      body;
+    const {
+      checkId,
+      imageUrl,
+      caption,
+      text,
+      longformResponse,
+      shortformResponse,
+      humanResponse,
+      isReport,
+    } = body;
 
     // Validate required fields
     if (!checkId) {
@@ -101,6 +109,7 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
             timestamp: null,
             updatedBy: null,
           },
+      isReport: isReport ?? false,
       crowdSourcedCategory: null,
       crowdSourcedTruthScore: null,
       startedTimestamp: new Date(),

@@ -13,6 +13,7 @@ interface MessageCardProps {
   text: string | null;
   caption: string | null;
   imageUrl: string | null;
+  isReport?: boolean;
 }
 // Helper function to detect URLs and split the text
 const splitTextByUrls = (text: string) => {
@@ -52,7 +53,7 @@ const splitTextByUrls = (text: string) => {
 export default function MessageCard(props: MessageCardProps) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const lengthBeforeTruncation = 300;
-  const { text, caption, imageUrl } = props;
+  const { text, caption, imageUrl, isReport } = props;
   let type = "text";
 
   if (imageUrl) {
@@ -83,6 +84,11 @@ export default function MessageCard(props: MessageCardProps) {
         <div className="flex items-center my-3">
           <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-[#ff327d] mr-2 flex-shrink-0" />
           <p className="font-semibold text-slate-700 leading-none">Message :</p>
+          {isReport && (
+            <span className="ml-auto inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+              Report
+            </span>
+          )}
         </div>
 
         <div className="w-full">

@@ -85,7 +85,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
     }
 
     // Create new user
-    const newChecker = createNewChecker(telegramId);
+    const newChecker = createNewChecker(telegramId, ctx.from?.username ?? null);
     await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     // Start with name prompt
@@ -175,7 +175,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
         if (checkResult.exists) {
           await sendTGGroupPrompt(ctx, env, telegramId, true);
         } else {
-          await sendWAServicePrompt(ctx, env, telegramId, false);
+          await sendWAServicePrompt(ctx, env, telegramId, true);
         }
       } else {
         console.log("QUIZ_COMPLETED: Quiz not complete, showing prompt again");
@@ -289,7 +289,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
     }
 
     // Create new user and start onboarding
-    const newChecker = createNewChecker(telegramId);
+    const newChecker = createNewChecker(telegramId, ctx.from?.username ?? null);
     await env.CHECKERS_DB_SERVICE.insertChecker(newChecker);
 
     await sendNamePrompt(ctx);
@@ -698,8 +698,8 @@ async function sendWAServicePrompt(
 
   await ctx.reply(
     isFirstPrompt
-      ? `Welcome back! As a volunteer, your main role is to vote on submitted messages. If you come across anything suspicious while doing so, you can also report it via WhatsApp to help us identify harmful content.\n\nAdd our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`
-      : `Please add our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.`,
+      ? `Welcome back! As a volunteer, your main role is to vote on submitted messages. If you come across anything suspicious while doing so, you can also report it via WhatsApp to help us identify harmful content.\n\nAdd our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.\n\nDo note that by using the WhatsApp service, you are agreeing to these <a href="https://checkmate.sg/terms-of-service">terms of use</a>.`
+      : `Please add our WhatsApp service <a href="${waLink}">here</a> to report any suspicious messages you encounter. Come back here when you are done to continue.\n\nDo note that by using the WhatsApp service, you are agreeing to these <a href="https://checkmate.sg/terms-of-service">terms of use</a>.`,
     {
       parse_mode: "HTML",
       reply_markup: new InlineKeyboard().text(
