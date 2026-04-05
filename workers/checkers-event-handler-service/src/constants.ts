@@ -79,6 +79,9 @@ To view your official completion certificate or to add it to your LinkedIn profi
 
 Thank you for being part of the Checkers' Crew. We're so proud of you! 💪`,
 
+  weeklyWelcome: (names: string) =>
+    `<b>📍 Welcome to the Checkers' Crew! 👋</b>\n\nLet's welcome our new checkers!🎉\n\n${names}\n\nWe're so excited to have you join our fact-checking family. This group is your hub for connecting with fellow Checkers, sharing tips, and staying up to date with important updates.\n\nIf you ever feel unsure about anything, don't hesitate to reach out or ask in our Q&A channel. We're all here to support each other and improve our skills together 🤗\n\nLet's get started!`,
+
   accuracyNudge: (params: {
     name: string;
     numMessages: number;

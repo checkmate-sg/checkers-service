@@ -78,6 +78,7 @@ export interface CheckerAPI {
   _id?: string;
   name: string | null;
   telegramId: string;
+  telegramUsername: string | null;
   whatsappId: string | null;
   singpassId: null;
   isActive: boolean;

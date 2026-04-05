@@ -126,6 +126,11 @@ export default class extends WorkerEntrypoint<Env> {
       await runProgrammeChecks(this.env, bot, adminBot);
     }
 
+    // 12:00 PM SGT (4:00 UTC) every Tuesday - Weekly welcome message
+    if (cron === "0 4 * * 2") {
+      await runWeeklyWelcomeMessage(this.env, adminBot);
+    }
+
     console.log("Batch job completed");
   }
 }
