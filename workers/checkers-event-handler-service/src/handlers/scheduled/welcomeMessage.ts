@@ -11,7 +11,7 @@ export async function runWeeklyWelcomeMessage(env: Env, adminBot: Bot): Promise<
 
   const lastWeek = new Date();
   lastWeek.setDate(lastWeek.getDate() - 7);
-  lastWeek.setHours(12, 3, 0, 0);
+  lastWeek.setUTCHours(4, 3, 0, 0); // 12:03 PM SGT = 4:03 AM UTC
 
   const result = await env.CHECKERS_DB_SERVICE.findCheckers({
     onboardingTime: { $gte: lastWeek },
@@ -25,7 +25,11 @@ export async function runWeeklyWelcomeMessage(env: Env, adminBot: Bot): Promise<
   const names = result.data
     .map(checker => {
       const username = checker.telegramUsername ? `@${checker.telegramUsername}` : null;
-      return username || checker.name || "New Checker";
+      const name = (checker.name || "New Checker")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return username || name;
     })
     .join("\n");
 
