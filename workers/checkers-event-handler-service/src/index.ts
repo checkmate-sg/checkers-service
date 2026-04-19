@@ -6,6 +6,7 @@ import { handlePrimaryCategoryChanged } from "./handlers/queue/onPrimaryCategory
 import { handleProgrammeCompletion } from "./handlers/queue/onProgrammeCompletion";
 import { handleVoteScoreChange } from "./handlers/queue/onVoteScoreChange";
 import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
+import { runGraduationSweep } from "./handlers/scheduled/graduation";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
 import { runWeeklyWelcomeMessage } from "./handlers/scheduled/welcomeMessage";
@@ -116,6 +117,11 @@ export default class extends WorkerEntrypoint<Env> {
     const cron = event.cron;
 
     console.log(`Batch job triggered by cron: ${cron}`);
+
+    // 10:30 AM SGT (2:30 UTC) - Graduation sweep
+    if (cron === "30 2 * * *") {
+      await runGraduationSweep(this.env);
+    }
 
     // 8:11 PM SGT (12:11 UTC) - Inactivity checks
     if (cron === "11 12 * * *") {

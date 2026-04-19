@@ -5,6 +5,7 @@ import { createBot } from "./bot";
 import { handleTypeformWebhook } from "./typeform";
 import { handlePollWebhook } from "./polls";
 import { handleCheckerStatsWebhook } from "./checker-stats";
+import { handleCheckGraduation } from "./check-graduation";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -40,6 +41,9 @@ app.post("/polls/webhook", handlePollWebhook);
 
 // Checker stats endpoint for ops automation (batch)
 app.post("/checker-stats", handleCheckerStatsWebhook);
+
+// Admin: manually trigger graduation check for a checker (by whatsappId)
+app.post("/admin/check-graduation", handleCheckGraduation);
 
 export default class extends WorkerEntrypoint<Env> {
   async fetch(request: Request) {
