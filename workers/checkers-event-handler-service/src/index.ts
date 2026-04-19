@@ -2,6 +2,7 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 import { Bot } from "grammy";
 
 import { handleAssessmentComplete } from "./handlers/queue/onAssessmentComplete";
+import { handleCertificateRequested } from "./handlers/queue/onCertificateRequested";
 import { handlePrimaryCategoryChanged } from "./handlers/queue/onPrimaryCategoryChanged";
 import { handleProgrammeCompletion } from "./handlers/queue/onProgrammeCompletion";
 import { handleVoteScoreChange } from "./handlers/queue/onVoteScoreChange";
@@ -12,6 +13,7 @@ import { runProgrammeChecks } from "./handlers/scheduled/programme";
 import { runWeeklyWelcomeMessage } from "./handlers/scheduled/welcomeMessage";
 import type {
   AssessmentCompleteData,
+  CertificateRequestedData,
   CheckersEvent,
   PrimaryCategoryChangedData,
   ProgrammeCompletedData,
@@ -63,6 +65,10 @@ export default class extends WorkerEntrypoint<Env> {
 
           case "programme.completed":
             await handleProgrammeCompletion(this.env, event.data as ProgrammeCompletedData);
+            break;
+
+          case "certificate.requested":
+            await handleCertificateRequested(this.env, event.data as CertificateRequestedData);
             break;
 
           case "vote.scoreChanged":

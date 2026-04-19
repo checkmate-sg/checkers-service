@@ -181,6 +181,7 @@ export interface ProgrammeAPI {
   hasReceivedExtension: boolean;
   hasReceivedLowAccuracyWarning: boolean;
   certificateUrl: string | null;
+  certificateName: string | null;
   completedAt: Date | null;
 }
 

@@ -75,9 +75,15 @@ Your dedication has clearly paid off! 🎓
 
 We'd love to hear about your experience - please take a moment to fill out <a href='${params.surveyLink}'>our survey</a>
 
-To view your official completion certificate or to add it to your LinkedIn profile, just press the respective buttons below.
+To claim your official completion certificate, press the button below to confirm the name you'd like it issued to.
 
 Thank you for being part of the Checkers' Crew. We're so proud of you! 💪`,
+
+  certificateReady: (name: string) => `<b>📍 Your certificate is ready! 🎓</b>
+
+Hi ${name},
+
+Your CheckMate completion certificate has been issued. Use the buttons below to view it or add it to your LinkedIn profile.`,
 
   weeklyWelcome: (names: string) =>
     `<b>📍 Welcome to the Checkers' Crew! 👋</b>\n\nLet's welcome our new checkers!🎉\n\n${names}\n\nWe're so excited to have you join our fact-checking family. This group is your hub for connecting with fellow Checkers, sharing tips, and staying up to date with important updates.\n\nIf you ever feel unsure about anything, don't hesitate to reach out or ask in our Q&A channel. We're all here to support each other and improve our skills together 🤗\n\nLet's get started!`,

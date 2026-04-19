@@ -772,6 +772,7 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
         hasReceivedExtension: false,
         hasReceivedLowAccuracyWarning: false,
         certificateUrl: null,
+        certificateName: null,
         completedAt: null,
       });
 
