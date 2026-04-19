@@ -136,6 +136,7 @@ export async function POST(req: NextRequest, { params }) {
       hasReceivedExtension: false,
       hasReceivedLowAccuracyWarning: false,
       certificateUrl: null,
+      certificateName: null,
       completedAt: null,
     });
 
