@@ -360,6 +360,11 @@ describe("checkGraduation", () => {
           data: {
             checkerId: "checker-001",
             programmeId: "programme-001",
+            stats: {
+              voteCount: expect.any(Number),
+              accuracy: expect.any(Number),
+              reportCount: expect.any(Number),
+            },
           },
           timestamp: expect.any(String),
         })
