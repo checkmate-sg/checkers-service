@@ -5,13 +5,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MAX_CERT_NAME_LEN } from "@/lib/constants/certificate";
 
 interface Props {
   checkerId: string;
   initialName: string;
 }
-
-const MAX_NAME_LEN = 100;
 
 export function ClaimCertificateForm({ checkerId, initialName }: Props) {
   const [name, setName] = useState(initialName);
@@ -67,7 +66,7 @@ export function ClaimCertificateForm({ checkerId, initialName }: Props) {
           id="cert-name"
           value={name}
           onChange={e => setName(e.target.value)}
-          maxLength={MAX_NAME_LEN}
+          maxLength={MAX_CERT_NAME_LEN}
           required
           disabled={submitting}
         />

@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
+import { MAX_CERT_NAME_LEN, MIN_CERT_NAME_LEN } from "@/lib/constants/certificate";
 import { publishCheckersEvent } from "@/lib/helpers/events/publishCheckersEvent";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const MIN_NAME_LEN = 1;
-const MAX_NAME_LEN = 100;
 
 export async function POST(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -23,8 +21,10 @@ export async function POST(req: NextRequest, { params }) {
     const body = (await req.json().catch(() => null)) as { name?: unknown } | null;
     const rawName = typeof body?.name === "string" ? body.name : "";
     const name = rawName.replace(/[\p{Cc}\p{Cn}]/gu, "").trim();
-    if (name.length < MIN_NAME_LEN || name.length > MAX_NAME_LEN) {
-      return Err.badParams(`Name must be between ${MIN_NAME_LEN} and ${MAX_NAME_LEN} characters`);
+    if (name.length < MIN_CERT_NAME_LEN || name.length > MAX_CERT_NAME_LEN) {
+      return Err.badParams(
+        `Name must be between ${MIN_CERT_NAME_LEN} and ${MAX_CERT_NAME_LEN} characters`
+      );
     }
 
     // Find the checker's most recent completed programme that doesn't yet have a certificate.
