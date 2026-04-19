@@ -25,6 +25,10 @@ export async function handleCheckGraduation(c: Context<{ Bindings: Env }>) {
       return c.json({ success: false, error: "Checker not found" }, 404);
     }
 
+    if (!checkerResult.data.currentProgrammeId) {
+      return c.json({ success: false, error: "Checker has no active programme" }, 404);
+    }
+
     const result = await checkGraduation(env, checkerResult.data._id!);
 
     if (!result.success) {
