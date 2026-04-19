@@ -69,6 +69,11 @@ export async function checkGraduation(
       data: {
         checkerId,
         programmeId: checkerResult.data.currentProgrammeId,
+        stats: {
+          voteCount: checkersProgress.data.voteCount,
+          accuracy: checkersProgress.data.accuracy ?? 0,
+          reportCount: checkersProgress.data.reportCount,
+        },
       },
       timestamp: new Date().toISOString(),
     });
