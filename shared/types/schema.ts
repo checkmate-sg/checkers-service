@@ -130,6 +130,7 @@ export interface Programme extends BaseDocument {
   hasReceivedExtension: boolean; // Whether Day 60 extension notice was sent
   hasReceivedLowAccuracyWarning: boolean; // Whether low accuracy warning was sent
   certificateUrl: string | null; // URL to the generated certificate
+  certificateName: string | null; // Name the checker chose to appear on the certificate
   completedAt: Date | null; // When the checker graduated
 }
 

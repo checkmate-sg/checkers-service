@@ -370,7 +370,11 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
       return;
     }
 
-    const phoneNumber = ctx.message.contact.phone_number;
+    const phoneNumber = normalizePhoneNumber(ctx.message.contact.phone_number);
+    if (!phoneNumber) {
+      await ctx.reply("The phone number received is invalid. Please enter your number manually.");
+      return;
+    }
     await processPhoneNumber(ctx, env, telegramId, phoneNumber, user);
   });
 
@@ -772,6 +776,7 @@ async function sendCompletionPrompt(ctx: Context, env: Env, telegramId: string):
         hasReceivedExtension: false,
         hasReceivedLowAccuracyWarning: false,
         certificateUrl: null,
+        certificateName: null,
         completedAt: null,
       });
 

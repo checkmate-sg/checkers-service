@@ -1,4 +1,5 @@
 import { CERTIFICATE_TEMPLATE } from "./certificateTemplate";
+import { escapeHtml } from "./html";
 
 const MAX_RETRIES = 3;
 const INITIAL_DELAY_MS = 1000;
@@ -68,9 +69,9 @@ export async function generateCertificate(
       year: "numeric",
     });
 
-    // Replace template placeholders
+    // Replace template placeholders (escape name — it's user input)
     let html = CERTIFICATE_TEMPLATE;
-    html = html.replace(/{{userName}}/g, userName);
+    html = html.replace(/{{userName}}/g, escapeHtml(userName));
     html = html.replace("{{issuanceDate}}", issuanceDate);
     html = html.replace("{{certificateId}}", programmeId);
     html = html.replace("{{numVotesTarget}}", targets.votes.toFixed(0));
