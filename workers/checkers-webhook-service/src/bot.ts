@@ -2,6 +2,7 @@ import { Bot, Context, InlineKeyboard, Keyboard } from "grammy";
 
 import { getParameters } from "@/shared/helpers/parameters";
 
+import { checkWhatsAppUser } from "./checkWhatsAppUser";
 import {
   createNewChecker,
   normalizePhoneNumber,
@@ -170,8 +171,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
         await ctx.reply(
           `Thank you for completing the quiz!💪🎉 We hope you found it useful.\n\n${progressBar(3)}`
         );
-        const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
-        // const checkResult = {exists: null}
+        const checkResult = await checkWhatsAppUser(env, user.whatsappId);
         if (checkResult.exists) {
           await sendTGGroupPrompt(ctx, env, telegramId, true);
         } else {
@@ -208,7 +208,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
     }
 
     try {
-      const checkResult = await env.WHATSAPP_CHECKER_HANDLER_SERVICE.checkUser(user.whatsappId);
+      const checkResult = await checkWhatsAppUser(env, user.whatsappId);
       if (checkResult.exists) {
         await sendTGGroupPrompt(ctx, env, telegramId, true);
       } else {
