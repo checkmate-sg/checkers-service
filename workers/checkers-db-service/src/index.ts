@@ -807,6 +807,126 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       return { success: false, error: errorMessage };
     }
   }
+
+  async distributePoll(pollId: string, limit: number): Promise<{voteId: string, checkerId: string}[]> {
+    const candidates = await this.getCandidates(pollId, limit);
+    if (!candidates.length) {
+      return [];
+    }
+    return this.assignCandidates(pollId, candidates);
+  }
+
+  private async getCandidates(pollId: string, limit: number): Promise<Checker[]> {
+    await this.connectPromise;
+    const db = this.client.db(DB_NAME);
+
+    const checkers = db.collection<Checker>("checkers");
+    const pollObjectId = new ObjectId(pollId);
+
+    return checkers.aggregate([
+      // 1. eligibility constraints
+      {
+        $match: {
+          isActive: true,
+          isOnboardingComplete: true,
+          $expr: {
+            $lt: ["$dailyAssignmentCount", "$dailyMaxCount"],
+          },
+        },
+      },
+
+      // 2. exclude already assigned for this poll
+      {
+        $lookup: {
+          from: "votes",
+          let: { checkerId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$checkerId", "$$checkerId"] },
+                    { $eq: ["$pollId", pollObjectId] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "existingVote",
+        },
+      },
+      {
+        $match: {
+          existingVote: { $size: 0 },
+        },
+      },
+
+      // 3. ranking features
+      {
+        $addFields: {
+          numVotes: { $ifNull: ["$numberOfVotes", 0] },
+        },
+      },
+
+      // 4. ranking logic
+      {
+        $sort: {
+          numVotes: 1,
+          createdAt: -1,
+          _id: 1,
+        },
+      },
+
+      { $limit: limit },
+    ]).toArray();
+  }
+
+  private async assignCandidates(pollId: string, candidates: Checker[]): Promise<{voteId: string, checkerId: string}[]> {
+    await this.connectPromise;
+    const db = this.client.db(DB_NAME);
+
+    const votes = db.collection<Vote>("votes");
+    const pollObjectId = new ObjectId(pollId);
+
+    const results: { voteId: string; checkerId: string }[] = [];
+
+    for (const checker of candidates) {
+      const res = await votes.findOneAndUpdate(
+        {
+          pollId: pollObjectId,
+          checkerId: checker._id
+        },
+        {
+        $setOnInsert: {
+          pollId: pollObjectId,
+          checkerId: checker._id,
+          createdTimestamp: new Date(),
+          votedTimestamp: null,
+          category: null,
+          truthScore: null,
+          responseCategory: null,
+          commentOnResponse: null,
+          responseTime: null,
+          score: null,
+          isCorrect: null,
+          showNoteAfterVote: Math.random() < 0.5,
+          telegramMessageId: null,
+        },
+      },
+      {
+        upsert: true,
+        returnDocument: "after",
+      });
+      if (!res?.value) {
+        continue;
+      }
+      results.push({
+        voteId: res.value._id.toString(),
+        checkerId: checker._id.toString() 
+      });
+    }
+    return results;
+  }
 }
 
 export default class extends WorkerEntrypoint<Env> {
