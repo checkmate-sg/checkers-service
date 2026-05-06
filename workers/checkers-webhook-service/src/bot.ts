@@ -302,7 +302,8 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
 
   bot.callbackQuery("REQUEST_NUMBER", async ctx => {
     await safeAnswerCallbackQuery(ctx);
-    await sendNumberPrompt(ctx);
+    const telegramId = ctx.from!.id.toString();
+    await sendNumberPrompt(ctx, env, telegramId);
   });
 
   bot.callbackQuery("SEND_OTP", async ctx => {
@@ -314,7 +315,7 @@ By the end, you'll be ready to make your first check and join CheckMate in actio
 
     if (!user || !user.whatsappId) {
       await ctx.reply("Please enter your phone number first.");
-      await sendNumberPrompt(ctx);
+      await sendNumberPrompt(ctx, env, telegramId);
       return;
     }
 
@@ -426,7 +427,7 @@ async function resumeOnboarding(ctx: Context, env: Env, user: CheckerAPI): Promi
       await sendNamePrompt(ctx);
       break;
     case "number":
-      await sendNumberPrompt(ctx);
+      await sendNumberPrompt(ctx, env, telegramId);
       break;
     case "otpSent":
     case "verify":
@@ -434,7 +435,7 @@ async function resumeOnboarding(ctx: Context, env: Env, user: CheckerAPI): Promi
       if (user.whatsappId) {
         await sendOTPPrompt(ctx, env, telegramId, user.whatsappId, user._id!);
       } else {
-        await sendNumberPrompt(ctx);
+        await sendNumberPrompt(ctx, env, telegramId);
       }
       break;
     case "quiz":
@@ -468,13 +469,12 @@ async function handleNameInput(
     {
       $set: {
         name: text.trim(),
-        onboardingStatus: "number",
         updatedAt: new Date(),
       },
     }
   );
 
-  await sendNumberPrompt(ctx);
+  await sendNumberPrompt(ctx, env, telegramId);
 }
 
 async function handlePhoneInput(
@@ -526,7 +526,7 @@ async function handleOTPInput(
 
   if (!whatsappId) {
     await ctx.reply("Please enter your phone number first.");
-    await sendNumberPrompt(ctx);
+    await sendNumberPrompt(ctx, env, telegramId);
     return;
   }
 
@@ -574,7 +574,12 @@ async function sendNamePrompt(ctx: Context): Promise<void> {
   });
 }
 
-async function sendNumberPrompt(ctx: Context): Promise<void> {
+async function sendNumberPrompt(ctx: Context, env: Env, telegramId: string): Promise<void> {
+  await env.CHECKERS_DB_SERVICE.updateOneChecker(
+    { telegramId },
+    { $set: { onboardingStatus: "number", updatedAt: new Date() } }
+  );
+
   const keyboard = new Keyboard().requestContact("📱 Share Phone Number").resized().oneTime();
 
   await ctx.reply(
