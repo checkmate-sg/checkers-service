@@ -143,9 +143,9 @@ Located in `src/lib/helpers/voteAssessment/`. Determines consensus based on:
 
 - Node.js (v18 or higher)
 - pnpm (v10 or higher)
-- MongoDB Atlas account
-- Telegram Bot Token
 - Git
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — GUI client for inspecting the dev database
+- (Optional) Your own Telegram bot via BotFather if you want to test bot UX end-to-end. Not needed for backend/webhook work — you can hit endpoints directly with curl.
 
 ### Quick Start
 
@@ -156,20 +156,31 @@ cd checkers-service
 
 # Install dependencies (pnpm monorepo - installs all workers too)
 pnpm install
-
-# Copy environment variables template
-cp .env.example .env.development.local
-
-# Configure your .env.development.local with:
-# - MongoDB connection string
-# - Telegram bot token
-# - NextAuth configuration
-
-# Copy worker environment variables
-cp workers/checkers-db-service/.dev.vars.example workers/checkers-db-service/.dev.vars
-cp workers/checkers-webhook-service/.dev.vars.example workers/checkers-webhook-service/.dev.vars
-# ... repeat for other workers as needed
 ```
+
+#### Environment files
+
+The project uses several env files, none of which are checked in:
+
+| File                                                | Purpose                            |
+| --------------------------------------------------- | ---------------------------------- |
+| `.env.development.local`                            | Next.js app config (incl. MongoDB) |
+| `.dev.vars` (root)                                  | Local dev shared vars              |
+| `workers/checkers-db-service/.dev.vars`             | DB worker secrets                  |
+| `workers/checkers-webhook-service/.dev.vars`        | Telegram bot token, API key, etc.  |
+| `workers/checkers-event-handler-service/.dev.vars`  | Queue + cron worker secrets        |
+| `workers/checkers-reminder-alarm-service/.dev.vars` | Alarm worker secrets               |
+
+These contain real secrets and a connection string to a shared dev MongoDB. **Request the bundle from the project lead** rather than provisioning your own — it ensures you connect to the same dev data as everyone else. Unzip into the repo root and the structure is preserved.
+
+#### Connect MongoDB Compass
+
+1. Open Compass.
+2. Copy `MONGODB_CONNECTION_STRING` from `.env.development.local`.
+3. Paste into the connection field and connect.
+4. Key collections: `checkers`, `polls`, `votes`, `programmes`.
+
+The dev DB is **shared** — be careful when modifying records, and prefer creating new test rows over editing existing ones.
 
 ### Running Locally
 
@@ -182,6 +193,23 @@ pnpm dev
 
 # The app will be available at http://localhost:3002
 ```
+
+#### Smoke test
+
+Send a test poll to the webhook to confirm fan-out works end-to-end:
+
+```bash
+curl -X POST http://localhost:9083/polls/webhook \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <API_KEY from workers/checkers-webhook-service/.dev.vars>" \
+  -d '{
+    "checkId": "test_'$(date +%s)'",
+    "text": "Test message",
+    "isReport": false
+  }'
+```
+
+In Compass, a new row should appear in `polls`, plus one row per active checker in `votes` (with `votedTimestamp: null` until the checker votes).
 
 ### Worker Ports
 
