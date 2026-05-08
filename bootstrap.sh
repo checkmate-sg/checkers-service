@@ -50,4 +50,35 @@ echo "-----------------"
 echo "pnpm: $(pnpm -v)"
 echo "node: $(node -v)"
 
+echo "checking current env settings"
+if [ ! -f ".dev.vars" ]; then
+    echo ".dev.vars not found"
+    exit 1
+fi
+
+set -a
+source .dev.vars
+set +a
+
+if [ "$NEXTJS_ENV" = "development" ]; then 
+    echo "detected dev mode settings"
+    if [ ! -f ".env.development.local" ]; then 
+        echo ".env.development.local not found, trying to detect zip file to build variables"
+        if [ ! -f "checkers-dev-vars.zip" ]; then
+            echo "checkers-dev-vars.zip file not found, check with project lead to dump into current directory"
+            exit 1
+        else 
+            echo "unpacking dev variables..."
+            unzip -o checkers-dev-vars.zip
+            echo "unpacked dev variables"
+        fi
+    else 
+        echo "detected .env.development.local"
+    fi
+else 
+    echo "not in development mode, please set up environment yourself"
+fi
+
+echo "environment variables initiated"
+
 echo "bootstrap completed"
