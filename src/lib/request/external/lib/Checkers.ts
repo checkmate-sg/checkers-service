@@ -49,11 +49,12 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
     data: CheckerPatchRequest,
     params: RequestParams = {}
   ) =>
-    this.request<any, any>({
+    this.request<Checker, APIError>({
       path: `/checkers/${checkerId}`,
       method: "PATCH",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**

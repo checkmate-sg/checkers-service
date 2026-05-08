@@ -63,7 +63,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CheckerPatchRequest'  
+              $ref: '#/components/schemas/CheckerPatchRequest' 
+      responses:
+        '200':
+          description: Successfully updated checker details
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Checker'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError' 
   '/checkers/{checkerId}/votes':
     get:
       summary: Retrieves ALL the Votes details based on checkerId
@@ -737,6 +750,7 @@ components:
         maxDailyVotes:
           type: integer
       additionalProperties: false
+      required: []
     Poll:
       description: >-
         Representation of the Messages to be checked
