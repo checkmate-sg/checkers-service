@@ -14,10 +14,11 @@ import {
   APIError,
   APIPagination,
   Checker,
+  CheckerPatchRequest,
   ProgrammeProgressResponse,
   VotesMessageBrief,
 } from "./data-contracts";
-import { HttpClient, RequestParams } from "./http-client";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -33,6 +34,26 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
       path: `/checkers/${checkerId}`,
       method: "GET",
       format: "json",
+      ...params,
+    });
+  /**
+   * @description Partially updates checker fields such as name, whatsappId, or dailyAssignmentCount
+   *
+   * @tags Checkers
+   * @name CheckersPartialUpdate
+   * @summary Update checker details
+   * @request PATCH:/checkers/{checkerId}
+   */
+  checkersPartialUpdate = (
+    checkerId: string,
+    data: CheckerPatchRequest,
+    params: RequestParams = {}
+  ) =>
+    this.request<any, any>({
+      path: `/checkers/${checkerId}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
       ...params,
     });
   /**

@@ -45,7 +45,25 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-          
+    patch:
+      summary: "Update checker details"
+      description: |
+        Partially updates checker fields such as name, whatsappId, or dailyAssignmentCount
+      tags:
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path
+          description: Checker ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckerPatchRequest'  
   '/checkers/{checkerId}/votes':
     get:
       summary: Retrieves ALL the Votes details based on checkerId
@@ -677,6 +695,10 @@ components:
               type: integer
               description: >-
                 Number of polls the Checker has been assigned to vote on today
+            maxDailyVotes:
+              type: integer
+              description: >-
+                Maximum number of votes a checker is willing to do today
           required:
             - name
             - telegramId
@@ -695,6 +717,26 @@ components:
             - lastVotedTimestamp
             - getNameMessageId
             - dailyAssignmentCount
+            - maxDailyVotes
+    CheckerPatchRequest:
+      description: Representation of a update request for Checker details. 
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        whatsappId:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        onboardingStatus:
+          $ref: '#/components/schemas/OnboardingStatus'
+        dailyAssignmentCount:
+          type: integer
+        maxDailyVotes:
+          type: integer
+      additionalProperties: false
     Poll:
       description: >-
         Representation of the Messages to be checked

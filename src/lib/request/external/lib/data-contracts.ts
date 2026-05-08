@@ -65,7 +65,6 @@ export enum Category {
   Legitimate = "legitimate",
   Irrelevant = "irrelevant",
   Unsure = "unsure",
-  Pass = "pass",
 }
 
 /** Category including 'pass' and allowing null */
@@ -163,7 +162,20 @@ export type Checker = BaseDocument & {
   getNameMessageId: string | null;
   /** Number of polls the Checker has been assigned to vote on today */
   dailyAssignmentCount: number;
+  /** Maximum number of votes a checker is willing to do today */
+  maxDailyVotes: number;
 };
+
+/** Representation of a update request for Checker details. */
+export interface CheckerPatchRequest {
+  name?: string | null;
+  whatsappId?: string | null;
+  isActive?: boolean;
+  /** Onboarding status of the Checker */
+  onboardingStatus?: OnboardingStatus;
+  dailyAssignmentCount?: number;
+  maxDailyVotes?: number;
+}
 
 /** Representation of the Messages to be checked */
 export type Poll = BaseDocument & {
@@ -179,8 +191,6 @@ export type Poll = BaseDocument & {
   longformResponse?: Response;
   /** Format of the AI generated responses passed from CheckMate AI platform */
   shortformResponse?: Response;
-  /** Whether the submission is a user-filed report rather than a regular check */
-  isReport?: boolean;
   /** crowed source message category */
   crowdSourcedCategory?: Category;
   /** Truth score if the category is info/untrue/misleading/accurate */
@@ -205,8 +215,6 @@ export type PollRequest = BaseDocument & {
   longformResponse?: Response;
   /** Format of the AI generated responses passed from CheckMate AI platform */
   shortformResponse?: Response;
-  /** Whether the submission is a user-filed report rather than a regular check */
-  isReport?: boolean;
 };
 
 /** Representation of individual vote on a message  */
@@ -224,8 +232,6 @@ export type Vote = BaseDocument & {
   /** Evaluation for an AI response quality (nullable) */
   responseCategory?: ResponseCategory;
   commentOnResponse?: string | null;
-  /** A/B test flag: true = show community note after voting, false = show before */
-  showNoteAfterVote?: boolean;
 };
 
 /** POST reqeust body to update the Vote Content of user  */
