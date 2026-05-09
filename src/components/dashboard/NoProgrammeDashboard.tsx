@@ -1,14 +1,17 @@
 import { AlertCircle, Loader2 } from "lucide-react";
 
 import { useGetCheckersStatsById } from "@/hooks/checkers/useGetCheckersStats";
+import { useUpdateDailyVoteLimit } from "@/hooks/checkers/useUpdateDailyVoteLimit";
 
 import StatCard from "./StatCard";
+import EditableStatCard from "./EditableStatCard";
 
 interface NoProgrammeDashboardProps {
   checkerId: string;
 }
 
 export const NoProgrammeDashboard = ({ checkerId }: NoProgrammeDashboardProps) => {
+  const updateDailyLimit = useUpdateDailyVoteLimit(checkerId);
   const { data, isLoading, error } = useGetCheckersStatsById(checkerId);
 
   if (isLoading)
@@ -40,6 +43,14 @@ export const NoProgrammeDashboard = ({ checkerId }: NoProgrammeDashboardProps) =
           stat={data.accuracy === null ? "NA" : `${data.accuracy.toFixed(1)}%`}
         />
         <StatCard name="message reported" imgSrc="/message.png" stat={String(data.reports)} />
+        <EditableStatCard
+          name="max daily votes"
+          imgSrc="/votes.png"
+          initialValue={String(data.maxDailyVotes)}
+          onSave={async v => {
+            await updateDailyLimit.mutateAsync(Number(v));
+          }}
+        ></EditableStatCard>
       </div>
     </div>
   );
