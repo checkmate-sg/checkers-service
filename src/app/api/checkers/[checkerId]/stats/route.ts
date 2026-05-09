@@ -48,6 +48,7 @@ export async function GET(req: NextRequest, { params }) {
         voteCount,
         accuracy,
         reports: reportCount.count,
+        maxDailyVotes: checkerResult.data.maxDailyVotes,
       },
       { status: 200 }
     );
