@@ -69,8 +69,7 @@ paths:
           description: Successfully updated checker details
           content:
             application/json:
-              schema: 
-                $ref: '#/components/schemas/Checker'
+              modifiedCount: integer
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '404':
@@ -190,10 +189,14 @@ paths:
                   reports:
                     type: integer
                     description: Number of reports associated with the checker
+                  maxDailyVotes:
+                    type: integer
+                    description: Max number of votes a checker is willing to get a day.
                 required:
                   - voteCount
                   - accuracy
                   - reports
+                  - maxDailyVotes
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '500':

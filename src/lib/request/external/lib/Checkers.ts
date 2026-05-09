@@ -49,7 +49,7 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
     data: CheckerPatchRequest,
     params: RequestParams = {}
   ) =>
-    this.request<Checker, APIError>({
+    this.request<void, APIError>({
       path: `/checkers/${checkerId}`,
       method: "PATCH",
       body: data,
@@ -140,6 +140,8 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
         accuracy: number;
         /** Number of reports associated with the checker */
         reports: number;
+        /** Max number of votes a checker is willing to get a day. */
+        maxDailyVotes: number;
       },
       APIError
     >({
