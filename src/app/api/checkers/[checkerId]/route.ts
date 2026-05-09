@@ -19,13 +19,10 @@ export async function PATCH(req: NextRequest, { params }) {
       return Err.badParams("Invalid request body");
     }
 
-    console.log("sending db update request:", { $set: body });
     const result = await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { _id: checkerId },
       { $set: body }
     );
-    console.log("results: ", result.success);
-    console.log("mod count: ", result.modifiedCount);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error ?? "Update failed" }, { status: 400 });
