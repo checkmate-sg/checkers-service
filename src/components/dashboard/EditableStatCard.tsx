@@ -41,24 +41,36 @@ export default function EditableStatCard({
   };
 
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center pt-6 gap-3">
+    <Card className="bg-white border border-orange-200 shadow-sm">
+      <CardContent className="flex flex-col items-center pt-6 gap-4">
         <img src={imgSrc} alt={name} className="w-16 h-16 rounded-full" />
 
         <input
-          className="text-center text-2xl font-bold border rounded px-2 py-1 w-full"
+          className="
+            text-center text-2xl font-bold
+            text-orange-600
+            bg-white
+            border border-orange-300
+            rounded px-2 py-1 w-full
+            focus:outline-none focus:ring-2 focus:ring-orange-400
+          "
           value={value}
           onChange={e => setValue(e.target.value)}
           disabled={saving}
         />
 
-        <Button onClick={handleSave} disabled={saving} className="w-full">
+        {/* Name ABOVE button */}
+        <p className="text-orange-500 text-sm text-center">{name}</p>
+
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+        >
           {saving ? <Loader2 className="animate-spin" size={16} /> : "Update"}
         </Button>
 
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-
-        <p className="text-muted-foreground text-sm">{name}</p>
       </CardContent>
     </Card>
   );
