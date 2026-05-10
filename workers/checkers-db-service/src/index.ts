@@ -491,6 +491,33 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async aggregateCheckers<T = CheckerAPI>(
+    pipeline: Document[]
+  ): Promise<{ success: boolean; data?: T[]; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const checkersCollection = db.collection<Checker>("checkers");
+
+      const result = await checkersCollection.aggregate(pipeline).toArray();
+      const formatted = result.map((c: any) => ({
+        ...c,
+        _id: c._id?.toString(),
+        currentProgrammeId: c.currentProgrammeId?.toString() ?? null,
+      }));
+
+      return {
+        success: true,
+        data: formatted as T[],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
   async findOnePoll(
     filter: Filter<Poll>
   ): Promise<{ success: boolean; data?: PollAPI; error?: string }> {
@@ -839,6 +866,11 @@ export default class extends WorkerEntrypoint<Env> {
   async insertChecker(checker: Omit<Checker, "_id">, customId?: string) {
     const durableObject = this.getDurableObject();
     return durableObject.insertChecker(checker, customId);
+  }
+
+  async aggregateCheckers<T = CheckerAPI>(pipeline: Document[]) {
+    const durableObject = this.getDurableObject();
+    return durableObject.aggregateCheckers(pipeline);
   }
 
   async insertVote(vote: Omit<Vote, "_id">, customId?: string) {

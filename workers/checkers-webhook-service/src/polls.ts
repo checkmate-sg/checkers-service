@@ -1,6 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { Context } from "hono";
 
+import { PollDistributor } from "../../../shared/helpers/distribution";
 import type { PollRequest, PollAPI, VoteAPI } from "./types";
 
 export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
@@ -124,76 +125,16 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
       return c.json({ error: insertResult.error || "Failed to create poll" }, 500);
     }
 
-    // Build preview text for notification
-    let previewText = "";
-    if (text) {
-      previewText = text.length > 50 ? text.substring(0, 50) + "..." : text;
-    }
-    if (imageUrl) {
-      previewText = previewText ? `${previewText}\n <Image 🖼️>` : "<Image 🖼️>";
-    }
-
-    // Get all active checkers
-    const activeCheckersResult = await env.CHECKERS_DB_SERVICE.findCheckers(
-      {
-        isActive: true,
-        isOnboardingComplete: true,
-      },
-      { dailyAssignmentCount: 1 }
-    );
-
-    // Create Telegram bot instance
     const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-
-    // Send vote requests to each checker
-    for (const checker of activeCheckersResult.data) {
-      // Create a vote request in the database
-      const voteRequest: Omit<VoteAPI, "_id"> = {
+    const distributor = new PollDistributor(env.HOST_URL, env.CHECKERS_DB_SERVICE, bot);
+    c.executionCtx.waitUntil(
+      distributor.distribute({
         pollId: insertResult.id!,
-        checkerId: checker._id!,
-        createdTimestamp: new Date(),
-        votedTimestamp: null,
-        category: null,
-        truthScore: null,
-        responseCategory: null,
-        commentOnResponse: null,
-        responseTime: null,
-        score: null,
-        isCorrect: null,
-        showNoteAfterVote: Math.random() < 0.5, // A/B test: 50/50 split
-        telegramMessageId: null,
-      };
-
-      const insertVoteResult = await env.CHECKERS_DB_SERVICE.insertVote(voteRequest);
-
-      if (!insertVoteResult.success) {
-        console.error("[POLL WEBHOOK ERROR]", insertVoteResult.error);
-        return c.json({ error: insertVoteResult.error || "Failed to create vote" }, 500);
-      }
-
-      const voteRequestPath = `${env.HOST_URL}/votes/${insertVoteResult.id}`;
-
-      // Send Telegram notification
-      const keyboard = new InlineKeyboard().webApp("Vote 🗳️!", voteRequestPath);
-
-      try {
-        const sentMessage = await bot.api.sendMessage(checker.telegramId, previewText, {
-          reply_markup: keyboard,
-        });
-
-        // Store the message ID for later button text updates (non-blocking)
-        c.executionCtx.waitUntil(
-          env.CHECKERS_DB_SERVICE.updateOneVote(
-            { _id: insertVoteResult.id },
-            { $set: { telegramMessageId: sentMessage.message_id } }
-          )
-        );
-      } catch (error) {
-        console.error(`Failed to send message to checker ${checker.telegramId}:`, error);
-        // Continue with other checkers even if one fails
-      }
-    }
-
+        text: text ?? null,
+        imageUrl: imageUrl ?? null,
+        limit: 30,
+      })
+    );
     return c.json({
       message: "Poll created successfully",
       id: insertResult.id,
