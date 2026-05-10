@@ -1,6 +1,7 @@
-import { ObjectId, Filter, UpdateFilter, type Document } from "mongodb";
+import { Filter, UpdateFilter, type Document } from "mongodb";
 import { Vote, CheckerAPI, VoteAPI } from "../types/schema";
 import { Bot, InlineKeyboard } from "grammy";
+import { ExecutionContext } from "@cloudflare/workers-types/experimental";
 
 export interface CheckerAggregationService {
   aggregateCheckers<T = CheckerAPI>(
@@ -39,11 +40,9 @@ interface DistributionLoad {
   limit: number;
 }
 
-type DistributionResult = {
-  success: boolean;
-  voteId: string;
-  error?: string;
-};
+interface Ctx {
+  waitUntil(promise: Promise<any>): void;
+}
 
 export class PollDistributor {
   private db: CheckerAggregationService;
@@ -56,7 +55,7 @@ export class PollDistributor {
     this.bot = bot;
   }
 
-  public async distribute(load: DistributionLoad) {
+  public async distribute(load: DistributionLoad, ctx: Ctx) {
     const { pollId, text, imageUrl, limit } = load;
     const { success, data: checkers = [], error } = await this.getValidCheckers(pollId, limit);
 
@@ -64,6 +63,8 @@ export class PollDistributor {
       console.error("problem with getting checkers:", error);
       throw new Error(error ?? "unknown error");
     }
+
+    console.log(`"pulled ${checkers.length} valid checkers"`);
 
     const previewText = this.buildPreviewText(text, imageUrl);
     const voteRequests = this.buildVoteRequests(pollId, checkers);
@@ -75,7 +76,7 @@ export class PollDistributor {
           throw new Error(
             `unexpected length mismatch, checker length: ${checkers.length}, vote length: ${voteRequests.length}`
           );
-        return this.processOneVote(checker, v, previewText);
+        return this.processOneVote(checker, v, previewText, ctx);
       })
     );
 
@@ -133,7 +134,8 @@ export class PollDistributor {
   private async processOneVote(
     checker: CheckerAPI,
     vote: Omit<VoteAPI, "_id">,
-    previewText: string
+    previewText: string,
+    ctx: Ctx
   ): Promise<{
     success: boolean;
     voteId?: string;
@@ -152,7 +154,7 @@ export class PollDistributor {
     const voteId = insertResult.id;
     try {
       const sentMsg = await this.sendOneVote(checker, voteId, previewText);
-      void this.attachTelegramMessageIdAsync(voteId, sentMsg.message_id, checker._id);
+      ctx.waitUntil(this.attachTelegramMessageIdAsync(voteId, sentMsg.message_id));
       return { success: true, voteId };
     } catch (err) {
       console.error(`telegram send failed for vote ${voteId} `, err);
@@ -164,14 +166,9 @@ export class PollDistributor {
     }
   }
 
-  private attachTelegramMessageIdAsync(voteId: string, messageId: number, checkerId?: string) {
+  private attachTelegramMessageIdAsync(voteId: string, messageId: number) {
     return this.db
-      .updateOneVote({ _id: new ObjectId(voteId) }, { $set: { telegramMessageId: messageId } })
-      .then(res => {
-        if (!res.success) {
-          throw new Error(res.error ?? "update failed");
-        }
-      })
+      .updateOneVote({ _id: voteId as any }, { $set: { telegramMessageId: messageId } })
       .catch(err => {
         console.error(`telegram update failed vote ${voteId}`, err);
       });
@@ -180,7 +177,7 @@ export class PollDistributor {
   private buildVoteRequests(pollId: string, data: CheckerAPI[]): Omit<VoteAPI, "_id">[] {
     return data.map(checker => ({
       pollId,
-      checkerId: checker._id!.toString(),
+      checkerId: checker._id!,
       createdTimestamp: new Date(),
       votedTimestamp: null,
       category: null,
@@ -203,79 +200,99 @@ export class PollDistributor {
     data?: CheckerAPI[];
     error?: string;
   }> {
-    const pipeline: Document[] = [
-      {
-        $match: {
-          isActive: true,
-          OnboardingStatus: "completed",
-        },
-      },
-
-      {
-        $lookup: {
-          from: "votes",
-          let: { checkerId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$checkerId", "$$checkerId"] },
-                    { $eq: ["$pollId", new ObjectId(pollId)] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "voteForPoll",
-        },
-      },
-
-      {
-        $match: {
-          voteForPoll: [],
-        },
-      },
-
-      {
-        $addFields: {
-          priorityScore: {
-            $subtract: [
-              { $ifNull: ["$maxDailyVote", 10] },
-              { $ifNull: ["$dailyAssignmentCount", 0] },
-            ],
+    try {
+      const pipeline: Document[] = [
+        {
+          $match: {
+            isActive: true,
+            onboardingStatus: "completed",
           },
         },
-      },
 
-      {
-        $sort: {
-          priorityScore: -1,
-          _id: 1,
+        {
+          $lookup: {
+            from: "votes",
+            let: { checkerId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$checkerId", "$$checkerId"] },
+                      { $eq: [{ $toString: "$pollId" }, pollId] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "voteForPoll",
+          },
         },
-      },
 
-      {
-        $limit: limit,
-      },
-
-      {
-        $project: {
-          voteForPoll: 0,
-          priorityScore: 0,
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $size: "$voteForPoll" }, 0],
+            },
+          },
         },
-      },
-    ];
-    const result = await this.db.aggregateCheckers<CheckerAPI>(pipeline);
-    if (!result.success) {
+
+        {
+          $addFields: {
+            priorityScore: {
+              $subtract: [
+                { $ifNull: ["$maxDailyVote", 10] },
+                { $ifNull: ["$dailyAssignmentCount", 0] },
+              ],
+            },
+          },
+        },
+
+        {
+          $sort: {
+            priorityScore: -1,
+            _id: 1,
+          },
+        },
+
+        {
+          $limit: limit,
+        },
+
+        {
+          $project: {
+            voteForPoll: 0,
+            priorityScore: 0,
+          },
+        },
+
+        {
+          $addFields: {
+            _id: { $toString: "$_id" },
+            checkerId: { $toString: "$checkerId" },
+            pollId: { $toString: "$pollId" },
+          },
+        },
+      ];
+
+      const result = await this.db.aggregateCheckers<CheckerAPI>(pipeline);
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error,
+        };
+      }
+
+      return {
+        success: true,
+        data: result.data,
+      };
+    } catch (err: any) {
       return {
         success: false,
-        error: result.error,
+        error: err?.message ?? "Unknown error",
       };
     }
-    return {
-      success: true,
-      data: result.data,
-    };
   }
 }

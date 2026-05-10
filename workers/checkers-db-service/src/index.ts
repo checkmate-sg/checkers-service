@@ -21,6 +21,7 @@ import {
 } from "@/shared/types/schema";
 
 import { VoteFilter } from "./types";
+import { toJSONSafe } from "@/shared/utils/json";
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -491,24 +492,18 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
-  async aggregateCheckers<T = CheckerAPI>(
-    pipeline: Document[]
-  ): Promise<{ success: boolean; data?: T[]; error?: string }> {
+  async aggregateCheckers<T = CheckerAPI>(pipeline: Record<string, any>[]) {
     try {
       await this.connectPromise;
       const db = this.client.db(DB_NAME);
-      const checkersCollection = db.collection<Checker>("checkers");
+      const checkersCollection = db.collection("checkers");
 
-      const result = await checkersCollection.aggregate(pipeline).toArray();
-      const formatted = result.map((c: any) => ({
-        ...c,
-        _id: c._id?.toString(),
-        currentProgrammeId: c.currentProgrammeId?.toString() ?? null,
-      }));
+      const convertedPipeline = this.convertPipelineIds(pipeline);
+      const result = await checkersCollection.aggregate(convertedPipeline).toArray();
 
       return {
         success: true,
-        data: formatted as T[],
+        data: toJSONSafe(result) as T[],
       };
     } catch (error) {
       return {
@@ -516,6 +511,19 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         error: error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
+  }
+
+  private convertPipelineIds(pipeline: Record<string, any>[]): Record<string, any>[] {
+    return JSON.parse(JSON.stringify(pipeline), (key, value) => {
+      if (
+        (key === "pollId" || key === "checkerId" || key === "_id") &&
+        typeof value === "string" &&
+        ObjectId.isValid(value)
+      ) {
+        return new ObjectId(value);
+      }
+      return value;
+    });
   }
 
   async findOnePoll(
@@ -868,7 +876,7 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.insertChecker(checker, customId);
   }
 
-  async aggregateCheckers<T = CheckerAPI>(pipeline: Document[]) {
+  async aggregateCheckers(pipeline: Record<string, any>[]) {
     const durableObject = this.getDurableObject();
     return durableObject.aggregateCheckers(pipeline);
   }
