@@ -1,7 +1,6 @@
-import { Filter, UpdateFilter, type Document } from "mongodb";
-import { Vote, CheckerAPI, VoteAPI } from "../types/schema";
+import { ObjectId, Filter, UpdateFilter, type Document } from "mongodb";
+import { Vote, CheckerAPI, VoteAPI, Checker } from "../types/schema";
 import { Bot, InlineKeyboard } from "grammy";
-import { ExecutionContext } from "@cloudflare/workers-types/experimental";
 
 export interface CheckerAggregationService {
   aggregateCheckers<T = CheckerAPI>(
@@ -23,12 +22,22 @@ export interface CheckerAggregationService {
     update: UpdateFilter<Vote>
   ): Promise<{
     success: boolean;
+    modifiedCount?: number;
     error?: string;
   }>;
 
   deleteOneVote(filter: Filter<Vote>): Promise<{
     success: boolean;
     deletedCount?: number;
+    error?: string;
+  }>;
+
+  updateOneChecker(
+    filter: Filter<Checker>,
+    update: UpdateFilter<Checker>
+  ): Promise<{
+    success: boolean;
+    modifiedCount?: number;
     error?: string;
   }>;
 }
@@ -154,7 +163,7 @@ export class PollDistributor {
     const voteId = insertResult.id;
     try {
       const sentMsg = await this.sendOneVote(checker, voteId, previewText);
-      ctx.waitUntil(this.attachTelegramMessageIdAsync(voteId, sentMsg.message_id));
+      ctx.waitUntil(this.postVoteUpdate(checker, voteId, sentMsg.message_id));
       return { success: true, voteId };
     } catch (err) {
       console.error(`telegram send failed for vote ${voteId} `, err);
@@ -166,12 +175,25 @@ export class PollDistributor {
     }
   }
 
-  private attachTelegramMessageIdAsync(voteId: string, messageId: number) {
-    return this.db
+  private postVoteUpdate(checker: CheckerAPI, voteId: string, messageId: number) {
+    const checkerUpdate = this.db
+      .updateOneChecker(
+        { _id: new ObjectId(checker._id) },
+        {
+          $inc: { dailyAssignmentCount: 1 },
+        }
+      )
+      .catch(err => {
+        console.error(`checker assignment update failed ${checker._id}`, err);
+      });
+
+    const voteUpdate = this.db
       .updateOneVote({ _id: voteId as any }, { $set: { telegramMessageId: messageId } })
       .catch(err => {
         console.error(`telegram update failed vote ${voteId}`, err);
       });
+
+    return Promise.allSettled([checkerUpdate, voteUpdate]);
   }
 
   private buildVoteRequests(pollId: string, data: CheckerAPI[]): Omit<VoteAPI, "_id">[] {
