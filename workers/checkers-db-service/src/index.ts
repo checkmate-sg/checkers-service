@@ -371,6 +371,32 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async updateManyUsers(
+    filter: Filter<Checker>,
+    update: UpdateFilter<Checker>
+  ): Promise<{ success: boolean; modifiedCount?: number; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const checkersCollection = db.collection<Checker>("checkers");
+
+      const processedFilter = this.convertStringIdsToObjectIds(filter);
+      const processedUpdate = this.convertStringIdsToObjectIds(update);
+
+      const result = await checkersCollection.updateMany(processedFilter, processedUpdate);
+
+      return {
+        success: true,
+        modifiedCount: result.modifiedCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+
+      console.error({ error, errorMessage, filter, update }, "Failed to bulk update checkers");
+      return { success: false, error: errorMessage };
+    }
+  }
+
   async updateOneVote(
     filter: Filter<Vote>,
     update: UpdateFilter<Vote>
@@ -492,18 +518,56 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
-  async aggregateCheckers<T = CheckerAPI>(pipeline: Record<string, any>[]) {
-    try {
-      await this.connectPromise;
-      const db = this.client.db(DB_NAME);
-      const checkersCollection = db.collection("checkers");
+  private async aggregateCollection<T>(
+    collectionName: string,
+    pipeline: Record<string, any>[]
+  ): Promise<T[]> {
+    await this.connectPromise;
 
-      const convertedPipeline = this.convertPipelineIds(pipeline);
-      const result = await checkersCollection.aggregate(convertedPipeline).toArray();
+    const db = this.client.db(DB_NAME);
+
+    const convertedPipeline = this.convertPipelineIds(pipeline);
+
+    const result = await db.collection(collectionName).aggregate(convertedPipeline).toArray();
+
+    return toJSONSafe(result) as T[];
+  }
+
+  async aggregatePolls<T = PollAPI>(
+    pipeline: Record<string, any>[]
+  ): Promise<{
+    success: boolean;
+    data?: T[];
+    error?: string;
+  }> {
+    try {
+      const data = await this.aggregateCollection<T>("polls", pipeline);
 
       return {
         success: true,
-        data: toJSONSafe(result) as T[],
+        data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
+  async aggregateCheckers<T = CheckerAPI>(
+    pipeline: Record<string, any>[]
+  ): Promise<{
+    success: boolean;
+    data?: T[];
+    error?: string;
+  }> {
+    try {
+      const data = await this.aggregateCollection<T>("checkers", pipeline);
+
+      return {
+        success: true,
+        data,
       };
     } catch (error) {
       return {
@@ -881,6 +945,11 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.aggregateCheckers(pipeline);
   }
 
+  async aggregatePolls(pipeline: Record<string, any>[]) {
+    const durableObject = this.getDurableObject();
+    return durableObject.aggregatePolls(pipeline);
+  }
+
   async insertVote(vote: Omit<Vote, "_id">, customId?: string) {
     const durableObject = this.getDurableObject();
     return durableObject.insertVote(vote, customId);
@@ -904,6 +973,11 @@ export default class extends WorkerEntrypoint<Env> {
   async updateOneChecker(filter: Filter<Checker>, update: UpdateFilter<Checker>) {
     const durableObject = this.getDurableObject();
     return durableObject.updateOneUser(filter, update);
+  }
+
+  async updateManyCheckers(filter: Filter<Checker>, update: UpdateFilter<Checker>) {
+    const durableObject = this.getDurableObject();
+    return durableObject.updateManyUsers(filter, update);
   }
 
   async updateOneVote(filter: Filter<Vote>, update: UpdateFilter<Vote>) {
