@@ -3,12 +3,7 @@ import type { HandlerResult } from "../../types";
 export async function runDailyAssignmentReset(env: Env) {
   console.log("resetting daily assignment for all checkers");
   const result = await env.CHECKERS_DB_SERVICE.updateManyCheckers(
-    {
-      $match: {
-        isActive: true,
-        onboardingStatus: "completed",
-      },
-    },
+    { isActive: true, onboardingStatus: "completed" },
     {
       $set: {
         dailyAssignmentCount: 0,
