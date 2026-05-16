@@ -14,68 +14,38 @@ export async function runRedistribution(env: Env, bot: Bot) {
     return;
   }
 
+  console.log(`discovered ${res.data.length} open polls to run redistribution over`);
+
   for (const poll of res.data) {
     const completed = poll.completedVotes ?? 0;
     const needed = NEEDED_VOTES - completed;
 
     if (needed <= 0) continue;
 
-    await distributor.distribute(
-      {
-        pollId: poll._id,
-        text: poll.text,
-        imageUrl: poll.imageUrl,
-        limit: needed,
-      },
-      {
-        waitUntil: (p: Promise<any>) => {
-          p.catch(console.error);
+    try {
+      await distributor.distribute(
+        {
+          pollId: poll._id,
+          text: poll.text,
+          imageUrl: poll.imageUrl,
+          limit: needed,
         },
-      }
-    );
+        {
+          waitUntil: (p: Promise<any>) => p.catch(console.error),
+        }
+      );
+    } catch (err) {
+      console.error(`failed to distribute poll ${poll._id}:`, err);
+    }
   }
 }
 
 async function getDailyOpenPollsWithVotes(env: Env) {
   const { start, end } = getStartAndEndOfDaySGT();
 
-  return env.CHECKERS_DB_SERVICE.aggregatePolls([
-    {
-      $match: {
-        startedTimestamp: { $gte: start, $lt: end },
-        assessedTimestamp: null,
-      },
-    },
-    {
-      $lookup: {
-        from: "votes",
-        let: { pollId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ["$pollId", "$$pollId"] },
-            },
-          },
-        ],
-        as: "votes",
-      },
-    },
-    {
-      $addFields: {
-        totalVotes: { $size: "$votes" },
-        completedVotes: {
-          $size: {
-            $filter: {
-              input: "$votes",
-              as: "v",
-              cond: { $ne: ["$$v.votedTimestamp", null] },
-            },
-          },
-        },
-      },
-    },
-    {
-      $project: { votes: 0 },
-    },
-  ]);
+  return env.CHECKERS_DB_SERVICE.getOpenPollsWithVotes(
+    start.toISOString(),
+    end.toISOString(),
+    NEEDED_VOTES
+  );
 }

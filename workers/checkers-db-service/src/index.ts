@@ -518,76 +518,131 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
-  private async aggregateCollection<T>(
-    collectionName: string,
-    pipeline: Record<string, any>[]
-  ): Promise<T[]> {
-    await this.connectPromise;
-
-    const db = this.client.db(DB_NAME);
-
-    const convertedPipeline = this.convertPipelineIds(pipeline);
-
-    const result = await db.collection(collectionName).aggregate(convertedPipeline).toArray();
-
-    return toJSONSafe(result) as T[];
-  }
-
-  async aggregatePolls<T = PollAPI>(
-    pipeline: Record<string, any>[]
-  ): Promise<{
-    success: boolean;
-    data?: T[];
-    error?: string;
-  }> {
+  async getOpenPollsWithVotes(
+    startISO: string,
+    endISO: string,
+    neededVotes: number
+  ): Promise<{ success: boolean; data?: any[]; error?: string }> {
     try {
-      const data = await this.aggregateCollection<T>("polls", pipeline);
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const pollsCollection = db.collection("polls");
 
-      return {
-        success: true,
-        data,
-      };
+      const startDate = new Date(startISO);
+      const endDate = new Date(endISO);
+
+      const pipeline = [
+        {
+          $match: {
+            assessedTimestamp: null,
+            startedTimestamp: { $gte: startDate, $lt: endDate },
+          },
+        },
+        {
+          $lookup: {
+            from: "votes",
+            localField: "_id",
+            foreignField: "pollId",
+            as: "votes",
+          },
+        },
+        {
+          $addFields: {
+            totalVotes: { $size: "$votes" },
+            completedVotes: {
+              $size: {
+                $filter: {
+                  input: "$votes",
+                  as: "v",
+                  cond: { $ne: ["$$v.votedTimestamp", null] },
+                },
+              },
+            },
+          },
+        },
+        { $match: { completedVotes: { $lt: neededVotes } } },
+        { $project: { votes: 0 } },
+      ];
+
+      const result = await pollsCollection.aggregate(pipeline).toArray();
+      return { success: true, data: JSON.parse(JSON.stringify(result)) };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
-  async aggregateCheckers<T = CheckerAPI>(
-    pipeline: Record<string, any>[]
-  ): Promise<{
-    success: boolean;
-    data?: T[];
-    error?: string;
-  }> {
+  async getValidCheckers(
+    pollId: string,
+    limit: number
+  ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string }> {
     try {
-      const data = await this.aggregateCollection<T>("checkers", pipeline);
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const checkersCollection = db.collection("checkers");
 
-      return {
-        success: true,
-        data,
-      };
+      const pipeline = [
+        {
+          $match: {
+            isActive: true,
+            onboardingStatus: "completed",
+          },
+        },
+        {
+          $lookup: {
+            from: "votes",
+            let: { checkerId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$checkerId", "$$checkerId"] },
+                      { $eq: [{ $toString: "$pollId" }, pollId] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "voteForPoll",
+          },
+        },
+        {
+          $match: {
+            $expr: { $eq: [{ $size: "$voteForPoll" }, 0] },
+          },
+        },
+        {
+          $addFields: {
+            priorityScore: {
+              $subtract: [
+                { $ifNull: ["$maxDailyVote", 10] },
+                { $ifNull: ["$dailyAssignmentCount", 0] },
+              ],
+            },
+          },
+        },
+        { $sort: { priorityScore: -1, _id: 1 } },
+        { $limit: limit },
+        { $project: { voteForPoll: 0, priorityScore: 0 } },
+        {
+          $addFields: {
+            _id: { $toString: "$_id" },
+            currentProgrammeId: { $toString: "$currentProgrammeId" },
+          },
+        },
+      ];
+
+      const result = await checkersCollection.aggregate(pipeline).toArray();
+      return { success: true, data: JSON.parse(JSON.stringify(result)) as CheckerAPI[] };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  }
-
-  private convertPipelineIds(pipeline: Record<string, any>[]): Record<string, any>[] {
-    return JSON.parse(JSON.stringify(pipeline), (key, value) => {
-      if (
-        (key === "pollId" || key === "checkerId" || key === "_id") &&
-        typeof value === "string" &&
-        ObjectId.isValid(value)
-      ) {
-        return new ObjectId(value);
-      }
-      return value;
-    });
   }
 
   async findOnePoll(
@@ -940,14 +995,9 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.insertChecker(checker, customId);
   }
 
-  async aggregateCheckers(pipeline: Record<string, any>[]) {
+  async getValidCheckers(pollId: string, limit: number) {
     const durableObject = this.getDurableObject();
-    return durableObject.aggregateCheckers(pipeline);
-  }
-
-  async aggregatePolls(pipeline: Record<string, any>[]) {
-    const durableObject = this.getDurableObject();
-    return durableObject.aggregatePolls(pipeline);
+    return durableObject.getValidCheckers(pollId, limit);
   }
 
   async insertVote(vote: Omit<Vote, "_id">, customId?: string) {
@@ -963,6 +1013,11 @@ export default class extends WorkerEntrypoint<Env> {
   async findCheckersVote(sortField?: string, offset?: number, limit?: number, baseFilter?: any) {
     const durableObject = this.getDurableObject();
     return durableObject.findCheckersVote(sortField, offset, limit, baseFilter);
+  }
+
+  async getOpenPollsWithVotes(startISO: string, endISO: string, neededVotes: number) {
+    const durableObject = this.getDurableObject();
+    return durableObject.getOpenPollsWithVotes(startISO, endISO, neededVotes);
   }
 
   async getVotesDetails(pollId: string, aggregationPipeline: any[]) {
