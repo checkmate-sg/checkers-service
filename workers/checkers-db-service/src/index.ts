@@ -21,7 +21,6 @@ import {
 } from "@/shared/types/schema";
 
 import { VoteFilter } from "./types";
-import { toJSONSafe } from "@/shared/utils/json";
 
 const DB_NAME = "checkmate-checkers-app";
 
@@ -580,6 +579,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
   ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string }> {
     try {
       await this.connectPromise;
+
       const db = this.client.db(DB_NAME);
       const checkersCollection = db.collection("checkers");
 
@@ -590,6 +590,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             onboardingStatus: "completed",
           },
         },
+
         {
           $lookup: {
             from: "votes",
@@ -598,35 +599,54 @@ export class DatabaseDurableObject extends DurableObject<Env> {
               {
                 $match: {
                   $expr: {
-                    $and: [
-                      { $eq: ["$checkerId", "$$checkerId"] },
-                      { $eq: [{ $toString: "$pollId" }, pollId] },
-                    ],
+                    $and: [{ $eq: ["$checkerId", "$$checkerId"] }, { $eq: ["$pollId", pollId] }],
                   },
                 },
               },
+              { $limit: 1 },
             ],
             as: "voteForPoll",
           },
         },
+
         {
           $match: {
-            $expr: { $eq: [{ $size: "$voteForPoll" }, 0] },
+            "voteForPoll.0": { $exists: false },
           },
         },
-    { $ifNull: ["$maxDailyVotes", 10] },
+
+        {
           $addFields: {
             priorityScore: {
-              $subtract: [
-                { $ifNull: ["$maxDailyVote", 10] },
-                { $ifNull: ["$dailyAssignmentCount", 0] },
+              $max: [
+                0,
+                {
+                  $subtract: [
+                    { $ifNull: ["$maxDailyVotes", 10] },
+                    { $ifNull: ["$dailyAssignmentCount", 0] },
+                  ],
+                },
               ],
             },
           },
         },
-        { $sort: { priorityScore: -1, _id: 1 } },
+
+        {
+          $sort: {
+            priorityScore: -1,
+            _id: 1,
+          },
+        },
+
         { $limit: limit },
-        { $project: { voteForPoll: 0, priorityScore: 0 } },
+
+        {
+          $project: {
+            voteForPoll: 0,
+            priorityScore: 0,
+          },
+        },
+
         {
           $addFields: {
             _id: { $toString: "$_id" },
@@ -636,7 +656,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       ];
 
       const result = await checkersCollection.aggregate(pipeline).toArray();
-      return { success: true, data: JSON.parse(JSON.stringify(result)) as CheckerAPI[] };
+
+      return {
+        success: true,
+        data: JSON.parse(JSON.stringify(result)) as CheckerAPI[],
+      };
     } catch (error) {
       return {
         success: false,
