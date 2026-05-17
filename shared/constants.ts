@@ -1,0 +1,1 @@
+const MIN_VOTES_NEEDED = 30;

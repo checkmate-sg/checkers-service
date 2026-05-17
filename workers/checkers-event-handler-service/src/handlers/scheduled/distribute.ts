@@ -2,8 +2,6 @@ import { PollDistributor } from "@/shared/helpers/distribution";
 import { getStartAndEndOfDaySGT } from "@/shared/utils/date";
 import { Bot } from "grammy";
 
-const NEEDED_VOTES = 30;
-
 export async function runRedistribution(env: Env, bot: Bot) {
   const distributor = new PollDistributor(env.HOST_URL, env.CHECKERS_DB_SERVICE, bot);
 
@@ -18,7 +16,7 @@ export async function runRedistribution(env: Env, bot: Bot) {
 
   for (const poll of res.data) {
     const completed = poll.completedVotes ?? 0;
-    const needed = NEEDED_VOTES - completed;
+    const needed = MIN_VOTES_NEEDED - completed;
 
     if (needed <= 0) continue;
 
@@ -46,6 +44,6 @@ async function getDailyOpenPollsWithVotes(env: Env) {
   return env.CHECKERS_DB_SERVICE.getOpenPollsWithVotes(
     start.toISOString(),
     end.toISOString(),
-    NEEDED_VOTES
+    MIN_VOTES_NEEDED
   );
 }
