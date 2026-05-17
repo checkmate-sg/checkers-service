@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { CheckerPatchSchema } from "@/validation/checker";
 
 export async function PATCH(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -23,9 +24,17 @@ export async function PATCH(req: NextRequest, { params }) {
       return Err.badParams("Invalid request body");
     }
 
+    const parsed = CheckerPatchSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return Err.badParams(parsed.error.message);
+    }
+
+    const updates = parsed.data;
+
     const result = await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { _id: checkerId },
-      { $set: body }
+      { $set: updates }
     );
 
     if (!result.success) {
