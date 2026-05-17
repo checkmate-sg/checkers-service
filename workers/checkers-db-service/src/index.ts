@@ -614,7 +614,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             $expr: { $eq: [{ $size: "$voteForPoll" }, 0] },
           },
         },
-        {
+    { $ifNull: ["$maxDailyVotes", 10] },
           $addFields: {
             priorityScore: {
               $subtract: [
