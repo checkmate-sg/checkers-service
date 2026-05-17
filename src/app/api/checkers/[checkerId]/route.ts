@@ -13,6 +13,10 @@ export async function PATCH(req: NextRequest, { params }) {
     const { checkerId } = await params;
     if (!checkerId) return Err.badParams("Missing checkerId parameter");
 
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
+
     const body = await req.json();
 
     if (!body || typeof body !== "object") {
@@ -42,6 +46,10 @@ export async function GET(req: NextRequest, { params }) {
 
     const { checkerId } = await params;
     if (!checkerId) return Err.badParams("Missing checkerId parameter");
+
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
 
     const result = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
 
