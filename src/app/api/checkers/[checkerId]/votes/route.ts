@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { GetCheckerVotesParamsSchema, GetCheckerVotesQuerySchema } from "@/validation/checker";
+import { resolve } from "path";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -11,20 +13,27 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { checkerId } = await params;
-    if (!checkerId) return Err.badParams("Missing checkerId parameter");
+    const resolvedParams = await params;
 
-    const searchParams = req.nextUrl.searchParams;
-    const sorting = searchParams.get("sorting") || "startedTimestamp";
-    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")) : 50;
-    const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")) : 0;
-    const statusParam = searchParams.get("VoteCheckerStatus");
-    const voteCheckerStatus =
-      statusParam === "true" ? true : statusParam === "false" ? false : undefined; // no filter if missing
+    const parsedParams = GetCheckerVotesParamsSchema.safeParse(resolvedParams);
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid checkerId parameter");
+    }
 
-    const baseFilter = {
+    const { checkerId } = parsedParams.data;
+
+    const rawQuery = Object.fromEntries(req.nextUrl.searchParams.entries());
+
+    const parsedQuery = GetCheckerVotesQuerySchema.safeParse(rawQuery);
+    if (!parsedQuery.success) {
+      return Err.badParams(parsedQuery.error.message);
+    }
+
+    const { sorting, limit = 50, offset = 0, VoteCheckerStatus } = parsedQuery.data;
+
+    const baseFilter: any = {
       checkerId,
-      voteCheckerStatus,
+      voteCheckerStatus: VoteCheckerStatus,
     };
 
     const result = await env.CHECKERS_DB_SERVICE.findCheckersVote(

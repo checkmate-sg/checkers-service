@@ -5,6 +5,7 @@ import { Err } from "@/lib/api/error";
 import { calculateProgrammeProgress } from "@/lib/helpers/programmeProgress";
 import { getParameters } from "@/shared/helpers/parameters";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { GetCheckerProgrammeParamsSchema } from "@/validation/checker";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -13,9 +14,15 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { checkerId } = await params;
+    const resolvedParams = await params;
 
-    if (!checkerId) return Err.badParams("Missing checkerId parameter");
+    const parsedParams = GetCheckerProgrammeParamsSchema.safeParse(resolvedParams);
+
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid checkerId parameter");
+    }
+
+    const { checkerId } = parsedParams.data;
 
     // Fetch Checker's data
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
@@ -88,8 +95,15 @@ export async function POST(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { checkerId } = await params;
-    if (!checkerId) return Err.badParams("Missing checkerId parameter");
+    const resolvedParams = await params;
+
+    const parsedParams = GetCheckerProgrammeParamsSchema.safeParse(resolvedParams);
+
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid checkerId parameter");
+    }
+
+    const { checkerId } = parsedParams.data;
 
     // Fetch checker
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
