@@ -20,8 +20,6 @@ export async function GET(req: NextRequest, { params }) {
 
     const resolvedParams = await params;
 
-    console.log("resolved:", resolvedParams);
-
     const parsedParams = GetVoteParamsSchema.safeParse(resolvedParams);
 
     if (!parsedParams.success) {
@@ -62,8 +60,6 @@ export async function POST(req: NextRequest, { params }) {
 
     const { voteId } = parsedParams.data;
 
-    console.log("successfully parsed: ", voteId);
-
     let body: unknown;
 
     try {
@@ -72,11 +68,7 @@ export async function POST(req: NextRequest, { params }) {
       return Err.badParams("Invalid JSON body");
     }
 
-    console.log("get body: ", body);
-
     const parsedBody = UpdateVoteBodySchema.safeParse(body);
-
-    console.log("body: ", parsedBody);
 
     if (!parsedBody.success) {
       return Err.badParams(parsedBody.error.message);
