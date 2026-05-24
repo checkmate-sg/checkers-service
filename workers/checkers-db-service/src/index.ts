@@ -580,6 +580,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     try {
       await this.connectPromise;
 
+      if (!ObjectId.isValid(pollId)) {
+        return { success: false, error: `Invalid pollId: ${pollId}` };
+      }
+      const pollObjectId = new ObjectId(pollId);
+
       const db = this.client.db(DB_NAME);
       const checkersCollection = db.collection("checkers");
 
@@ -594,12 +599,18 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         {
           $lookup: {
             from: "votes",
-            let: { checkerId: "$_id" },
+            // votes.pollId is stored as ObjectId; the bare string was never
+            // matching, so every checker passed the dedup filter and got
+            // re-assigned on every redistribution sweep.
+            let: { checkerId: "$_id", pollId: pollObjectId },
             pipeline: [
               {
                 $match: {
                   $expr: {
-                    $and: [{ $eq: ["$checkerId", "$$checkerId"] }, { $eq: ["$pollId", pollId] }],
+                    $and: [
+                      { $eq: ["$checkerId", "$$checkerId"] },
+                      { $eq: ["$pollId", "$$pollId"] },
+                    ],
                   },
                 },
               },
