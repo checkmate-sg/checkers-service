@@ -1,1 +1,1 @@
-const MIN_VOTES_NEEDED = 30;
+export const MIN_VOTES_NEEDED = 30;
