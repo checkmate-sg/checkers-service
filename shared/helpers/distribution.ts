@@ -50,10 +50,6 @@ interface DistributionLoad {
   limit: number;
 }
 
-interface Ctx {
-  waitUntil(promise: Promise<any>): void;
-}
-
 export class PollDistributor {
   private db: CheckerAggregationService;
   private bot: Bot;
@@ -65,7 +61,7 @@ export class PollDistributor {
     this.bot = bot;
   }
 
-  public async distribute(load: DistributionLoad, ctx: Ctx) {
+  public async distribute(load: DistributionLoad) {
     const { pollId, text, imageUrl, limit } = load;
     const { success, data: checkers = [], error } = await this.getValidCheckers(pollId, limit);
 
@@ -86,7 +82,7 @@ export class PollDistributor {
           throw new Error(
             `unexpected length mismatch, checker length: ${checkers.length}, vote length: ${voteRequests.length}`
           );
-        return this.processOneVote(checker, v, previewText, ctx);
+        return this.processOneVote(checker, v, previewText);
       })
     );
 
@@ -144,8 +140,7 @@ export class PollDistributor {
   private async processOneVote(
     checker: CheckerAPI,
     vote: Omit<VoteAPI, "_id">,
-    previewText: string,
-    ctx: Ctx
+    previewText: string
   ): Promise<{
     success: boolean;
     voteId?: string;
@@ -164,7 +159,10 @@ export class PollDistributor {
     const voteId = insertResult.id;
     try {
       const sentMsg = await this.sendOneVote(checker, voteId, previewText);
-      ctx.waitUntil(this.postVoteUpdate(checker, voteId, sentMsg.message_id));
+      // Await the bookkeeping writes so they complete within the request /
+      // cron lifetime. postVoteUpdate uses Promise.allSettled and swallows
+      // its own errors, so a failed bookkeeping write still won't fail the vote.
+      await this.postVoteUpdate(checker, voteId, sentMsg.message_id);
       return { success: true, voteId };
     } catch (err) {
       console.error(`telegram send failed for vote ${voteId} `, err);

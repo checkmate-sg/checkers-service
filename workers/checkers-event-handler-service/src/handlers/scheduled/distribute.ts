@@ -22,17 +22,12 @@ export async function runRedistribution(env: Env, bot: Bot) {
     if (needed <= 0) continue;
 
     try {
-      await distributor.distribute(
-        {
-          pollId: poll._id,
-          text: poll.text,
-          imageUrl: poll.imageUrl,
-          limit: needed,
-        },
-        {
-          waitUntil: (p: Promise<any>) => p.catch(console.error),
-        }
-      );
+      await distributor.distribute({
+        pollId: poll._id,
+        text: poll.text,
+        imageUrl: poll.imageUrl,
+        limit: needed,
+      });
     } catch (err) {
       console.error(`failed to distribute poll ${poll._id}:`, err);
     }

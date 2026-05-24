@@ -127,15 +127,12 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
 
     const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
     const distributor = new PollDistributor(env.HOST_URL, env.CHECKERS_DB_SERVICE, bot);
-    await distributor.distribute(
-      {
-        pollId: insertResult.id!,
-        text: text ?? null,
-        imageUrl: imageUrl ?? null,
-        limit: 30,
-      },
-      c.executionCtx
-    );
+    await distributor.distribute({
+      pollId: insertResult.id!,
+      text: text ?? null,
+      imageUrl: imageUrl ?? null,
+      limit: 30,
+    });
     return c.json({
       message: "Poll created successfully",
       id: insertResult.id,
