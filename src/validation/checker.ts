@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { OnboardingStatusSchema } from "./primatives";
 
 export const GetCheckerParamsSchema = z.object({
   checkerId: z.string(),
@@ -9,16 +8,14 @@ export const PatchCheckerParamsSchema = z.object({
   checkerId: z.string(),
 });
 
-export const PatchCheckerBodySchema = z
-  .object({
-    name: z.string().nullable(),
-    whatsappId: z.string().nullable(),
-    isActive: z.boolean(),
-    onboardingStatus: OnboardingStatusSchema,
-    dailyAssignmentCount: z.number().int(),
-    maxDailyVotes: z.number().int(),
-  })
-  .partial();
+// Only maxDailyVotes is user-controllable via the dashboard. Other fields
+// (isActive, onboardingStatus, dailyAssignmentCount) are managed by bot
+// commands, the onboarding state machine, and the distribution system
+// respectively — exposing them here would let checkers game their quota
+// or skip onboarding.
+export const PatchCheckerBodySchema = z.object({
+  maxDailyVotes: z.number().int().min(0).max(50),
+});
 
 export const GetCheckerVotesParamsSchema = z.object({
   checkerId: z.string(),

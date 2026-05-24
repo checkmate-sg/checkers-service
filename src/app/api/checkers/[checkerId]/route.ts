@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { PatchCheckerBodySchema, GetCheckerParamsSchema } from "@/validation/checker";
-import { parseOrBadRequest } from "@/shared/utils/validation";
 
 export async function PATCH(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -34,15 +33,9 @@ export async function PATCH(req: NextRequest, { params }) {
       return Err.badParams(parsedBody.error.message);
     }
 
-    const updates = parsedBody.data;
-
-    if (!updates || Object.keys(updates).length === 0) {
-      return Err.badParams("No valid fields provided");
-    }
-
     const result = await env.CHECKERS_DB_SERVICE.updateOneChecker(
       { _id: checkerId },
-      { $set: updates }
+      { $set: parsedBody.data }
     );
 
     if (!result.success) {
