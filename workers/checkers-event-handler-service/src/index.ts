@@ -151,7 +151,7 @@ export default class extends WorkerEntrypoint<Env> {
       await runDailyAssignmentReset(this.env);
     }
 
-    // Runs every 3 hours from 9:00 AM SGT to 10:00 PM SGT daily - run redistribution for open polls
+    // Runs every 3 hours from 9:00 AM SGT to 9:00 PM SGT daily - run redistribution for open polls
     if (cron === "0 1,4,7,10,13 * * *") {
       await runRedistribution(this.env, bot);
     }
