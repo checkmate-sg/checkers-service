@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { Err } from "@/lib/api/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { GetCheckerVotesParamsSchema, GetCheckerVotesQuerySchema } from "@/validation/checker";
-import { resolve } from "path";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
