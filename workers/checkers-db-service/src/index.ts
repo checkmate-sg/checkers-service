@@ -573,16 +573,21 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
-  async getValidCheckers(
+  async findCheckersForRedistribution(
     pollId: string,
     limit: number
-  ): Promise<{ success: boolean; data?: CheckerAPI[]; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    data?: CheckerAPI[];
+    error?: string;
+  }> {
     try {
       await this.connectPromise;
 
       if (!ObjectId.isValid(pollId)) {
         return { success: false, error: `Invalid pollId: ${pollId}` };
       }
+
       const pollObjectId = new ObjectId(pollId);
 
       const db = this.client.db(DB_NAME);
@@ -599,10 +604,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         {
           $lookup: {
             from: "votes",
-            // votes.pollId is stored as ObjectId; the bare string was never
-            // matching, so every checker passed the dedup filter and got
-            // re-assigned on every redistribution sweep.
-            let: { checkerId: "$_id", pollId: pollObjectId },
+            let: {
+              checkerId: "$_id",
+              pollId: pollObjectId,
+            },
             pipeline: [
               {
                 $match: {
@@ -628,15 +633,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
         {
           $addFields: {
-            priorityScore: {
-              $max: [
-                0,
-                {
-                  $subtract: [
-                    { $ifNull: ["$maxDailyVotes", 10] },
-                    { $ifNull: ["$dailyAssignmentCount", 0] },
-                  ],
-                },
+            remainingCapacity: {
+              $subtract: [
+                { $ifNull: ["$maxDailyVotes", 10] },
+                { $ifNull: ["$dailyAssignmentCount", 0] },
               ],
             },
           },
@@ -644,17 +644,62 @@ export class DatabaseDurableObject extends DurableObject<Env> {
 
         {
           $sort: {
-            priorityScore: -1,
-            _id: 1,
+            remainingCapacity: -1,
           },
         },
 
-        { $limit: limit },
+        {
+          $limit: limit,
+        },
 
         {
           $project: {
             voteForPoll: 0,
-            priorityScore: 0,
+            remainingCapacity: 0,
+          },
+        },
+
+        {
+          $addFields: {
+            _id: { $toString: "$_id" },
+            currentProgrammeId: { $toString: "$currentProgrammeId" },
+          },
+        },
+      ];
+
+      const result = await checkersCollection.aggregate(pipeline).toArray();
+
+      return {
+        success: true,
+        data: JSON.parse(JSON.stringify(result)) as CheckerAPI[],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  async findCheckersWithBudget(): Promise<{
+    success: boolean;
+    data?: CheckerAPI[];
+    error?: string;
+  }> {
+    try {
+      await this.connectPromise;
+
+      const db = this.client.db(DB_NAME);
+      const checkersCollection = db.collection("checkers");
+
+      const pipeline = [
+        {
+          $match: {
+            isActive: true,
+            onboardingStatus: "completed",
+            $expr: {
+              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxTarget", 10] }],
+            },
           },
         },
 
@@ -1030,9 +1075,14 @@ export default class extends WorkerEntrypoint<Env> {
     return durableObject.insertChecker(checker, customId);
   }
 
-  async getValidCheckers(pollId: string, limit: number) {
+  async findCheckersWithBudget() {
     const durableObject = this.getDurableObject();
-    return durableObject.getValidCheckers(pollId, limit);
+    return durableObject.findCheckersWithBudget();
+  }
+
+  async findCheckersForRedistribution(pollId: string, limit: number) {
+    const durableObject = this.getDurableObject();
+    return durableObject.findCheckersForRedistribution(pollId, limit);
   }
 
   async insertVote(vote: Omit<Vote, "_id">, customId?: string) {
