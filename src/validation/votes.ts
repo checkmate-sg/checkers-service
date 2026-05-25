@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CategorySchema, ResponseCategorySchema } from "./primatives";
+import { CategoryWithPassNullableSchema, ResponseCategorySchema } from "./primatives";
 
 export const GetVoteParamsSchema = z.object({
   voteId: z.string(),
@@ -11,8 +11,8 @@ export const UpdateVoteParamsSchema = z.object({
 
 export const UpdateVoteBodySchema = z
   .object({
-    category: CategorySchema.nullable().optional(),
-    truthScore: z.number().int().min(0).max(5).optional(),
+    category: CategoryWithPassNullableSchema.optional(),
+    truthScore: z.number().int().min(0).max(5).nullable().optional(),
     responseCategory: ResponseCategorySchema.optional(),
     commentOnResponse: z.string().optional(),
   })
