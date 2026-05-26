@@ -4,8 +4,6 @@ import { DistributionStep } from "../interface/step";
 import { VoteNotifier, buildVotePreviewText } from "../../telegram";
 
 export class SendTelegramState extends BaseState {
-  step = DistributionStep.SENDING_TELEGRAM_MSG;
-
   constructor(private notifier: VoteNotifier) {
     super();
   }
