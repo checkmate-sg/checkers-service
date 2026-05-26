@@ -16,10 +16,10 @@ import { DistributionLoad } from "./load";
 
 export abstract class BasePollDistributor {
   private runner: StateRunner;
-  private db: CheckerDBService;
+  protected db: CheckerDBService;
   private hostUrl: string;
   private voteNotifier: VoteNotifier;
-  private bot: Bot;
+  protected bot: Bot;
 
   constructor(hostUrl: string, bot: Bot, db: CheckerDBService) {
     this.db = db;

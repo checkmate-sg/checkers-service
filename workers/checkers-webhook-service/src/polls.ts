@@ -1,8 +1,8 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot } from "grammy";
 import { Context } from "hono";
 
-import { PollDistributor } from "../../../shared/helpers/distribution";
-import type { PollRequest, PollAPI, VoteAPI } from "./types";
+import { InitialPhaseDistributor } from "@/shared/helpers/distributor/initial";
+import type { PollRequest, PollAPI } from "./types";
 
 export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
   const env = c.env;
@@ -126,16 +126,17 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
     }
 
     const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-    const distributor = new PollDistributor(env.HOST_URL, env.CHECKERS_DB_SERVICE, bot);
-    await distributor.distribute({
+    const distributor = new InitialPhaseDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE);
+    const results = await distributor.distribute({
       pollId: insertResult.id!,
       text: text ?? null,
       imageUrl: imageUrl ?? null,
-      limit: 30,
     });
+
     return c.json({
       message: "Poll created successfully",
       id: insertResult.id,
+      results: results,
     });
   } catch (err) {
     console.error("[POLL WEBHOOK ERROR]", err);

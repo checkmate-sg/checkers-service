@@ -1,10 +1,14 @@
 import { MIN_VOTES_NEEDED } from "@/shared/constants";
-import { PollDistributor } from "@/shared/helpers/distribution";
+import { RedistributionPhaseDistributor } from "@/shared/helpers/distributor/post";
 import { getStartAndEndOfDaySGT } from "@/shared/utils/date";
 import { Bot } from "grammy";
 
 export async function runRedistribution(env: Env, bot: Bot) {
-  const distributor = new PollDistributor(env.HOST_URL, env.CHECKERS_DB_SERVICE, bot);
+  const distributor = new RedistributionPhaseDistributor(
+    env.HOST_URL,
+    bot,
+    env.CHECKERS_DB_SERVICE
+  );
 
   const res = await getDailyOpenPollsWithVotes(env);
 
@@ -22,12 +26,14 @@ export async function runRedistribution(env: Env, bot: Bot) {
     if (needed <= 0) continue;
 
     try {
-      await distributor.distribute({
+      const results = await distributor.distribute({
         pollId: poll._id,
         text: poll.text,
         imageUrl: poll.imageUrl,
         limit: needed,
       });
+
+      console.log("redistribution results:", results);
     } catch (err) {
       console.error(`failed to distribute poll ${poll._id}:`, err);
     }
