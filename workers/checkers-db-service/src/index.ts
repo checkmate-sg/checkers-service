@@ -790,6 +790,43 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async deleteOneVote(voteId: string): Promise<{
+    success: boolean;
+    deletedCount?: number;
+    error?: string;
+  }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+      const votesCollection = db.collection<Vote>("votes");
+
+      if (!ObjectId.isValid(voteId)) {
+        return {
+          success: false,
+          error: `invalid vote id received: ${voteId}`,
+        };
+      }
+
+      const result = await votesCollection.deleteOne({
+        _id: new ObjectId(voteId),
+      });
+
+      return {
+        success: true,
+        deletedCount: result.deletedCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "unknown error occurred";
+
+      console.error({ error, voteId }, `failed to delete vote by id: ${voteId}`);
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
   async findVotes(
     filter: Filter<Vote>
   ): Promise<{ success: boolean; data?: VoteAPI[]; error?: string }> {
@@ -1148,6 +1185,11 @@ export default class extends WorkerEntrypoint<Env> {
   async findOneVote(filter: Filter<Vote>) {
     const durableObject = this.getDurableObject();
     return durableObject.findOneVote(filter);
+  }
+
+  async deleteOneVote(voteId: string) {
+    const durableObject = this.getDurableObject();
+    return durableObject.deleteOneVote(voteId);
   }
 
   async findVotes(filter: Filter<Vote>) {
