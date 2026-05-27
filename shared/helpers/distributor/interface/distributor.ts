@@ -1,6 +1,6 @@
 import { isFulfilled } from "../../../utils/promise";
 import { StateRunner } from "../orchestration/runner";
-import { CheckerAPI, Vote } from "@/shared/types/schema";
+import { CheckerAPI, Vote, VoteAPI } from "@/shared/types/schema";
 import { InsertVoteState } from "../states/insertVote";
 import { SendTelegramState } from "../states/sendTeleMsg";
 import { LinkVoteState } from "../states/linkVote";
@@ -36,10 +36,10 @@ export abstract class BasePollDistributor {
 
   protected abstract getValidCheckers(pollId: string, limit: number): Promise<CheckerAPI[]>;
 
-  private buildVoteRequest(pollId: string, checker: CheckerAPI): Omit<Vote, "_id"> {
+  private buildVoteRequest(pollId: string, checker: CheckerAPI): Omit<VoteAPI, "_id"> {
     return {
-      pollId: new ObjectId(pollId),
-      checkerId: new ObjectId(checker._id!),
+      pollId: pollId,
+      checkerId: checker._id!,
       createdTimestamp: new Date(),
       votedTimestamp: null,
       category: null,

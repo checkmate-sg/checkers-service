@@ -9,6 +9,7 @@ export class SendTelegramState extends BaseState {
   }
 
   async execute(ctx: DistributionContext): Promise<DistributionContext> {
+    console.debug(`entering state: ${this.constructor.name}`);
     if (!ctx.voteId) {
       throw new Error("missing vote id, nothing to llink");
     }

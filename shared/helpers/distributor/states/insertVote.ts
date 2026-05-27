@@ -9,6 +9,7 @@ export class InsertVoteState extends BaseState {
   }
 
   async execute(ctx: DistributionContext) {
+    console.debug(`entering state: ${this.constructor.name}`);
     const res = await this.db.insertVote(ctx.vote);
 
     if (!res.success || !res.id) {

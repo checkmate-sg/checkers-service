@@ -1,4 +1,4 @@
-import { CheckerAPI, Vote } from "@/shared/types/schema";
+import { CheckerAPI, VoteAPI } from "@/shared/types/schema";
 import { DistributionStep } from "./step";
 import { DistributionStatus } from "./status";
 
@@ -10,7 +10,7 @@ export interface DistributionContext {
   pollText?: string | null;
   pollImageUrl?: string | null;
 
-  vote: Omit<Vote, "_id">;
+  vote: Omit<VoteAPI, "_id">;
 
   voteId?: string;
   telegramMsgId?: number;

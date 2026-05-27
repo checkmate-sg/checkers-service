@@ -1,5 +1,5 @@
 import { Filter, UpdateFilter } from "mongodb";
-import { Vote, CheckerAPI, VoteAPI, Checker } from "../../../types/schema";
+import { CheckerAPI, VoteAPI } from "../../../types/schema";
 
 export interface CheckerDBService {
   findCheckersWithBudget(): Promise<{
@@ -24,7 +24,7 @@ export interface CheckerDBService {
   }>;
 
   insertVote(
-    vote: Omit<Vote, "_id">,
+    vote: Omit<VoteAPI, "_id">,
     customId?: string
   ): Promise<{
     success: boolean;
@@ -33,8 +33,8 @@ export interface CheckerDBService {
   }>;
 
   updateOneChecker(
-    filter: Filter<Checker>,
-    update: UpdateFilter<Checker>
+    filter: Filter<CheckerAPI>,
+    update: UpdateFilter<CheckerAPI>
   ): Promise<{
     success: boolean;
     modifiedCount?: number;
@@ -42,8 +42,8 @@ export interface CheckerDBService {
   }>;
 
   updateOneVote(
-    filter: Filter<Vote>,
-    update: UpdateFilter<Vote>
+    filter: Filter<VoteAPI>,
+    update: UpdateFilter<VoteAPI>
   ): Promise<{
     success: boolean;
     modifiedCount?: number;

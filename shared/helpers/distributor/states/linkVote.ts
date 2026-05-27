@@ -10,6 +10,7 @@ export class LinkVoteState extends BaseState {
   }
 
   async execute(ctx: DistributionContext): Promise<DistributionContext> {
+    console.debug(`entering state: ${this.constructor.name}`);
     if (!ctx.voteId) {
       throw new Error("missing vote id, nothing to link");
     }
@@ -19,7 +20,7 @@ export class LinkVoteState extends BaseState {
     }
 
     const res = await this.db.updateOneVote(
-      { _id: new ObjectId(ctx.voteId) },
+      { _id: ctx.voteId },
       {
         $set: {
           telegramMessageId: ctx.telegramMsgId,
@@ -40,7 +41,7 @@ export class LinkVoteState extends BaseState {
     if (!ctx.voteId) return;
 
     await this.db.updateOneVote(
-      { _id: new ObjectId(ctx.voteId) },
+      { _id: ctx.voteId },
       {
         $unset: {
           telegramMessageId: "",

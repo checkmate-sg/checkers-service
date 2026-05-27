@@ -10,8 +10,9 @@ export class UpdateCheckerState extends BaseState {
   }
 
   async execute(ctx: DistributionContext) {
+    console.debug(`entering state: ${this.constructor.name}`);
     const res = await this.db.updateOneChecker(
-      { _id: new ObjectId(ctx.checker._id) },
+      { _id: ctx.checker._id },
       {
         $inc: { dailyAssignmentCount: 1 },
       }
@@ -27,7 +28,7 @@ export class UpdateCheckerState extends BaseState {
 
   async rollback(ctx: DistributionContext) {
     await this.db.updateOneChecker(
-      { _id: new ObjectId(ctx.checker._id) },
+      { _id: ctx.checker._id },
       {
         $inc: { dailyAssignmentCount: -1 },
       }
