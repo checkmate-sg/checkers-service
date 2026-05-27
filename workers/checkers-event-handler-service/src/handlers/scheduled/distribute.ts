@@ -32,7 +32,6 @@ export async function runRedistribution(env: Env, bot: Bot) {
         imageUrl: poll.imageUrl,
         limit: needed,
       });
-
       console.log("redistribution results:", results);
     } catch (err) {
       console.error(`failed to distribute poll ${poll._id}:`, err);

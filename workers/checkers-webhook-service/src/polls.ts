@@ -133,6 +133,8 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
       imageUrl: imageUrl ?? null,
     });
 
+    console.info("ran initial distribution:", results);
+
     return c.json({
       message: "Poll created successfully",
       id: insertResult.id,
