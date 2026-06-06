@@ -183,6 +183,17 @@ pnpm dev
 # The app will be available at http://localhost:3002
 ```
 
+### Signing in locally
+
+In local dev, Telegram `initData` verification is bypassed and the app **signs you in as a real checker from the dev DB**, matched by `LOCAL_DEV_TELEGRAM_ID` (set in `.env.development.local`).
+
+A checker with that `telegramId` **must already exist** in the dev DB. If none is found, sign-in fails cleanly (you'll land on `/unauthorized` and see an actionable message in the worker logs) rather than logging you in as a phantom user. To get a checker:
+
+- point `LOCAL_DEV_TELEGRAM_ID` at the `telegramId` of an existing checker in the (shared) dev DB, **or**
+- onboard a new one through the Telegram bot (`/onboard`).
+
+> There is no fallback "guest" user: a synthetic id is not a valid Mongo `ObjectId`, so it would `500` every checker API call once the DB service tries to convert it.
+
 ### Worker Ports
 
 | Worker                          | HTTP Port | Description                         |

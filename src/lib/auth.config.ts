@@ -16,51 +16,60 @@ export const authConfig: NextAuthConfig = {
         console.log("[Auth Config] Starting authorization process");
 
         // LOCAL DEVELOPMENT BYPASS
+        // Skips Telegram initData verification and instead signs in as a real
+        // checker from the (shared) dev DB, matched by LOCAL_DEV_TELEGRAM_ID.
+        // We deliberately require a real checker — a synthetic fallback id is
+        // not a valid Mongo ObjectId, so it would 500 every checker API call
+        // the moment the strict DB-service ObjectId boundary tries to convert it.
         if (process.env.ENVIRONMENT === "local") {
           console.log("[Auth Config] LOCAL ENVIRONMENT - Using development bypass");
 
-          // You can customize this mock user or fetch a real test user from DB
-          const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID || "123456789";
+          const mockTelegramId = process.env.LOCAL_DEV_TELEGRAM_ID;
+          if (!mockTelegramId) {
+            console.error(
+              "[Auth Config] LOCAL: LOCAL_DEV_TELEGRAM_ID is not set. " +
+                "Set it (in .env.development.local) to the telegramId of an existing checker " +
+                "in the dev DB so local dev can sign you in."
+            );
+            return null;
+          }
 
+          let checker;
           try {
-            // Try to find a real user for testing
             const { env } = getCloudflareContext();
-            const checker = (
+            checker = (
               await env.CHECKERS_DB_SERVICE.findOneChecker({
                 telegramId: mockTelegramId,
               })
             ).data;
-
-            if (checker) {
-              console.log("[Auth Config] LOCAL: Found test user:", {
-                id: checker._id?.toString() || "",
-                name: checker.name || "Local Dev User",
-                telegramId: checker.telegramId || mockTelegramId,
-              });
-
-              return {
-                id: checker._id?.toString() || "",
-                telegramId: mockTelegramId,
-                name: checker.name || "Local Dev User",
-              };
-            } else {
-              // Return a mock user if no real user exists
-              console.log("[Auth Config] LOCAL: Using mock user");
-              return {
-                id: "local-dev-user",
-                telegramId: mockTelegramId,
-                name: "Local Dev User",
-              };
-            }
           } catch (error) {
-            console.error("[Auth Config] LOCAL: Error during bypass:", error);
-            // Still return mock user even if DB is unavailable
-            return {
-              id: "local-dev-user",
-              telegramId: mockTelegramId,
-              name: "Local Dev User",
-            };
+            console.error("[Auth Config] LOCAL: Error looking up dev checker:", error);
+            return null;
           }
+
+          if (!checker?._id) {
+            console.error(
+              `[Auth Config] LOCAL: No checker found for LOCAL_DEV_TELEGRAM_ID="${mockTelegramId}". ` +
+                `Local dev signs in as a real checker from the dev DB, so one must exist. ` +
+                `Fix: set LOCAL_DEV_TELEGRAM_ID (in .env.development.local) to the telegramId of an ` +
+                `existing checker in the dev DB, or onboard one via the Telegram bot. ` +
+                `(The previous "local-dev-user" fallback was removed because its id is not a valid ` +
+                `Mongo ObjectId and 500s every checker API call.)`
+            );
+            return null;
+          }
+
+          console.log("[Auth Config] LOCAL: Signed in as dev checker:", {
+            id: checker._id.toString(),
+            name: checker.name || "Local Dev User",
+            telegramId: mockTelegramId,
+          });
+
+          return {
+            id: checker._id.toString(),
+            telegramId: mockTelegramId,
+            name: checker.name || "Local Dev User",
+          };
         }
 
         const initData = credentials?.initData;
