@@ -90,6 +90,10 @@ export default class extends WorkerEntrypoint<Env> {
     return this.getDurableObject().updateOneProgramme(filter, update);
   }
 
+  async findTopNCheckersWithBudget(limit: number) {
+    return this.getDurableObject().findTopNCheckersWithBudget(limit);
+  }
+
   async findCheckersWithBudget() {
     return this.getDurableObject().findCheckersWithBudget();
   }

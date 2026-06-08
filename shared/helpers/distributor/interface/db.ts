@@ -2,6 +2,12 @@ import { Filter, UpdateFilter } from "mongodb";
 import { CheckerAPI, VoteAPI } from "../../../types/schema";
 
 export interface CheckerDBService {
+  findTopNCheckersWithBudget(limit: number): Promise<{
+    success: boolean;
+    data?: CheckerAPI[];
+    error?: string;
+  }>;
+
   findCheckersWithBudget(): Promise<{
     success: boolean;
     data?: CheckerAPI[];

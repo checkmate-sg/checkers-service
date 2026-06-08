@@ -648,6 +648,65 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     }
   }
 
+  async findTopNCheckersWithBudget(limit: number): Promise<{
+    success: boolean;
+    data?: CheckerAPI[];
+    error?: string;
+  }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+
+      const pipeline = [
+        {
+          $match: {
+            isActive: true,
+            onboardingStatus: "completed",
+            $expr: {
+              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxDailyVotes", 10] }],
+            },
+          },
+        },
+        {
+          $addFields: {
+            _id: { $toString: "$_id" },
+            currentProgrammeId: { $toString: "$currentProgrammeId" },
+
+            dailyAssignmentCount: { $ifNull: ["$dailyAssignmentCount", 0] },
+            maxDailyVotes: { $ifNull: ["$maxDailyVotes", 10] },
+
+            remainingBudget: {
+              $subtract: [
+                { $ifNull: ["$maxDailyVotes", 10] },
+                { $ifNull: ["$dailyAssignmentCount", 0] },
+              ],
+            },
+          },
+        },
+        {
+          $sort: {
+            remainingBudget: -1,
+          },
+        },
+        {
+          $limit: limit,
+        },
+      ];
+
+      const result = await db.collection("checkers").aggregate(pipeline).toArray();
+
+      return {
+        success: true,
+        data: JSON.parse(JSON.stringify(result)) as CheckerAPI[],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
   async findCheckersWithBudget(): Promise<{
     success: boolean;
     data?: CheckerAPI[];

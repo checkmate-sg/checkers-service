@@ -2,6 +2,7 @@ import { BasePollDistributor } from "./interface/distributor";
 import { CheckerDBService } from "./interface/db";
 import { Bot } from "grammy";
 import { CheckerAPI } from "@/shared/types/schema";
+import { isCurrentSGTBetweenHours } from "@/shared/utils/date";
 
 export class InitialPhaseDistributor extends BasePollDistributor {
   constructor(hostUrl: string, bot: Bot, db: CheckerDBService) {
@@ -12,7 +13,14 @@ export class InitialPhaseDistributor extends BasePollDistributor {
     pollId: string = null,
     limit: number = null
   ): Promise<CheckerAPI[]> {
-    const res = await this.db.findCheckersWithBudget();
+    var res;
+
+    if (isCurrentSGTBetweenHours(13, 18)) {
+      res = await this.db.findCheckersWithBudget();
+    } else {
+      res = await this.db.findTopNCheckersWithBudget(30);
+    }
+
     if (!res.success || !res.data) {
       return [];
     }
