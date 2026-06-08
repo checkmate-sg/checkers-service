@@ -27,7 +27,10 @@ export const GetCheckerVotesQuerySchema = z.object({
   limit: z.coerce.number().int().optional(),
   offset: z.coerce.number().int().optional(),
 
-  VoteCheckerStatus: z.coerce.boolean(),
+  VoteCheckerStatus: z
+    .enum(["true", "false"])
+    .transform(v => v === "true")
+    .optional(),
 });
 
 export const GetCheckerStatsParamsSchema = z.object({
