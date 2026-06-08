@@ -663,7 +663,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             isActive: true,
             onboardingStatus: "completed",
             $expr: {
-              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxTarget", 10] }],
+              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxDailyVotes", 10] }],
             },
           },
         },
