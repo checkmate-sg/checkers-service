@@ -26,7 +26,10 @@ export abstract class BasePollDistributor {
     this.hostUrl = hostUrl;
     this.bot = bot;
     this.voteNotifier = new VoteNotifier(this.bot, this.hostUrl);
-    this.runner = new StateRunner([
+  }
+
+  private createRunner() {
+    return new StateRunner([
       new InsertVoteState(this.db),
       new SendTelegramState(this.voteNotifier),
       new LinkVoteState(this.db),
@@ -72,7 +75,7 @@ export abstract class BasePollDistributor {
           createdAt: new Date(),
         };
 
-        return this.runner.run(ctx);
+        return this.createRunner().run(ctx);
       })
     );
 
