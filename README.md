@@ -119,7 +119,7 @@ All day thresholds below are **configurable parameters** read from a Cloudflare 
 
 ## Database Models
 
-- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`), and **daily-assignment fields** (`maxDailyVotes` — how many messages this checker is willing to be assigned per day, default 10; `dailyAssignmentCount` — how many they've been assigned today, reset to 0 nightly)
+- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`), and **daily-assignment fields** (`targetDailyVotes` — the checker's preferred number of messages to be assigned per day, default 10 (currently enforced as a cap; see the engine notes below); `dailyAssignmentCount` — how many they've been assigned today, reset to 0 nightly)
 - **Poll**: Message content (`text`/`imageUrl`/`caption`), AI responses (longform, shortform, human), `isReport` flag, crowd-sourced category/truth score
 - **Vote**: Individual vote with category, truth score, response rating, A/B test flag (`showNoteAfterVote`), and `telegramMessageId` linking it to the notification sent to the checker
 - **Programme**: Checker enrollment with targets (votes, accuracy, reports), status tracking
@@ -148,9 +148,9 @@ The logic lives in `shared/helpers/distributor/` and is shared by two workers (t
 
 #### Daily budget
 
-Each checker has a `maxDailyVotes` cap (default **10**) and a running `dailyAssignmentCount`. A checker is only handed a new message while they still have budget left. A cron resets every active checker's count to 0 at **midnight SGT**, so budgets refill each day.
+Each checker has a `targetDailyVotes` cap (default **10**) and a running `dailyAssignmentCount`. A checker is only handed a new message while they still have budget left (`dailyAssignmentCount < targetDailyVotes`). A cron resets every active checker's count to 0 at **midnight SGT**, so budgets refill each day.
 
-> ⚠️ **Known inconsistency in the code:** redistribution correctly compares `dailyAssignmentCount` against each checker's `maxDailyVotes`, but the _initial_ distribution query (`findCheckersWithBudget`) gates on a `maxTarget` field that does not exist in the `Checker` schema. Because of the `$ifNull` fallback, the initial pass currently caps every checker at a flat **10** rather than honouring their personal `maxDailyVotes`. See [Known Issues](#known-issues--todos).
+> **Note:** `targetDailyVotes` is named for its intended future role — a _target_ the distributor tops up toward. Today it is still enforced only as a **cap** (a ceiling, not a floor); the planned distribution rework will add under-target top-ups.
 
 #### Two phases
 
@@ -407,5 +407,5 @@ Run `pnpm test` to execute unit tests.
 
 **Vote Distribution Engine** (see section above):
 
-- `findCheckersWithBudget` (initial distribution) references a non-existent `maxTarget` field instead of `maxDailyVotes`, so the initial pass caps every checker at a flat 10 regardless of their configured limit.
+- `targetDailyVotes` is currently enforced only as a cap, not a target — checkers who fall well short of their chosen number aren't topped up. Reframing the distribution to honour it as a target (and adding a "receive every check" cohort) is planned work; see PR #162 discussion.
 - `StateRunner` is a single shared instance on `BasePollDistributor` whose `executed` array is mutated while all checkers' assignments run concurrently (`Promise.allSettled`). Under parallel load the rollback bookkeeping can replay or skip the wrong states. A `StateRunner` should be instantiated per assignment.

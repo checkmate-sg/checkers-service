@@ -27,7 +27,7 @@ import {
 import { IconMenu2 } from "@tabler/icons-react";
 import { useGetCheckersProgrammeById } from "@/hooks/checkers/useGetCheckersProgramme";
 import { useGetCheckersById } from "@/hooks/checkers/useGetCheckersDetails";
-import DailyVolumeDialog from "@/components/dashboard/DailyVolumeDialog";
+import TargetLoadDialog from "@/components/dashboard/TargetLoadDialog";
 
 import classes from "./TopHeader.module.css";
 
@@ -53,7 +53,7 @@ export default function TopHeader({
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showBreakDialog, setShowBreakDialog] = useState(false);
-  const [showVolumeDialog, setShowVolumeDialog] = useState(false);
+  const [showTargetDialog, setShowTargetDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasActiveProgramme = !!programmeData?.programme;
@@ -131,7 +131,7 @@ export default function TopHeader({
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     className={menuItemClass}
-                    onClick={() => setShowVolumeDialog(true)}
+                    onClick={() => setShowTargetDialog(true)}
                   >
                     Choose target load
                   </DropdownMenuItem>
@@ -156,11 +156,11 @@ export default function TopHeader({
       </div>
 
       {session?.user?.id && (
-        <DailyVolumeDialog
+        <TargetLoadDialog
           checkerId={session.user.id}
-          currentValue={checkerData?.maxDailyVotes ?? 10}
-          open={showVolumeDialog}
-          onOpenChange={setShowVolumeDialog}
+          currentValue={checkerData?.targetDailyVotes ?? 10}
+          open={showTargetDialog}
+          onOpenChange={setShowTargetDialog}
         />
       )}
 

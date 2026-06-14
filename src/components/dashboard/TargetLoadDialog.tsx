@@ -13,21 +13,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { useUpdateDailyVoteLimit } from "@/hooks/checkers/useUpdateDailyVoteLimit";
-import { MAX_DAILY_VOTES, MIN_DAILY_VOTES } from "@/shared/constants";
+import { useUpdateTargetLoad } from "@/hooks/checkers/useUpdateTargetLoad";
+import { MAX_TARGET_DAILY_VOTES, MIN_TARGET_DAILY_VOTES } from "@/shared/constants";
 
 // Snap points the slider locks onto. The slider works on the *index* of this
 // array (even spacing per stop) rather than the raw number, so the gaps between
 // 20/30/50 feel as deliberate as the gaps between 5/10. Lowest stop is the
-// shared MIN_DAILY_VOTES so the slider can never emit an invalid value.
-const STEPS = [MIN_DAILY_VOTES, 10, 20, 30, 50] as const;
+// shared MIN_TARGET_DAILY_VOTES so the slider can never emit an invalid value.
+const STEPS = [MIN_TARGET_DAILY_VOTES, 10, 20, 30, 50] as const;
 const TOP_STEP = STEPS[STEPS.length - 1];
 
-// "Receive every check" maps to MAX_DAILY_VOTES — a practical stand-in for "all"
-// (exceeding it/day is unlikely). Since the slider only emits the STEPS values,
-// a stored MAX_DAILY_VOTES unambiguously identifies a receive-all checker
-// without a separate flag.
-const RECEIVE_ALL_VALUE = MAX_DAILY_VOTES;
+// "Receive every check" maps to MAX_TARGET_DAILY_VOTES — a practical stand-in
+// for "all" (exceeding it/day is unlikely). Since the slider only emits the
+// STEPS values, a stored MAX_TARGET_DAILY_VOTES unambiguously identifies a
+// receive-all checker without a separate flag.
+const RECEIVE_ALL_VALUE = MAX_TARGET_DAILY_VOTES;
 
 function nearestIndex(value: number): number {
   let best = 0;
@@ -37,20 +37,20 @@ function nearestIndex(value: number): number {
   return best;
 }
 
-interface DailyVolumeDialogProps {
+interface TargetLoadDialogProps {
   checkerId: string;
   currentValue: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function DailyVolumeDialog({
+export default function TargetLoadDialog({
   checkerId,
   currentValue,
   open,
   onOpenChange,
-}: DailyVolumeDialogProps) {
-  const update = useUpdateDailyVoteLimit(checkerId);
+}: TargetLoadDialogProps) {
+  const update = useUpdateTargetLoad(checkerId);
 
   const [index, setIndex] = useState(() => nearestIndex(currentValue));
   const [receiveAll, setReceiveAll] = useState(false);
@@ -160,7 +160,7 @@ export default function DailyVolumeDialog({
             </div>
           </div>
 
-          {/* Receive-all toggle — saves MAX_DAILY_VOTES */}
+          {/* Receive-all toggle — saves MAX_TARGET_DAILY_VOTES */}
           <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5">

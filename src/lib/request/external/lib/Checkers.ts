@@ -140,8 +140,8 @@ export class Checkers<SecurityDataType = unknown> extends HttpClient<SecurityDat
         accuracy: number;
         /** Number of reports associated with the checker */
         reports: number;
-        /** Max number of votes a checker is willing to get a day. */
-        maxDailyVotes: number;
+        /** The checker's preferred number of vote assignments a day. */
+        targetDailyVotes: number;
       },
       APIError
     >({

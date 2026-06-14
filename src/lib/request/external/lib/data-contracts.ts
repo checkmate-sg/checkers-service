@@ -162,8 +162,8 @@ export type Checker = BaseDocument & {
   getNameMessageId: string | null;
   /** Number of polls the Checker has been assigned to vote on today */
   dailyAssignmentCount: number;
-  /** Maximum number of votes a checker is willing to do today */
-  maxDailyVotes: number;
+  /** The checker's preferred number of vote assignments per day */
+  targetDailyVotes: number;
 };
 
 /** Representation of a update request for Checker details. */
@@ -174,7 +174,7 @@ export interface CheckerPatchRequest {
   /** Onboarding status of the Checker */
   onboardingStatus?: OnboardingStatus;
   dailyAssignmentCount?: number;
-  maxDailyVotes?: number;
+  targetDailyVotes?: number;
 }
 
 /** Representation of the Messages to be checked */

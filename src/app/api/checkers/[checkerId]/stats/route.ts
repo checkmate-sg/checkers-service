@@ -59,7 +59,7 @@ export async function GET(req: NextRequest, { params }) {
         voteCount,
         accuracy,
         reports: reportCount.count,
-        maxDailyVotes: checkerResult.data.maxDailyVotes,
+        targetDailyVotes: checkerResult.data.targetDailyVotes,
       },
       { status: 200 }
     );
