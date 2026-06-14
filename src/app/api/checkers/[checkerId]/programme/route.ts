@@ -24,6 +24,10 @@ export async function GET(req: NextRequest, { params }) {
 
     const { checkerId } = parsedParams.data;
 
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
+
     // Fetch Checker's data
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
 
@@ -104,6 +108,10 @@ export async function POST(req: NextRequest, { params }) {
     }
 
     const { checkerId } = parsedParams.data;
+
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
 
     // Fetch checker
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
