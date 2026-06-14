@@ -27,6 +27,7 @@ import {
 import { IconMenu2 } from "@tabler/icons-react";
 import { useGetCheckersProgrammeById } from "@/hooks/checkers/useGetCheckersProgramme";
 import { useGetCheckersById } from "@/hooks/checkers/useGetCheckersDetails";
+import DailyVolumeDialog from "@/components/dashboard/DailyVolumeDialog";
 
 import classes from "./TopHeader.module.css";
 
@@ -35,6 +36,9 @@ type TopHeaderProps = {
   logoSrc?: string;
   logoLabel?: string;
 };
+
+const menuItemClass =
+  "rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground";
 
 export default function TopHeader({
   title = "DASHBOARD",
@@ -49,6 +53,7 @@ export default function TopHeader({
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showBreakDialog, setShowBreakDialog] = useState(false);
+  const [showVolumeDialog, setShowVolumeDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasActiveProgramme = !!programmeData?.programme;
@@ -125,15 +130,15 @@ export default function TopHeader({
               >
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    onClick={handleToggleActive}
+                    className={menuItemClass}
+                    onClick={() => setShowVolumeDialog(true)}
                   >
+                    Choose target load
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className={menuItemClass} onClick={handleToggleActive}>
                     {isActive ? "Take a break" : "Resume checking"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="rounded-md px-2 py-2 text-md font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    onClick={handleStartNewProgramme}
-                  >
+                  <DropdownMenuItem className={menuItemClass} onClick={handleStartNewProgramme}>
                     Start new programme
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -149,6 +154,15 @@ export default function TopHeader({
           </div>
         </div>
       </div>
+
+      {session?.user?.id && (
+        <DailyVolumeDialog
+          checkerId={session.user.id}
+          currentValue={checkerData?.maxDailyVotes ?? 10}
+          open={showVolumeDialog}
+          onOpenChange={setShowVolumeDialog}
+        />
+      )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent className="max-w-[90vw] rounded-xl">
