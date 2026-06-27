@@ -61,6 +61,7 @@ export abstract class BasePollDistributor {
     const { pollId, text, imageUrl, limit } = load;
 
     const checkers = await this.getValidCheckers(pollId, limit);
+    console.log(`found ${checkers.length} checkers for distribution`);
 
     const results = await Promise.allSettled(
       checkers.map(checker => {

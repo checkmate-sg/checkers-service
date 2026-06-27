@@ -9,8 +9,10 @@ export class RedistributionPhaseDistributor extends BasePollDistributor {
   }
 
   protected async getValidCheckers(pollId: string, limit: number): Promise<CheckerAPI[]> {
+    console.log("starting redistribution logic for: ", pollId);
     const res = await this.db.findCheckersForRedistribution(pollId, limit);
-    if (!res.success || !res.data) {
+    if (!res.success) {
+      console.error(`failed to get results from db: ${res.error}`);
       return [];
     }
     return res.data;

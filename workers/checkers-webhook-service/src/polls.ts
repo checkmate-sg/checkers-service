@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import { Context } from "hono";
 
 import { InitialPhaseDistributor } from "@/shared/helpers/distributor/initial";
+import { PreviousDistributor } from "@/shared/helpers/distributor/prev";
 import type { PollRequest, PollAPI } from "./types";
 
 export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
@@ -126,7 +127,16 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
     }
 
     const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-    const distributor = new InitialPhaseDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE);
+
+    const CANARY_PROBABILITY = 0.3;
+
+    const distributor =
+      Math.random() < CANARY_PROBABILITY
+        ? new InitialPhaseDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE)
+        : new PreviousDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE);
+
+    console.log(`using distributor: ${distributor.constructor.name}`);
+
     const results = await distributor.distribute({
       pollId: insertResult.id!,
       text: text ?? null,
