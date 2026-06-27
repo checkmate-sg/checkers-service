@@ -8,7 +8,8 @@ export function getStartAndEndOfDaySGT() {
   const nowSGT = getCurrentSGT();
 
   const start = new Date(
-    Date.UTC(nowSGT.getUTCFullYear(), nowSGT.getUTCMonth(), nowSGT.getUTCDate(), 0, 0, 0)
+    Date.UTC(nowSGT.getUTCFullYear(), nowSGT.getUTCMonth(), nowSGT.getUTCDate(), 0, 0, 0, 0) -
+      SGT_OFFSET_MS
   );
 
   const end = new Date(start);
