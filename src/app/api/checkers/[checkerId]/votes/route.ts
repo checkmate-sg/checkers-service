@@ -21,6 +21,10 @@ export async function GET(req: NextRequest, { params }) {
 
     const { checkerId } = parsedParams.data;
 
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
+
     const rawQuery = Object.fromEntries(req.nextUrl.searchParams.entries());
 
     const parsedQuery = GetCheckerVotesQuerySchema.safeParse(rawQuery);

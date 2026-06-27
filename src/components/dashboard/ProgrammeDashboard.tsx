@@ -1,8 +1,6 @@
 import { Checker, ProgrammeProgressResponse } from "@/lib/request/external/lib/data-contracts";
 
 import { ProgressItem } from "../common/progress-item/ProgressItem";
-import { useUpdateDailyVoteLimit } from "@/hooks/checkers/useUpdateDailyVoteLimit";
-import EditableStatCard from "./EditableStatCard";
 
 interface ProgrammeDashboardProps {
   checker: Checker;
@@ -11,7 +9,6 @@ interface ProgrammeDashboardProps {
 
 export const ProgrammeDashboard = ({ checker, programme }: ProgrammeDashboardProps) => {
   const isProd = process.env.NODE_ENV === "production";
-  const updateDailyLimit = useUpdateDailyVoteLimit(checker._id);
 
   return (
     <div className="flex flex-col gap-y-4 p-4">
@@ -67,14 +64,6 @@ export const ProgrammeDashboard = ({ checker, programme }: ProgrammeDashboardPro
           </>
         }
       />
-      <EditableStatCard
-        name="max daily votes"
-        imgSrc="/votes.png"
-        initialValue={String(checker.maxDailyVotes)}
-        onSave={async v => {
-          await updateDailyLimit.mutateAsync(Number(v));
-        }}
-      ></EditableStatCard>
     </div>
   );
 };

@@ -24,6 +24,10 @@ export async function GET(req: NextRequest, { params }) {
 
     const { checkerId } = parsed.data;
 
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
+
     // Get checker for whatsappId
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
     if (!checkerResult.success || !checkerResult.data) {
@@ -55,7 +59,7 @@ export async function GET(req: NextRequest, { params }) {
         voteCount,
         accuracy,
         reports: reportCount.count,
-        maxDailyVotes: checkerResult.data.maxDailyVotes,
+        targetDailyVotes: checkerResult.data.targetDailyVotes,
       },
       { status: 200 }
     );

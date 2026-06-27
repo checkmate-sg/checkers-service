@@ -66,7 +66,7 @@ export function createNewChecker(
   getNameMessageId: null;
   dailyAssignmentCount: 0;
   currentProgrammeId: null;
-  maxDailyVotes: 10;
+  targetDailyVotes: 10;
 } {
   return {
     name: null,
@@ -91,6 +91,6 @@ export function createNewChecker(
     getNameMessageId: null,
     dailyAssignmentCount: 0,
     currentProgrammeId: null,
-    maxDailyVotes: 10,
+    targetDailyVotes: 10,
   };
 }

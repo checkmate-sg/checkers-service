@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { checkersAPI } from "@/lib/request/api";
 
-export function useUpdateDailyVoteLimit(checkerId: string) {
+export function useUpdateTargetLoad(checkerId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newVoteLimit: number) => {
-      await checkersAPI.checkersPartialUpdate(checkerId, { maxDailyVotes: newVoteLimit });
+    mutationFn: async (newTarget: number) => {
+      await checkersAPI.checkersPartialUpdate(checkerId, { targetDailyVotes: newTarget });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -21,7 +21,7 @@ export function useUpdateDailyVoteLimit(checkerId: string) {
       });
     },
     onError: err => {
-      console.log("error occured in vote update: ", err);
+      console.log("error occurred in target load update: ", err);
     },
   });
 }

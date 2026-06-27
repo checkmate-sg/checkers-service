@@ -189,14 +189,14 @@ paths:
                   reports:
                     type: integer
                     description: Number of reports associated with the checker
-                  maxDailyVotes:
+                  targetDailyVotes:
                     type: integer
-                    description: Max number of votes a checker is willing to get a day.
+                    description: The checker's preferred number of vote assignments a day.
                 required:
                   - voteCount
                   - accuracy
                   - reports
-                  - maxDailyVotes
+                  - targetDailyVotes
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '500':
@@ -711,10 +711,10 @@ components:
               type: integer
               description: >-
                 Number of polls the Checker has been assigned to vote on today
-            maxDailyVotes:
+            targetDailyVotes:
               type: integer
               description: >-
-                Maximum number of votes a checker is willing to do today
+                The checker's preferred number of vote assignments per day
           required:
             - name
             - telegramId
@@ -733,7 +733,7 @@ components:
             - lastVotedTimestamp
             - getNameMessageId
             - dailyAssignmentCount
-            - maxDailyVotes
+            - targetDailyVotes
     CheckerPatchRequest:
       description: Representation of a update request for Checker details. 
       type: object
@@ -750,7 +750,7 @@ components:
           $ref: '#/components/schemas/OnboardingStatus'
         dailyAssignmentCount:
           type: integer
-        maxDailyVotes:
+        targetDailyVotes:
           type: integer
       additionalProperties: false
       required: []

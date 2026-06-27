@@ -624,7 +624,7 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           $addFields: {
             remainingCapacity: {
               $subtract: [
-                { $ifNull: ["$maxDailyVotes", 10] },
+                { $ifNull: ["$targetDailyVotes", 10] },
                 { $ifNull: ["$dailyAssignmentCount", 0] },
               ],
             },
@@ -663,7 +663,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             isActive: true,
             onboardingStatus: "completed",
             $expr: {
-              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxDailyVotes", 10] }],
+              $lt: [
+                { $ifNull: ["$dailyAssignmentCount", 0] },
+                { $ifNull: ["$targetDailyVotes", 10] },
+              ],
             },
           },
         },
@@ -673,11 +676,11 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             currentProgrammeId: { $toString: "$currentProgrammeId" },
 
             dailyAssignmentCount: { $ifNull: ["$dailyAssignmentCount", 0] },
-            maxDailyVotes: { $ifNull: ["$maxDailyVotes", 10] },
+            targetDailyVotes: { $ifNull: ["$targetDailyVotes", 10] },
 
             remainingBudget: {
               $subtract: [
-                { $ifNull: ["$maxDailyVotes", 10] },
+                { $ifNull: ["$targetDailyVotes", 10] },
                 { $ifNull: ["$dailyAssignmentCount", 0] },
               ],
             },
@@ -722,7 +725,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
             isActive: true,
             onboardingStatus: "completed",
             $expr: {
-              $lt: [{ $ifNull: ["$dailyAssignmentCount", 0] }, { $ifNull: ["$maxDailyVotes", 10] }],
+              $lt: [
+                { $ifNull: ["$dailyAssignmentCount", 0] },
+                { $ifNull: ["$targetDailyVotes", 10] },
+              ],
             },
           },
         },
