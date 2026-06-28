@@ -57,8 +57,13 @@ export interface Checker extends BaseDocument {
   numVoted: number; // The number of polls the Checker has voted on
   lastVotedTimestamp: Date | null; // The time the Checker last voted
   getNameMessageId: string | null; // The message ID of the message the Checker used to set their name
-  dailyAssignmentCount: Number; // The number of polls the Checker has been assigned to vote on today
+  dailyAssignmentCount: number; // The number of polls the Checker has been assigned to vote on today
   currentProgrammeId: ObjectId | null; // Reference to the active Programme, null if not enrolled
+  // The checker's preferred daily number of vote assignments. Currently enforced
+  // as a hard cap by the distributor (dailyAssignmentCount < targetDailyVotes);
+  // the planned distribution rework will treat it as a target (topping up toward
+  // it) rather than only a ceiling.
+  targetDailyVotes: number;
 }
 
 // Message to be checked

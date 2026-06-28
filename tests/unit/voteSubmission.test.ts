@@ -272,6 +272,29 @@ describe("Vote Submission API Route", () => {
       expect(mockUpdateOneVote).not.toHaveBeenCalled();
     });
 
+    it("should allow truthScore null for non-info categories", async () => {
+      const request = createMockRequest({
+        category: "scam",
+        truthScore: null,
+      });
+
+      const response = await POST(request, {
+        params: Promise.resolve({ voteId: "vote-123" }),
+      });
+
+      expect(response.status).toBe(201);
+
+      expect(mockUpdateOneVote).toHaveBeenCalledWith(
+        { _id: "vote-123" },
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            category: "scam",
+            truthScore: null,
+          }),
+        })
+      );
+    });
+
     it("should return 401 if session has no user", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: null,

@@ -16,9 +16,19 @@
    * Run graduation sweep at 10:30 AM SGT (2:30 UTC)
    * Run inactivity checks at 8:11 PM SGT (12:11 UTC)
    * Run programme checks at 8:41 PM SGT (12:41 UTC)
+   * Weekly welcome message Tuesday 12:00 PM SGT (4:00 UTC Tuesday)
+   * Reset dailyAssignmentCount at 12:00 AM SGT (16:00 UTC previous day)
+   * Redistribute open polls every 3h, 9 AM–9 PM SGT (1,4,7,10,13 UTC)
    */
   "triggers": {
-    "crons": ["30 2 * * *", "11 12 * * *", "41 12 * * *", "0 4 * * 2"],
+    "crons": [
+      "30 2 * * *",
+      "11 12 * * *",
+      "41 12 * * *",
+      "0 4 * * 2",
+      "0 16 * * *",
+      "0 1,4,7,10,13 * * *",
+    ],
   },
   /**
    * Dev configuration

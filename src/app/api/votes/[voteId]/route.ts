@@ -9,6 +9,7 @@ import {
 } from "@/lib/helpers/events/publishCheckersEvent";
 import { Vote } from "@/lib/request/external/lib/data-contracts";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { GetVoteParamsSchema, UpdateVoteBodySchema } from "@/validation/votes";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -17,8 +18,15 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { voteId } = await params;
-    if (!voteId) return Err.badParams("Missing voteId parameter");
+    const resolvedParams = await params;
+
+    const parsedParams = GetVoteParamsSchema.safeParse(resolvedParams);
+
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid voteId parameter");
+    }
+
+    const { voteId } = parsedParams.data;
 
     const result = await env.CHECKERS_DB_SERVICE.findOneVote({
       _id: voteId,
@@ -42,16 +50,32 @@ export async function POST(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { voteId } = await params;
-    if (!voteId) return Err.badParams("Missing voteId parameter");
+    const resolvedParams = await params;
 
-    const body = await req.json();
+    const parsedParams = GetVoteParamsSchema.safeParse(resolvedParams);
 
-    if (!body || Object.keys(body).length === 0) {
-      return Err.badParams();
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid voteId parameter");
     }
 
-    const { category, truthScore, responseCategory, commentOnResponse, ...otherFields } = body;
+    const { voteId } = parsedParams.data;
+
+    let body: unknown;
+
+    try {
+      body = await req.json();
+    } catch {
+      return Err.badParams("Invalid JSON body");
+    }
+
+    const parsedBody = UpdateVoteBodySchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return Err.badParams(parsedBody.error.message);
+    }
+
+    const { category, truthScore, responseCategory, commentOnResponse, ...otherFields } =
+      parsedBody.data;
 
     const filter: Filter<Vote> = { _id: voteId };
 

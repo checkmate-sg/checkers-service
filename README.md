@@ -119,7 +119,7 @@ All day thresholds below are **configurable parameters** read from a Cloudflare 
 
 ## Database Models
 
-- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`), and **daily-assignment fields** (`maxDailyVotes` — how many messages this checker is willing to be assigned per day, default 10; `dailyAssignmentCount` — how many they've been assigned today, reset to 0 nightly)
+- **Checker**: User profile, onboarding status, vote stats, lifecycle fields (`lastActivatedDate`, `lastInactivityWarningSent`, `offboardingTime`, `hasReceivedExtension`, `hasCompletedProgramme`), and **daily-assignment fields** (`targetDailyVotes` — the checker's preferred number of messages to be assigned per day, default 10 (currently enforced as a cap; see the engine notes below); `dailyAssignmentCount` — how many they've been assigned today, reset to 0 nightly)
 - **Poll**: Message content (`text`/`imageUrl`/`caption`), AI responses (longform, shortform, human), `isReport` flag, crowd-sourced category/truth score
 - **Vote**: Individual vote with category, truth score, response rating, A/B test flag (`showNoteAfterVote`), and `telegramMessageId` linking it to the notification sent to the checker
 - **Programme**: Checker enrollment with targets (votes, accuracy, reports), status tracking
@@ -148,9 +148,9 @@ The logic lives in `shared/helpers/distributor/` and is shared by two workers (t
 
 #### Daily budget
 
-Each checker has a `maxDailyVotes` cap (default **10**) and a running `dailyAssignmentCount`. A checker is only handed a new message while they still have budget left. A cron resets every active checker's count to 0 at **midnight SGT**, so budgets refill each day.
+Each checker has a `targetDailyVotes` cap (default **10**) and a running `dailyAssignmentCount`. A checker is only handed a new message while they still have budget left (`dailyAssignmentCount < targetDailyVotes`). A cron resets every active checker's count to 0 at **midnight SGT**, so budgets refill each day.
 
-> ⚠️ **Known inconsistency in the code:** redistribution correctly compares `dailyAssignmentCount` against each checker's `maxDailyVotes`, but the _initial_ distribution query (`findCheckersWithBudget`) gates on a `maxTarget` field that does not exist in the `Checker` schema. Because of the `$ifNull` fallback, the initial pass currently caps every checker at a flat **10** rather than honouring their personal `maxDailyVotes`. See [Known Issues](#known-issues--todos).
+> **Note:** `targetDailyVotes` is named for its intended future role — a _target_ the distributor tops up toward. Today it is still enforced only as a **cap** (a ceiling, not a floor); the planned distribution rework will add under-target top-ups.
 
 #### Two phases
 
@@ -325,6 +325,17 @@ curl -X POST http://localhost:9083/polls/webhook \
 
 In Compass, a new row should appear in `polls`, plus one row per **assigned** checker in `votes` — i.e. active, onboarded checkers who still have daily budget (with `votedTimestamp: null` until the checker votes). Note this is a fair share of checkers, not necessarily everyone; see [Vote Distribution Engine](#vote-distribution-engine).
 
+### Signing in locally
+
+In local dev, Telegram `initData` verification is bypassed and the app **signs you in as a real checker from the dev DB**, matched by `LOCAL_DEV_TELEGRAM_ID` (set in `.env.development.local`).
+
+A checker with that `telegramId` **must already exist** in the dev DB. If none is found, sign-in fails cleanly (you'll land on `/unauthorized` and see an actionable message in the worker logs) rather than logging you in as a phantom user. To get a checker:
+
+- point `LOCAL_DEV_TELEGRAM_ID` at the `telegramId` of an existing checker in the (shared) dev DB, **or**
+- onboard a new one through the Telegram bot (`/onboard`).
+
+> There is no fallback "guest" user: a synthetic id is not a valid Mongo `ObjectId`, so it would `500` every checker API call once the DB service tries to convert it.
+
 ### Worker Ports
 
 | Worker                          | HTTP Port | Description                         |
@@ -396,5 +407,5 @@ Run `pnpm test` to execute unit tests.
 
 **Vote Distribution Engine** (see section above):
 
-- `findCheckersWithBudget` (initial distribution) references a non-existent `maxTarget` field instead of `maxDailyVotes`, so the initial pass caps every checker at a flat 10 regardless of their configured limit.
+- `targetDailyVotes` is currently enforced only as a cap, not a target — checkers who fall well short of their chosen number aren't topped up. Reframing the distribution to honour it as a target (and adding a "receive every check" cohort) is planned work; see PR #162 discussion.
 - `StateRunner` is a single shared instance on `BasePollDistributor` whose `executed` array is mutated while all checkers' assignments run concurrently (`Promise.allSettled`). Under parallel load the rollback bookkeeping can replay or skip the wrong states. A `StateRunner` should be instantiated per assignment.

@@ -7,6 +7,7 @@ import {
   getResponseCategoryCountsByPollId,
 } from "@/shared/helpers/voteAssessment";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { GetPollParamsSchema } from "@/validation/polls";
 
 export async function GET(req: NextRequest, { params }) {
   // Get and calculate the results/statistics for a specific poll by _id
@@ -17,8 +18,14 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { id } = await params;
-    if (!id) return Err.badParams("Missing id parameter");
+    const resolvedParams = await params;
+
+    const parsedParams = GetPollParamsSchema.safeParse(resolvedParams);
+    if (!parsedParams.success) {
+      return Err.badParams("Invalid poll id");
+    }
+
+    const { id } = parsedParams.data;
 
     const categoryCountResult = await getCategoryCountsByPollId(env.CHECKERS_DB_SERVICE, id);
     if ("error" in categoryCountResult) return Err.internal(categoryCountResult.error);

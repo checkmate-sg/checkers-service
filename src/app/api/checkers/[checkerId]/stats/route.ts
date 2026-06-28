@@ -5,6 +5,7 @@ import { Err } from "@/lib/api/error";
 import { getReportCount } from "@/lib/helpers/getReportCount";
 import { computeAccuracyPercentage } from "@/shared/helpers/scoring";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { GetCheckerStatsParamsSchema } from "@/validation/checker";
 
 export async function GET(req: NextRequest, { params }) {
   const { env } = getCloudflareContext();
@@ -13,9 +14,19 @@ export async function GET(req: NextRequest, { params }) {
     const session = await auth();
     if (!session?.user) return Err.unauthorized();
 
-    const { checkerId } = await params;
+    const resolvedParams = await params;
 
-    if (!checkerId) return Err.badParams("Missing checkerId parameter");
+    const parsed = GetCheckerStatsParamsSchema.safeParse(resolvedParams);
+
+    if (!parsed.success) {
+      return Err.badParams("Invalid checkerId parameter");
+    }
+
+    const { checkerId } = parsed.data;
+
+    if (checkerId.toString() !== session.user.id) {
+      return Err.unauthorized();
+    }
 
     // Get checker for whatsappId
     const checkerResult = await env.CHECKERS_DB_SERVICE.findOneChecker({ _id: checkerId });
@@ -48,6 +59,7 @@ export async function GET(req: NextRequest, { params }) {
         voteCount,
         accuracy,
         reports: reportCount.count,
+        targetDailyVotes: checkerResult.data.targetDailyVotes,
       },
       { status: 200 }
     );
