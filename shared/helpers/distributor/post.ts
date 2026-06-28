@@ -15,6 +15,6 @@ export class RedistributionPhaseDistributor extends BasePollDistributor {
       console.error(`failed to get results from db: ${res.error}`);
       return [];
     }
-    return res.data;
+    return res.data ?? [];
   }
 }
