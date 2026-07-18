@@ -397,6 +397,19 @@ pnpm deploy     # Deploy to Cloudflare
 
 Run `pnpm test` to execute unit tests.
 
+### Testing vote distribution in staging
+
+Staging has too few real checkers to exercise the distribution engine. Use `scripts/seed-synthetic-checkers.js` to plant marked (`isSynthetic: true`) checker documents with varied budgets: 35+ bulk checkers so the out-of-window top-30 selection is observable, deliberately invalid Telegram IDs to exercise rollback, an at-cap checker that must never be assigned, and (optionally) checkers pointing at your own Telegram ID for end-to-end delivery.
+
+```bash
+# Reads MONGODB_URI from .env.staging at the repo root
+node scripts/seed-synthetic-checkers.js seed --real-telegram-id <your-telegram-id>
+node scripts/seed-synthetic-checkers.js deactivate   # exclude from all pipelines, keep docs
+node scripts/seed-synthetic-checkers.js cleanup      # remove the checkers and their votes
+```
+
+Then fire test polls at the staging webhook (see [Testing the Poll Webhook](#testing-the-poll-webhook)) and verify via the response tallies, `wrangler tail`, and the database. Mind two staging quirks: the fast inactivity parameters (`INACTIVITY_DEACTIVATION_DAYS` ≈ 30 minutes) deactivate seeded checkers holding uncast votes at the daily 8:11 PM SGT sweep, and casting votes can assess a poll early (removing it from redistribution) because consensus thresholds scale with the assignment count.
+
 ## Known Issues / TODOs
 
 - Dashboard messages sent uses checkers num referred, may not be the actual number of WhatsApp messages sent

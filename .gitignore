@@ -35,5 +35,6 @@ dist-ssr
 tsconfig.tsbuildinfo
 
 # Local scripts (test data, utilities)
-scripts/
+scripts/*
+!scripts/seed-synthetic-checkers.js
 parameters/
