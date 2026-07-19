@@ -9,6 +9,7 @@ import {
   ProgrammeAPI,
   VoteAPI,
 } from "@/shared/types/schema";
+import { MAX_TARGET_DAILY_VOTES } from "@/shared/constants";
 
 import { VoteFilter } from "./types";
 
@@ -672,9 +673,6 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         },
         {
           $addFields: {
-            _id: { $toString: "$_id" },
-            currentProgrammeId: { $toString: "$currentProgrammeId" },
-
             dailyAssignmentCount: { $ifNull: ["$dailyAssignmentCount", 0] },
             targetDailyVotes: { $ifNull: ["$targetDailyVotes", 10] },
 
@@ -687,12 +685,27 @@ export class DatabaseDurableObject extends DurableObject<Env> {
           },
         },
         {
-          $sort: {
-            remainingBudget: -1,
+          // "Receive every check" (target == MAX_TARGET_DAILY_VOTES) is a promise
+          // the dashboard makes, so those checkers bypass the top-N competition;
+          // everyone else ranks by remaining budget for the N slots.
+          $facet: {
+            receiveAll: [{ $match: { targetDailyVotes: { $gte: MAX_TARGET_DAILY_VOTES } } }],
+            topN: [
+              { $match: { targetDailyVotes: { $lt: MAX_TARGET_DAILY_VOTES } } },
+              { $sort: { remainingBudget: -1 } },
+              { $limit: limit },
+            ],
           },
         },
+        { $project: { checkers: { $concatArrays: ["$receiveAll", "$topN"] } } },
+        { $unwind: "$checkers" },
+        { $replaceRoot: { newRoot: "$checkers" } },
+        { $project: { remainingBudget: 0 } },
         {
-          $limit: limit,
+          $addFields: {
+            _id: { $toString: "$_id" },
+            currentProgrammeId: { $toString: "$currentProgrammeId" },
+          },
         },
       ];
 

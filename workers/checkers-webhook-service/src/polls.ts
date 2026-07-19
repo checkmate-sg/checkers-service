@@ -128,10 +128,22 @@ export async function handlePollWebhook(c: Context<{ Bindings: Env }>) {
 
     const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
-    const CANARY_PROBABILITY = 0.3;
+    // Share of polls routed to the new InitialPhaseDistributor. Configured per
+    // environment via the CANARY_PROBABILITY var: 0 disables the canary, 1
+    // routes every poll through it (the graduation setting). Blank counts as
+    // unset, not 0 — Number("") is 0, which would silently disable the canary.
+    const rawProbability = env.CANARY_PROBABILITY?.trim();
+    const parsedProbability = rawProbability ? Number(rawProbability) : NaN;
+    const canaryProbability =
+      Number.isFinite(parsedProbability) && parsedProbability >= 0 && parsedProbability <= 1
+        ? parsedProbability
+        : 0.3;
+    if (rawProbability && canaryProbability !== parsedProbability) {
+      console.warn(`Invalid CANARY_PROBABILITY "${env.CANARY_PROBABILITY}", falling back to 0.3`);
+    }
 
     const distributor =
-      Math.random() < CANARY_PROBABILITY
+      Math.random() < canaryProbability
         ? new InitialPhaseDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE)
         : new PreviousDistributor(env.HOST_URL, bot, env.CHECKERS_DB_SERVICE);
 
