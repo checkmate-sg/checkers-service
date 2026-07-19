@@ -18,6 +18,8 @@
  *             Their telegram IDs are fake too, so their assignments also roll back by design:
  *             selection behaviour is verified from the webhook response tallies/contexts, not
  *             from surviving votes, and their budget counters stay at the seeded values.
+ *   receive-all - targetDailyVotes 100 (the sentinel), fake IDs; must be included in
+ *             every initial distribution, including the out-of-window top-N phase
  *   at-cap  - dailyAssignmentCount == targetDailyVotes; must never be selected
  */
 
@@ -170,6 +172,11 @@ function buildCheckers() {
     if (i % 10 === 9) delete checker.targetDailyVotes;
     checkers.push(checker);
   }
+
+  // Receive-all sentinel (fake IDs): must be included in every initial
+  // distribution, including the out-of-window top-N phase.
+  checkers.push(baseChecker("receive-all-1", "8888777001", { targetDailyVotes: 100 }));
+  checkers.push(baseChecker("receive-all-2", "8888777002", { targetDailyVotes: 100 }));
 
   // Already at cap: must never be assigned.
   checkers.push(

@@ -420,5 +420,6 @@ Then fire test polls at the staging webhook (see [Testing the Poll Webhook](#tes
 
 **Vote Distribution Engine** (see section above):
 
-- `targetDailyVotes` is currently enforced only as a cap, not a target — checkers who fall well short of their chosen number aren't topped up. Reframing the distribution to honour it as a target (and adding a "receive every check" cohort) is planned work; see PR #162 discussion.
+- `targetDailyVotes` is currently enforced only as a cap, not a target — checkers who fall well short of their chosen number aren't topped up. Reframing the distribution to honour it as a target is planned work; see PR #162 discussion. (The "receive every check" sentinel of 100 _is_ honoured by initial distribution: those checkers are always included, even in the out-of-window top-N phase.)
+- Redistribution top-ups rank candidates by remaining capacity but do not hard-filter on it, so when a poll still needs votes and every under-target checker has already seen it, checkers can be assigned past their daily target. Deliberate trade-off (reaching 30 votes wins); revisit in the target-as-top-up rework.
 - `StateRunner` is a single shared instance on `BasePollDistributor` whose `executed` array is mutated while all checkers' assignments run concurrently (`Promise.allSettled`). Under parallel load the rollback bookkeeping can replay or skip the wrong states. A `StateRunner` should be instantiated per assignment.

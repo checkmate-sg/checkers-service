@@ -6,5 +6,7 @@ export const MIN_TARGET_DAILY_VOTES = 5;
 // Upper bound for a checker's daily target. Doubles as the "receive every check"
 // sentinel: the dashboard slider only emits 5/10/20/30/50, so a stored value of
 // MAX_TARGET_DAILY_VOTES unambiguously marks a receive-all checker. 100 is a
-// practical stand-in for "all" — exceeding it daily is unlikely.
+// practical stand-in for "all" — exceeding it daily is unlikely. The initial
+// distributor honours the sentinel: checkers at this value are always included,
+// even in the out-of-window top-N phase (see findTopNCheckersWithBudget).
 export const MAX_TARGET_DAILY_VOTES = 100;
