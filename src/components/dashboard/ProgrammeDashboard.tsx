@@ -9,6 +9,7 @@ interface ProgrammeDashboardProps {
 
 export const ProgrammeDashboard = ({ checker, programme }: ProgrammeDashboardProps) => {
   const isProd = process.env.NODE_ENV === "production";
+
   return (
     <div className="flex flex-col gap-y-4 p-4">
       <h6 className="text-orange-600 text-lg font-semibold">

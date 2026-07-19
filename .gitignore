@@ -35,5 +35,7 @@ dist-ssr
 tsconfig.tsbuildinfo
 
 # Local scripts (test data, utilities)
-scripts/
+scripts/*
+!scripts/seed-synthetic-checkers.js
+!scripts/backfill-target-daily-votes.js
 parameters/

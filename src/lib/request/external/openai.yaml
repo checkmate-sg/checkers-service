@@ -45,7 +45,37 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-          
+    patch:
+      summary: "Update checker details"
+      description: |
+        Partially updates checker fields such as name, whatsappId, or dailyAssignmentCount
+      tags:
+        - Checkers
+      parameters:
+        - name: checkerId
+          in: path
+          description: Checker ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckerPatchRequest' 
+      responses:
+        '200':
+          description: Successfully updated checker details
+          content:
+            application/json:
+              modifiedCount: integer
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError' 
   '/checkers/{checkerId}/votes':
     get:
       summary: Retrieves ALL the Votes details based on checkerId
@@ -159,10 +189,14 @@ paths:
                   reports:
                     type: integer
                     description: Number of reports associated with the checker
+                  targetDailyVotes:
+                    type: integer
+                    description: The checker's preferred number of vote assignments a day.
                 required:
                   - voteCount
                   - accuracy
                   - reports
+                  - targetDailyVotes
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '500':
@@ -677,6 +711,10 @@ components:
               type: integer
               description: >-
                 Number of polls the Checker has been assigned to vote on today
+            targetDailyVotes:
+              type: integer
+              description: >-
+                The checker's preferred number of vote assignments per day
           required:
             - name
             - telegramId
@@ -695,6 +733,27 @@ components:
             - lastVotedTimestamp
             - getNameMessageId
             - dailyAssignmentCount
+            - targetDailyVotes
+    CheckerPatchRequest:
+      description: Representation of a update request for Checker details. 
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        whatsappId:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        onboardingStatus:
+          $ref: '#/components/schemas/OnboardingStatus'
+        dailyAssignmentCount:
+          type: integer
+        targetDailyVotes:
+          type: integer
+      additionalProperties: false
+      required: []
     Poll:
       description: >-
         Representation of the Messages to be checked

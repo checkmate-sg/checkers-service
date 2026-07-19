@@ -10,7 +10,9 @@ import { handleVoteSubmitted } from "./handlers/queue/onVoteSubmitted";
 import { runGraduationSweep } from "./handlers/scheduled/graduation";
 import { runInactivityChecks } from "./handlers/scheduled/inactivity";
 import { runProgrammeChecks } from "./handlers/scheduled/programme";
+import { runDailyAssignmentReset } from "./handlers/scheduled/dailyAssignment";
 import { runWeeklyWelcomeMessage } from "./handlers/scheduled/welcomeMessage";
+import { runRedistribution } from "./handlers/scheduled/distribute";
 import type {
   AssessmentCompleteData,
   CertificateRequestedData,
@@ -142,6 +144,16 @@ export default class extends WorkerEntrypoint<Env> {
     // 12:00 PM SGT (4:00 UTC) every Tuesday - Weekly welcome message
     if (cron === "0 4 * * 2") {
       await runWeeklyWelcomeMessage(this.env, adminBot);
+    }
+
+    // 12:00 AM SGT (16:00 UTC) - Reset daily assignment counts
+    if (cron === "0 16 * * *") {
+      await runDailyAssignmentReset(this.env);
+    }
+
+    // Runs every 3 hours from 9:00 AM SGT to 9:00 PM SGT daily - run redistribution for open polls
+    if (cron === "0 1,4,7,10,13 * * *") {
+      await runRedistribution(this.env, bot);
     }
 
     console.log("Batch job completed");
