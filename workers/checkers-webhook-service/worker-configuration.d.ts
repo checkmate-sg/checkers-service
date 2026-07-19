@@ -38,6 +38,7 @@ interface Env {
   WHATSAPP_BOT_LINK: string;
   CHECKERS_GROUP_LINK: string;
   ENVIRONMENT?: string;
+  CANARY_PROBABILITY?: string;
   WHATSAPP_ADHOC_MESSAGE_QUEUE: Queue<WhatsAppAdhocMessage>;
   WHATSAPP_MESSAGE_SERVICE: WhatsAppMessageService;
   TYPEFORM_SECRET_TOKEN: string;

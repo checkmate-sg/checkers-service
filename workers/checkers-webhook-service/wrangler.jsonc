@@ -71,6 +71,7 @@
     "HOST_URL": "https://checkmate-checkers-local.tanbingwen.com",
     "TYPEFORM_URL": "https://better-sg.typeform.com/to/MlihTUDx",
     "WHATSAPP_BOT_LINK": "https://wa.me/15556491968",
+    "CANARY_PROBABILITY": "0.3",
   },
   "env": {
     "staging": {
@@ -86,6 +87,7 @@
         "HOST_URL": "https://checkers.staging.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/mlWViHgR",
         "WHATSAPP_BOT_LINK": "https://ref.staging.checkmate.sg/add",
+        "CANARY_PROBABILITY": "0.3",
       },
       "kv_namespaces": [
         {
@@ -145,6 +147,7 @@
         "HOST_URL": "https://checkers.checkmate.sg",
         "TYPEFORM_URL": "https://better-sg.typeform.com/to/ySRoY4Ms",
         "WHATSAPP_BOT_LINK": "https://ref.checkmate.sg/add",
+        "CANARY_PROBABILITY": "0.3",
       },
       "kv_namespaces": [
         {
