@@ -599,7 +599,10 @@ export class DatabaseDurableObject extends DurableObject<Env> {
       const pollObjectId = new ObjectId(pollId);
 
       const pipeline = [
-        { $match: { isActive: true, onboardingStatus: "completed" } },
+        // Select on isOnboardingComplete, not onboardingStatus: legacy docs carry
+        // statuses like "number"/"offboarded" while still being fully onboarded,
+        // and reactivation only restores isActive (2026-07 distribution incident).
+        { $match: { isActive: true, isOnboardingComplete: true } },
         {
           $lookup: {
             from: "votes",
@@ -662,7 +665,8 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         {
           $match: {
             isActive: true,
-            onboardingStatus: "completed",
+            // isOnboardingComplete, not onboardingStatus — see findCheckersForRedistribution note.
+            isOnboardingComplete: true,
             $expr: {
               $lt: [
                 { $ifNull: ["$dailyAssignmentCount", 0] },
@@ -736,7 +740,8 @@ export class DatabaseDurableObject extends DurableObject<Env> {
         {
           $match: {
             isActive: true,
-            onboardingStatus: "completed",
+            // isOnboardingComplete, not onboardingStatus — see findCheckersForRedistribution note.
+            isOnboardingComplete: true,
             $expr: {
               $lt: [
                 { $ifNull: ["$dailyAssignmentCount", 0] },
