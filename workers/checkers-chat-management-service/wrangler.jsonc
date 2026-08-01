@@ -81,7 +81,7 @@
       "vars": {
         "AI_GATEWAY_ID": "checkmate-checkers-admin-nonprod",
         "AI_MODEL": "@cf/zai-org/glm-4.7-flash",
-        "FAQ_SHADOW_MODE": "true",
+        "FAQ_SHADOW_MODE": "false",
       },
       "ai": {
         "binding": "AI",
@@ -110,7 +110,7 @@
       "vars": {
         "AI_GATEWAY_ID": "checkmate-checkers-admin",
         "AI_MODEL": "@cf/zai-org/glm-4.7-flash",
-        "FAQ_SHADOW_MODE": "true",
+        "FAQ_SHADOW_MODE": "false",
       },
       "ai": {
         "binding": "AI",
