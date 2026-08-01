@@ -1,0 +1,132 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "checkers-chat-management-service",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  /**
+   * Cron Triggers
+   * FAQ sweep every 15 minutes. Each run answers only questions that have gone
+   * unanswered by a human for FAQ_GRACE_PERIOD_MINUTES, so the cadence here is
+   * the polling granularity, not how fast the bot speaks.
+   */
+  "triggers": {
+    "crons": ["*/15 * * * *"],
+  },
+  /**
+   * Dev configuration
+   */
+  "dev": {
+    "port": 9084,
+  },
+  /**
+   * Workers AI, routed through AI Gateway for logging, analytics and cost
+   * tracking. The gateway name is per-environment (see vars below).
+   */
+  "ai": {
+    "binding": "AI",
+  },
+  /**
+   * Durable message log lives in Mongo behind the DB worker, alongside every
+   * other collection, rather than in a store of its own.
+   *
+   * Note: reaching BigQuery is a separate step owned by the data-app repo's
+   * pipeline, not by anything here — see the README.
+   */
+  "services": [
+    {
+      "binding": "CHECKERS_DB_SERVICE",
+      "service": "checkers-db-service",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+      "id": "bfe4ce71ed084aff83f9042381e2daaf",
+    },
+  ],
+  "vars": {
+    "AI_GATEWAY_ID": "checkmate-checkers-admin-nonprod",
+    "AI_MODEL": "@cf/zai-org/glm-4.7-flash",
+    /* Log the intended reply instead of posting it.
+       Top-level vars apply to local `wrangler dev` only — CI always deploys
+       with --env, so staging and production use their own blocks below.
+       Defaults to "true" because local dev uses a REAL bot token and a REAL
+       chat id from .dev.vars, and `pnpm dev` runs with --test-scheduled.
+       Note: wrangler vars override .dev.vars, so flip it HERE to test posting. */
+    "FAQ_SHADOW_MODE": "true",
+  },
+  /**
+   * Environment Variables (secrets set via wrangler secret put)
+   * - TELEGRAM_ADMIN_BOT_TOKEN: admin bot token (reads + posts in the group)
+   * - TELEGRAM_ADMIN_WEBHOOK_SECRET: secret_token passed to setWebhook
+   * - CHECKERS_CHAT_ID: Telegram group chat ID for the checkers community
+   */
+  "env": {
+    "staging": {
+      "name": "checkers-chat-management-service-staging",
+      "routes": [
+        {
+          "pattern": "admin-notifications.staging.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
+      "vars": {
+        "AI_GATEWAY_ID": "checkmate-checkers-admin-nonprod",
+        "AI_MODEL": "@cf/zai-org/glm-4.7-flash",
+        "FAQ_SHADOW_MODE": "false",
+      },
+      "ai": {
+        "binding": "AI",
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service-staging",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "52f365580a3f42b780ddee24c1f5091b",
+        },
+      ],
+    },
+    "production": {
+      "name": "checkers-chat-management-service",
+      "routes": [
+        {
+          "pattern": "admin-notifications.checkmate.sg",
+          "custom_domain": true,
+        },
+      ],
+      "vars": {
+        "AI_GATEWAY_ID": "checkmate-checkers-admin",
+        "AI_MODEL": "@cf/zai-org/glm-4.7-flash",
+        "FAQ_SHADOW_MODE": "false",
+      },
+      "ai": {
+        "binding": "AI",
+      },
+      "services": [
+        {
+          "binding": "CHECKERS_DB_SERVICE",
+          "service": "checkers-db-service",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CHECKMATE_CHECKERS_PARAMETERS_KV",
+          "id": "bfe4ce71ed084aff83f9042381e2daaf",
+        },
+      ],
+    },
+  },
+}

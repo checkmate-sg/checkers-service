@@ -21,6 +21,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "setup-webhook": "node scripts/setup-webhook.js",
+    "eval:faq": "node scripts/eval-faq.js",
     "upload-parameters:local": "node scripts/upload-parameters.js local",
     "upload-parameters:staging": "node scripts/upload-parameters.js staging",
     "upload-parameters:production": "node scripts/upload-parameters.js production",

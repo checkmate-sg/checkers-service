@@ -1,0 +1,115 @@
+{
+  "_comment": "Prompt eval set for the group-chat FAQ bot. Run against the real model via `pnpm eval:faq` with `pnpm dev` running in the worker directory. These are NOT unit tests — they call Workers AI and cost (a trivial amount of) money. Messages are deliberately worded differently from the phrasings in parameters/faqs.json: matching the canonical wording proves nothing, matching a paraphrase is the actual job. Expected values encode judgement calls; when the model disagrees, decide whether the prompt is wrong or the expectation is.",
+  "cases": [
+    {
+      "name": "volunteer hours — paraphrased, not the canonical wording",
+      "message": "my hours still aren't showing up on giving.sg, anyone know why?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "volunteer-hours" }
+    },
+    {
+      "name": "volunteer hours — asked without a question mark",
+      "message": "finished the programme ages ago but still no hours credited",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "volunteer-hours" }
+    },
+    {
+      "name": "reports — paraphrased, mentions the wrong bot",
+      "message": "I keep sending scam texts to the telegram bot but my report count never goes up",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "report-not-counted" }
+    },
+    {
+      "name": "reports — how do I even report",
+      "message": "whats the right way to send in a scam message I got?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "report-not-counted" }
+    },
+    {
+      "name": "timesheet — paraphrased, gives a reason rather than naming the doc",
+      "message": "school needs proof of my volunteering, who do I ask for that?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "volunteer-timesheet" }
+    },
+    {
+      "name": "not receiving messages to vote on",
+      "message": "haven't been sent anything to vote on for about a week now, is that normal?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "problem-with-checkmate" }
+    },
+    {
+      "name": "votes missing from leaderboard",
+      "message": "voted on a bunch yesterday but the leaderboard hasn't moved at all",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "problem-with-checkmate" }
+    },
+    {
+      "name": "timesheet and hours are different entries — should not be confused",
+      "message": "who do I ping to get a timesheet?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "volunteer-timesheet" }
+    },
+    {
+      "name": "not covered — accuracy scoring is no longer an FAQ",
+      "message": "how exactly is my accuracy score worked out?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "none" }
+    },
+    {
+      "name": "not covered — expenses",
+      "message": "can I claim transport reimbursement for the volunteer meetup next month?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "none" }
+    },
+    {
+      "name": "not covered — adjacent to reports but a different question",
+      "message": "who decides whether something counts as a scam or just spam?",
+      "following": [],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "none" }
+    },
+    {
+      "name": "statement, not a question",
+      "message": "just finished my 50th vote today, feeling good about it",
+      "following": [],
+      "expect": { "isQuestion": false }
+    },
+    {
+      "name": "greeting is not a question",
+      "message": "morning everyone, hope you all had a good weekend",
+      "following": [],
+      "expect": { "isQuestion": false }
+    },
+    {
+      "name": "thanks is not a question",
+      "message": "thanks so much for clarifying that, really helpful",
+      "following": [],
+      "expect": { "isQuestion": false }
+    },
+    {
+      "name": "answered casually, without the reply feature",
+      "message": "when do the volunteer hours actually show up on giving.sg?",
+      "following": [
+        {
+          "userName": "admin_jo",
+          "text": "giving.sg only credits them at the end of the year, it's a limitation on their side"
+        }
+      ],
+      "expect": { "isQuestion": true, "alreadyAnswered": true }
+    },
+    {
+      "name": "me-too and good-question are not answers",
+      "message": "when do the volunteer hours actually show up on giving.sg?",
+      "following": [
+        { "userName": "checker_amy", "text": "same here, mine aren't showing either" },
+        { "userName": "checker_ben", "text": "good question" }
+      ],
+      "expect": { "isQuestion": true, "alreadyAnswered": false, "faqId": "volunteer-hours" }
+    },
+    {
+      "name": "partial answer still counts as answered",
+      "message": "how do I get a timesheet for my hours?",
+      "following": [{ "userName": "admin_jo", "text": "ping @g38937, they handle those" }],
+      "expect": { "isQuestion": true, "alreadyAnswered": true }
+    }
+  ]
+}

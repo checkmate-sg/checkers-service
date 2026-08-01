@@ -2,6 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import { Filter, MongoClient, ObjectId, UpdateFilter } from "mongodb";
 
 import {
+  ChatMessageAPI,
   CheckerAPI,
   Leaderboard,
   LeaderboardAPI,
@@ -121,6 +122,109 @@ export class DatabaseDurableObject extends DurableObject<Env> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       console.error({ error, errorMessage, programme }, "Failed to insert programme");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Record a community group-chat message.
+   *
+   * Upsert on (chatId, messageId) rather than insert: Telegram retries webhook
+   * deliveries it did not get a 2xx for, so the same message can legitimately
+   * arrive twice and must not become two rows in the analysis corpus.
+   */
+  async upsertChatMessage(
+    message: Omit<ChatMessageAPI, "_id">
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+
+      await db
+        .collection("chatMessages")
+        .updateOne(
+          { chatId: message.chatId, messageId: message.messageId },
+          { $setOnInsert: { ...message, _id: new ObjectId() } },
+          { upsert: true }
+        );
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, message }, "Failed to upsert chat message");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Chat messages in a window, newest last.
+   *
+   * Returns everything in the window, not just unprocessed messages: the FAQ
+   * sweep needs the replies too, since a reply is how it knows a human already
+   * answered a question.
+   */
+  async findChatMessagesSince(
+    chatId: string,
+    sinceISO: string
+  ): Promise<{ success: boolean; data?: ChatMessageAPI[]; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+
+      const result = await db
+        .collection("chatMessages")
+        .aggregate([
+          { $match: { chatId, sentAt: { $gte: new Date(sinceISO) } } },
+          { $sort: { sentAt: 1 } },
+          { $addFields: { _id: { $toString: "$_id" } } },
+        ])
+        .toArray();
+
+      return { success: true, data: JSON.parse(JSON.stringify(result)) as ChatMessageAPI[] };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, chatId }, "Failed to find chat messages");
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Record that the FAQ sweep has dealt with a message.
+   *
+   * Always called once the sweep has looked at a message, whatever it decided —
+   * an unstamped message is retried on the next run.
+   */
+  async markChatMessageProcessed(
+    chatId: string,
+    messageId: number,
+    outcome: NonNullable<ChatMessageAPI["faqOutcome"]>,
+    faqId: string | null = null,
+    // Corrections (e.g. "answered" -> "send-failed") must be able to overwrite
+    // a claim this sweep already made. Everything else claims conditionally.
+    force = false
+  ): Promise<{ success: boolean; claimed?: boolean; error?: string }> {
+    try {
+      await this.connectPromise;
+      const db = this.client.db(DB_NAME);
+
+      // Conditional on faqProcessedAt still being null: this is what arbitrates
+      // between overlapping sweeps. A slow run (retries and backoff can push one
+      // past the 15-minute cron) would otherwise let two sweeps both decide to
+      // answer the same message, and both post.
+      const filter = force ? { chatId, messageId } : { chatId, messageId, faqProcessedAt: null };
+
+      const result = await db.collection("chatMessages").updateOne(filter, {
+        $set: {
+          faqProcessedAt: new Date(),
+          faqOutcome: outcome,
+          answeredWithFaqId: faqId,
+        },
+      });
+
+      return { success: true, claimed: result.modifiedCount === 1 };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error({ error, errorMessage, chatId, messageId }, "Failed to mark chat message");
       return { success: false, error: errorMessage };
     }
   }
