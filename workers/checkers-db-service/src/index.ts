@@ -1,4 +1,4 @@
-import { CheckerAPI, PollAPI, ProgrammeAPI, VoteAPI } from "@/shared/types/schema";
+import { ChatMessageAPI, CheckerAPI, PollAPI, ProgrammeAPI, VoteAPI } from "@/shared/types/schema";
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { Filter, UpdateFilter } from "mongodb";
 import { VoteFilter } from "./types";
@@ -40,6 +40,30 @@ export default class extends WorkerEntrypoint<Env> {
 
   async insertProgramme(programme: Omit<ProgrammeAPI, "_id">, customId?: string) {
     return this.getDurableObject().insertProgramme(programme, customId);
+  }
+
+  async upsertChatMessage(message: Omit<ChatMessageAPI, "_id">) {
+    return this.getDurableObject().upsertChatMessage(message);
+  }
+
+  async findChatMessagesSince(chatId: string, sinceISO: string) {
+    return this.getDurableObject().findChatMessagesSince(chatId, sinceISO);
+  }
+
+  async markChatMessageProcessed(
+    chatId: string,
+    messageId: number,
+    outcome: NonNullable<ChatMessageAPI["faqOutcome"]>,
+    faqId: string | null = null,
+    force = false
+  ) {
+    return this.getDurableObject().markChatMessageProcessed(
+      chatId,
+      messageId,
+      outcome,
+      faqId,
+      force
+    );
   }
 
   async findOnePoll(filter: Filter<PollAPI>) {

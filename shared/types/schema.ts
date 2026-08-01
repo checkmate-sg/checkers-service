@@ -25,6 +25,7 @@ export type PollAPI = ObjectIdToString<Poll>;
 export type VoteAPI = ObjectIdToString<Vote>;
 export type ProgrammeAPI = ObjectIdToString<Programme>;
 export type LeaderboardAPI = ObjectIdToString<Leaderboard>; // _id is the checkers Id
+export type ChatMessageAPI = ObjectIdToString<ChatMessage>;
 
 // User/Checker schema
 export interface Checker extends BaseDocument {
@@ -226,4 +227,42 @@ export interface ProgrammeProgress {
   voteCount: number;
   accuracy: number | null;
   reportCount: number;
+}
+
+// Community group-chat message, captured by checkers-chat-management-service.
+// Durable record for analysis (what do volunteers actually ask?), separate from
+// the short-lived KV buffer that worker uses to decide what to answer.
+export interface ChatMessage extends BaseDocument {
+  chatId: string; // Telegram chat id, as a string (values exceed 2^53 in some chats)
+  messageId: number; // Telegram message id, unique within the chat
+  // Forum topic the message was posted in. Null means the General topic:
+  // Telegram omits message_thread_id entirely there rather than sending a value.
+  messageThreadId: number | null;
+  telegramId: string; // Sender's Telegram user id
+  telegramUsername: string | null; // Without @; absent for users who have no username
+  name: string | null; // Sender's first_name, as a fallback label
+  text: string;
+  sentAt: Date; // Derived from Telegram's `date` (unix seconds)
+  // Genuine reply target only. Telegram also points a topic's first message at
+  // the forum_topic_created service message; that structural link is discarded
+  // on ingest so it is never mistaken for someone answering a question.
+  replyToMessageId: number | null;
+  // When the FAQ sweep last considered this message. Null means not yet looked
+  // at; this is what stops the sweep re-classifying the same message forever,
+  // and it is the sweep's only piece of working state.
+  faqProcessedAt: Date | null;
+  // Why the sweep did or did not answer. "no-match" and "low-confidence" are
+  // the interesting ones: together they are the list of questions volunteers
+  // asked that the FAQ could not answer, i.e. the FAQ entries worth writing next.
+  faqOutcome:
+    | "answered"
+    | "human-answered" // a colleague got there first; the bot stayed quiet
+    | "not-a-question" // chatter that survived the cheap filters
+    | "no-match"
+    | "low-confidence"
+    | "duplicate" // same FAQ already answered for someone else in that run
+    | "send-failed"
+    | null;
+  // The FAQ id used, set only when faqOutcome is "answered".
+  answeredWithFaqId: string | null;
 }

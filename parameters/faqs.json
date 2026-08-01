@@ -1,0 +1,39 @@
+{
+  "_comment": "Grounding source for the group-chat FAQ bot (checkers-chat-management-service). `questions` lists the ways people actually ask it — every phrasing is shown to the model, so adding wording it could not have guessed is what widens matching. `answer` is the only thing the bot may say on that topic: it rephrases to fit how the question was asked, but may not add facts, links, names or timeframes that are not written there, so treat it as published copy. `id` is stable and lands in the chatMessages record — avoid renaming ids once live. Upload with: pnpm upload-parameters:<env>",
+  "faqs": [
+    {
+      "id": "volunteer-hours",
+      "questions": [
+        "When do my volunteer hours get credited on giving.sg?",
+        "How come I finished the programme but the hours are not in yet?",
+        "How do I get my volunteer hours after finishing the programme?"
+      ],
+      "answer": "On CheckMate's end, we will key the volunteer hours into the giving.sg system by the end of the month. However, it will only reflect in your giving.sg account at the end of the year. This is because giving.sg does not have a category to accommodate our unique volunteering model, where volunteers can start and end their volunteering at any time. In their system, we have to set a 'duration' to the opportunity, and so we set it to match the calendar year. This means that your hours will only be credited at the end of the year. If you need us to separately certify your hours, please message @g38937."
+    },
+    {
+      "id": "report-not-counted",
+      "questions": [
+        "How do I report messages?",
+        "Why are my messages reports not yet reflecting?",
+        "I reported messages to the bot but the number of reports did not increase."
+      ],
+      "answer": "Reports should be made to the CheckMate WhatsApp bot at https://wa.me/6580432188. Do not send reports in to the Telegram bot. Once you send in a message or photo to the WhatsApp bot, you will get an option whether to 'check' or to 'report' the message. You can choose either, both will count as reports."
+    },
+    {
+      "id": "volunteer-timesheet",
+      "questions": [
+        "How do I get my volunteer timesheet?",
+        "I need a timesheet for my volunteering hours. How do I get it?"
+      ],
+      "answer": "You can ping @g38937 for the timesheet."
+    },
+    {
+      "id": "problem-with-checkmate",
+      "questions": [
+        "Why am I not receiving any messages to vote on?",
+        "I voted on messages but they aren't appearing on the leaderboard."
+      ],
+      "answer": "@sarge1989 please look into it."
+    }
+  ]
+}

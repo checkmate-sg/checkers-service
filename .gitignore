@@ -38,4 +38,11 @@ tsconfig.tsbuildinfo
 scripts/*
 !scripts/seed-synthetic-checkers.js
 !scripts/backfill-target-daily-votes.js
-parameters/
+!scripts/upload-parameters.js
+!scripts/eval-faq.js
+
+# Per-environment threshold values stay local, but faqs.json is published copy:
+# it is the only thing the group-chat bot is allowed to say, so it belongs in
+# review and in history like any other user-facing string.
+parameters/*
+!parameters/faqs.json
