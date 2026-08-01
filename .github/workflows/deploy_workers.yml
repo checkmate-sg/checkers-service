@@ -9,6 +9,7 @@ on:
     paths:
       - "workers/**" # Run when worker code changes
       - "shared/**" # Run when shared code changes (used by workers)
+      - "parameters/faqs.json" # Bundled into the chat-management worker as a fallback
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -35,7 +36,7 @@ jobs:
       - name: Determine changed workers
         id: changed-workers
         run: |
-          ALL_WORKER_DIRS='["checkers-db-service","checkers-reminder-alarm-service","checkers-event-handler-service","checkers-webhook-service"]'
+          ALL_WORKER_DIRS='["checkers-db-service","checkers-reminder-alarm-service","checkers-event-handler-service","checkers-webhook-service","checkers-chat-management-service"]'
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
             echo "Force deploying all workers"
@@ -123,6 +124,7 @@ jobs:
         worker-dir:
           - checkers-event-handler-service
           - checkers-webhook-service
+          - checkers-chat-management-service
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4.2.2

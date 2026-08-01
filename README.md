@@ -55,7 +55,8 @@ workers/
 ├── checkers-db-service/        # Cloudflare Worker for MongoDB (RPC entrypoint)
 ├── checkers-event-handler-service/  # Queue consumer + cron jobs (lifecycle, daily-budget reset, redistribution)
 ├── checkers-reminder-alarm-service/ # Durable Object alarms for reminders
-└── checkers-webhook-service/   # Telegram, poll, Typeform & stats webhooks (WorkerEntrypoint with RPC); triggers initial vote distribution
+├── checkers-webhook-service/   # Telegram, poll, Typeform & stats webhooks (WorkerEntrypoint with RPC); triggers initial vote distribution
+└── checkers-chat-management-service/ # Community group-chat capture + FAQ auto-answering (Workers AI via AI Gateway)
 ```
 
 ## Core Features
@@ -247,6 +248,52 @@ When assessed, `voteAssessment` returns `{ primaryCategory, truthScore, isDownvo
   - Midnight (`0 16 * * *`): **Daily-budget reset** — sets every active checker's `dailyAssignmentCount` back to 0
   - 9 AM / 12 PM / 3 PM / 6 PM / 9 PM (`0 1,4,7,10,13 * * *`): **Redistribution** — tops up any of today's polls still short of the vote target (see [Vote Distribution Engine](#vote-distribution-engine))
 
+### Chat Management Service
+
+`workers/checkers-chat-management-service/` watches the checkers community group chat, records everything said, and answers recurring questions so admins stop repeating themselves.
+
+**Ingest and answering are decoupled.** A webhook (`POST /telegram-admin`, verified by `secret_token`) records each message as it arrives; a cron every 15 minutes decides what to answer. That ordering is deliberate — humans get first crack at every question, three people asking the same thing collapse into one reply, and the bot never interrupts a live conversation.
+
+- **Single store** — every message with text is upserted into the `chatMessages` collection via `checkers-db-service`. Upsert (not insert) on `chatId + messageId`, because Telegram redelivers any update it did not get a 2xx for. Ingest returns 500 on a storage failure precisely so that retry happens. There is no separate buffer: the sweep's working state is two fields on the same document (`faqProcessedAt`, `faqOutcome`).
+- **Getting it into BigQuery is a separate, unverified step.** The export that populates `checkmate-data-and-ai.checkmate_export` is not configured in this repo — it lives in the `data-app` repo's `pipeline/` directory. Whether a newly added collection is picked up automatically or has to be declared there has **not been checked**. Until someone confirms it, assume `chatMessages` accumulates in Mongo and never appears in BigQuery.
+- **Answering** — a question is answered once it has gone `FAQ_GRACE_PERIOD_MINUTES` unanswered, is under `FAQ_MAX_AGE_HOURS` old, and the model clears `FAQ_CONFIDENCE_THRESHOLD`. At most one reply per FAQ per run, capped at 3 replies and 10 candidates per run. Note 10 candidates is up to 60 model subrequests worst case (2 stages x 3 retry attempts).
+- **"Has a human answered?" is a model judgement, not a metadata check.** People in a group chat mostly answer by typing the next message rather than using Telegram's reply feature, so `reply_to_message_id` catches only a minority of real answers. The model is given the transcript of what followed the question in the same topic and decides. A threaded reply still short-circuits without a model call, as a cheap fast path.
+- **Classification runs in two stages**, because the two judgements need disjoint context. Stage 1 (`assessQuestion`) gets the conversation transcript and no FAQ text, and answers "is this a question, and has anyone answered it?". Only genuine unanswered questions reach stage 2 (`matchFaq`), which gets the FAQ list and no transcript. Combining them meant every call carried roughly half a prompt of noise, and chatter paid for the FAQ-laden prompt before being discarded.
+- **FAQ gaps are queryable** — `faqOutcome` records why the bot stayed quiet. `no-match` and `low-confidence` together are the list of questions volunteers asked that the FAQ could not answer, which is the list of FAQ entries worth writing next.
+- **Grounding** — answers are generated but constrained to `parameters/faqs.json`, the only content the bot may convey. Structured output comes from a tool call; an `faq_id` the model invents is rejected. `FAQ_SHADOW_MODE=true` logs the intended reply without posting.
+
+#### Where the FAQ content lives
+
+Write the answers in **`parameters/faqs.json`** at the repo root. It is the one file in `parameters/` that is version-controlled — it is published copy, so it belongs in review like any other user-facing string. Each entry is three fields:
+
+- `id` — stable. It is what the model returns and what lands in `answeredWithFaqId`, so avoid renaming ids once live.
+- `questions` — the ways people actually ask it. Every phrasing is shown to the model, so the ones worth adding are those it could not infer from the canonical form: local vocabulary, internal jargon, or a question asked by symptom ("report count never goes up") rather than by topic.
+- `answer` — the **only** text the bot may convey on that topic. It rephrases to fit how the question was asked, but the prompt forbids adding facts, links, names, or timeframes that are not written there. Anything left vague here stays vague in the reply; anything wrong here is wrong in front of the whole group.
+
+`pnpm upload-parameters:staging` / `:production` push it to KV under the `FAQS` key alongside the numeric thresholds, so editing an answer is a KV upload rather than a deploy. The script warns if any answer still contains a `TODO` placeholder.
+
+The same file is also **bundled into the Worker as a fallback**, mirroring how `PARAMETER_DEFAULTS` backs the numeric parameters. This is what makes local dev work: every worker keeps its own `.wrangler/state/v3/kv`, so `pnpm upload-parameters:local` writes to the repo-root state directory that no worker reads. Locally you get the bundled copy and need no upload at all. Logs say which source was used, since a deployed bundle can drift from KV once someone edits one and not the other.
+
+**Forum topics.** The chat is a forum, so replies must echo `message_thread_id` or they land in General (which itself carries no thread id — Telegram omits the field rather than sending a sentinel). Telegram also points a topic's first message at its `forum_topic_created` service message; `resolveReplyTarget` discards that structural link, since treating it as a reply would make the topic root look answered and silence the bot in the Q&A topic.
+
+**Model** — `@cf/zai-org/glm-4.7-flash` via the `AI` binding, routed through AI Gateway (`checkmate-checkers-admin-nonprod` / `checkmate-checkers-admin`) so every prompt and response is logged for audit.
+
+#### Testing the prompts
+
+Workers AI has no local simulation — the binding always calls Cloudflare's API, **even under `wrangler dev`, and it bills your account**. That makes local prompt iteration real rather than mocked: the model, the gateway, and the logs are all production ones; only the worker runs on your machine.
+
+```bash
+# Terminal 1
+cd workers/checkers-chat-management-service && pnpm dev
+
+# Terminal 2 — scores the prompts against tests/eval/faq-cases.json
+pnpm eval:faq
+```
+
+The eval set covers the judgements that are easy to get wrong: questions with no question mark, chatter that looks like a question, an answer given casually without the reply feature, "same here" and "good question" (which are _not_ answers), and questions the FAQ deliberately should not stretch to cover. A failure means the model and the expectation disagree — decide which is wrong before changing either.
+
+`POST /dev/classify` backs this and returns both stages plus the outcome the cron would have reached. It 404s unless `ENABLE_EVAL_ENDPOINT=true` (set only in `.dev.vars`) and also requires the webhook secret.
+
 ### Alarm Service
 
 `workers/checkers-reminder-alarm-service/` uses Durable Objects to schedule per-checker reminders after deactivation. Alarms are cancelled when checker reactivates via the "Reactivate Now" button.
@@ -338,12 +385,13 @@ A checker with that `telegramId` **must already exist** in the dev DB. If none i
 
 ### Worker Ports
 
-| Worker                          | HTTP Port | Description                         |
-| ------------------------------- | --------- | ----------------------------------- |
-| checkers-db-service             | 9080      | MongoDB database service            |
-| checkers-reminder-alarm-service | 9081      | Durable Object alarms for reminders |
-| checkers-event-handler-service  | 9082      | Queue consumer + daily cron jobs    |
-| checkers-webhook-service        | 9083      | Telegram, poll & stats webhooks     |
+| Worker                           | HTTP Port | Description                         |
+| -------------------------------- | --------- | ----------------------------------- |
+| checkers-db-service              | 9080      | MongoDB database service            |
+| checkers-reminder-alarm-service  | 9081      | Durable Object alarms for reminders |
+| checkers-event-handler-service   | 9082      | Queue consumer + daily cron jobs    |
+| checkers-webhook-service         | 9083      | Telegram, poll & stats webhooks     |
+| checkers-chat-management-service | 9084      | Group-chat capture + FAQ bot        |
 
 ### Testing the Poll Webhook
 

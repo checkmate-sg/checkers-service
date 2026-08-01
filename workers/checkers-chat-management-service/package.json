@@ -1,0 +1,23 @@
+{
+  "name": "checkers-chat-management-service",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --inspector-port 9334 --test-scheduled",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.19",
+    "@cloudflare/workers-types": "^4.20251224.0",
+    "typescript": "^5.5.2",
+    "vitest": "~3.2.0",
+    "wrangler": "4.54.0"
+  },
+  "dependencies": {
+    "grammy": "^1.38.4",
+    "hono": "^4.11.1"
+  }
+}

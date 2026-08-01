@@ -1,0 +1,6 @@
+TELEGRAM_ADMIN_BOT_TOKEN=xxx
+CHECKERS_CHAT_ID=-1111
+# secret_token passed to Telegram's setWebhook; rejects unsigned callers
+TELEGRAM_ADMIN_WEBHOOK_SECRET=xxx
+# Enables POST /dev/classify for prompt testing. Local only — never set in production.
+ENABLE_EVAL_ENDPOINT=true

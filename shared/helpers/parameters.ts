@@ -28,6 +28,14 @@ export const PARAMETER_DEFAULTS = {
   PROGRAMME_TARGET_VOTES: 50,
   PROGRAMME_TARGET_ACCURACY: 60,
   PROGRAMME_TARGET_REPORTS: 5,
+
+  // Group-chat FAQ bot (checkers-chat-management-service)
+  // How long a question must sit unanswered by a human before the bot replies.
+  FAQ_GRACE_PERIOD_MINUTES: 30,
+  // Minimum model confidence (0-1) required to post. Below this, stay silent.
+  FAQ_CONFIDENCE_THRESHOLD: 0.75,
+  // Questions older than this are dropped unanswered — too late to be useful.
+  FAQ_MAX_AGE_HOURS: 12,
 } as const;
 
 export type ParameterKey = keyof typeof PARAMETER_DEFAULTS;
