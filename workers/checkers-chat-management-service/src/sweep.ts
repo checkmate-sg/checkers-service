@@ -1,6 +1,6 @@
 import { Bot } from "grammy";
 import { getParameters } from "@/shared/helpers/parameters";
-import { assessQuestion, matchFaq } from "./classify";
+import { assessQuestion, matchFaq, resolveOutcome } from "./classify";
 import { loadFaqs } from "./faq";
 import type { CandidateMessage, FollowingMessage } from "./types";
 
@@ -104,14 +104,13 @@ export async function runFaqSweep(env: Env): Promise<void> {
       continue;
     }
 
-    if (!assessment.isQuestion) {
-      await markProcessed(env, chatId, candidate.messageId, "not-a-question");
-      continue;
-    }
-
-    if (assessment.alreadyAnswered) {
-      console.log(`Message ${candidate.messageId} was already answered by a human`);
-      await markProcessed(env, chatId, candidate.messageId, "human-answered");
+    // resolveOutcome is shared with the eval endpoint so the two cannot diverge.
+    const earlyOutcome = resolveOutcome(assessment, null, params.FAQ_CONFIDENCE_THRESHOLD);
+    if (earlyOutcome === "not-a-question" || earlyOutcome === "human-answered") {
+      if (earlyOutcome === "human-answered") {
+        console.log(`Message ${candidate.messageId} was already answered by a human`);
+      }
+      await markProcessed(env, chatId, candidate.messageId, earlyOutcome);
       continue;
     }
 
@@ -130,22 +129,34 @@ export async function runFaqSweep(env: Env): Promise<void> {
 
     if (!verdict) continue;
 
-    if (verdict.faqId === "none" || !verdict.answer) {
-      await markProcessed(env, chatId, candidate.messageId, "no-match");
-      continue;
-    }
-
-    if (verdict.confidence < params.FAQ_CONFIDENCE_THRESHOLD) {
-      console.log(
-        `Below threshold (${verdict.confidence.toFixed(2)} < ${params.FAQ_CONFIDENCE_THRESHOLD}) ` +
-          `for message ${candidate.messageId}, matched "${verdict.faqId}"`
-      );
-      await markProcessed(env, chatId, candidate.messageId, "low-confidence");
+    const outcome = resolveOutcome(assessment, verdict, params.FAQ_CONFIDENCE_THRESHOLD);
+    if (outcome !== "answered") {
+      if (outcome === "low-confidence") {
+        console.log(
+          `Below threshold (${verdict.confidence.toFixed(2)} < ${params.FAQ_CONFIDENCE_THRESHOLD}) ` +
+            `for message ${candidate.messageId}, matched "${verdict.faqId}"`
+        );
+      }
+      await markProcessed(env, chatId, candidate.messageId, outcome);
       continue;
     }
 
     if (answeredFaqIds.has(verdict.faqId)) {
       await markProcessed(env, chatId, candidate.messageId, "duplicate", verdict.faqId);
+      continue;
+    }
+
+    // Shadow mode logs without claiming. Claiming here would mark the message
+    // answered when nothing was posted, so it would never be reconsidered once
+    // shadow mode is turned off — which matters because this var is the kill
+    // switch: everything asked during an incident would be silently swallowed.
+    if (shadowMode) {
+      console.log(
+        `[shadow] would reply to ${candidate.messageId} (@${candidate.userName}) ` +
+          `via "${verdict.faqId}" @ ${verdict.confidence.toFixed(2)}: ${verdict.answer}`
+      );
+      answeredFaqIds.add(verdict.faqId);
+      repliesPosted += 1;
       continue;
     }
 
@@ -169,14 +180,6 @@ export async function runFaqSweep(env: Env): Promise<void> {
     }
     answeredFaqIds.add(verdict.faqId);
     repliesPosted += 1;
-
-    if (shadowMode) {
-      console.log(
-        `[shadow] would reply to ${candidate.messageId} (@${candidate.userName}) ` +
-          `via "${verdict.faqId}" @ ${verdict.confidence.toFixed(2)}: ${verdict.answer}`
-      );
-      continue;
-    }
 
     try {
       await bot!.api.sendMessage(chatId, verdict.answer, {

@@ -54,12 +54,23 @@ jobs:
               WORKER_DIRS="$ALL_WORKER_DIRS"
             else
               WORKER_CHANGES=$(echo "$CHANGED_FILES" | grep "^workers/" || true)
-              if [[ -z "$WORKER_CHANGES" ]]; then
+
+              # parameters/faqs.json is bundled into the chat-management worker as
+              # a fallback, so editing it must redeploy that worker or the bundled
+              # copy silently drifts from the checked-in one.
+              FAQ_CHANGES=$(echo "$CHANGED_FILES" | grep "^parameters/faqs.json" || true)
+
+              if [[ -z "$WORKER_CHANGES" && -z "$FAQ_CHANGES" ]]; then
                 echo "No worker changes detected"
                 echo "worker-dirs=[]" >> $GITHUB_OUTPUT
                 exit 0
               fi
-              WORKER_DIRS=$(echo "$WORKER_CHANGES" | grep -o "workers/[^/]*" | cut -d'/' -f2 | sort | uniq | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+              DIRS=$(echo "$WORKER_CHANGES" | grep -o "workers/[^/]*" | cut -d'/' -f2 || true)
+              if [[ -n "$FAQ_CHANGES" ]]; then
+                DIRS=$(printf '%s\ncheckers-chat-management-service' "$DIRS")
+              fi
+              WORKER_DIRS=$(echo "$DIRS" | sort | uniq | jq -R -s -c 'split("\n") | map(select(length > 0))')
             fi
           fi
 

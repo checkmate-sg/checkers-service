@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { PARAMETER_DEFAULTS } from "@/shared/helpers/parameters";
-import { assessQuestion, matchFaq } from "./classify";
+import { getParameters } from "@/shared/helpers/parameters";
+import { assessQuestion, matchFaq, resolveOutcome } from "./classify";
 import { loadFaqs } from "./faq";
 import type { FollowingMessage } from "./types";
 
@@ -51,27 +51,22 @@ export async function handleEvalRequest(c: Context<{ Bindings: Env }>) {
     return c.json({ error: "Stage 1 failed; see worker logs" }, 502);
   }
 
-  // Mirrors the sweep's short-circuit exactly, so what you see here is what the
-  // cron would have done with the same message.
-  if (!assessment.isQuestion) {
-    return c.json({ stage1: assessment, outcome: "not-a-question", stage2: null });
-  }
-  if (assessment.alreadyAnswered) {
-    return c.json({ stage1: assessment, outcome: "human-answered", stage2: null });
-  }
+  // Same threshold source as the sweep, so the eval reflects what the cron
+  // would decide rather than what the code default says.
+  const { FAQ_CONFIDENCE_THRESHOLD } = await getParameters(env.CHECKMATE_CHECKERS_PARAMETERS_KV, [
+    "FAQ_CONFIDENCE_THRESHOLD",
+  ]);
 
-  const match = await matchFaq(env, body.message, faqs);
-  if (!match) {
+  // Stage 2 only runs for genuine unanswered questions, exactly as in the sweep.
+  const needsFaq = assessment.isQuestion && !assessment.alreadyAnswered;
+  const match = needsFaq ? await matchFaq(env, body.message, faqs) : null;
+  if (needsFaq && !match) {
     return c.json({ error: "Stage 2 failed; see worker logs" }, 502);
   }
 
-  const threshold = PARAMETER_DEFAULTS.FAQ_CONFIDENCE_THRESHOLD; // KV value wins in the sweep
-  const outcome =
-    match.faqId === "none" || !match.answer
-      ? "no-match"
-      : match.confidence < threshold
-        ? "low-confidence"
-        : "answered";
-
-  return c.json({ stage1: assessment, outcome, stage2: match });
+  return c.json({
+    stage1: assessment,
+    outcome: resolveOutcome(assessment, match, FAQ_CONFIDENCE_THRESHOLD),
+    stage2: match,
+  });
 }
