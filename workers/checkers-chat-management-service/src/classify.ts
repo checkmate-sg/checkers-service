@@ -144,6 +144,29 @@ function extractToolArguments(response: unknown): Record<string, unknown> | null
   return args && typeof args === "object" ? (args as Record<string, unknown>) : null;
 }
 
+/**
+ * The outcome a candidate resolves to, given both stages and the threshold.
+ *
+ * Shared so the eval endpoint cannot drift from what the cron would actually
+ * decide — the two used to branch identically in two places, and dev.ts had
+ * already diverged by reading the code default instead of the live KV value.
+ *
+ * A null `match` means stage 2 either did not run or produced nothing usable;
+ * both resolve to no-match here. Whether a null is worth retrying is the
+ * caller's decision, not this function's.
+ */
+export function resolveOutcome(
+  assessment: QuestionAssessment,
+  match: FaqMatch | null,
+  threshold: number
+): "not-a-question" | "human-answered" | "no-match" | "low-confidence" | "answered" {
+  if (!assessment.isQuestion) return "not-a-question";
+  if (assessment.alreadyAnswered) return "human-answered";
+  if (!match || match.faqId === "none" || !match.answer) return "no-match";
+  if (match.confidence < threshold) return "low-confidence";
+  return "answered";
+}
+
 /** Attempts per stage, including the first. Workers AI returns transient 3xxx errors. */
 const MAX_ATTEMPTS = 3;
 
@@ -277,10 +300,13 @@ export async function matchFaq(
   const faqId = typeof args.faq_id === "string" ? args.faq_id : "none";
 
   // Guard against a hallucinated id: only ids we actually supplied may be acted on.
+  // Returned as an explicit no-match rather than null, because null means
+  // "transient failure, retry" — and a hallucination is not transient. Returning
+  // null here would re-classify the same message every sweep for FAQ_MAX_AGE_HOURS.
   const known = faqId === "none" || faqs.some(faq => faq.id === faqId);
   if (!known) {
-    console.error(`Model returned unknown faq_id "${faqId}"; treating as no match`);
-    return null;
+    console.error(`Model returned unknown faq_id "${faqId}"; recording as no match`);
+    return { faqId: "none", confidence: 0, answer: "" };
   }
 
   return {
