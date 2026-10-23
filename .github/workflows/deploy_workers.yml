@@ -97,6 +97,11 @@ jobs:
         with:
           version: 10.5.2
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          check-latest: true
+
       - name: Check if worker has changes
         id: check-changes
         run: |
@@ -143,6 +148,11 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
         with:
           version: 10.5.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          check-latest: true
 
       - name: Check if worker has changes
         id: check-changes
